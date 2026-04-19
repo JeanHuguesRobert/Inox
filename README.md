@@ -19,6 +19,30 @@ Yours,
    Jean Hugues Noël Robert, aka Virteal Baron Mariani. @jhr on Twitter.
 
 ---
+
+## Context
+
+Inox is one layer of a larger architectural project asking a single question across five scales:
+**how do autonomous agents coordinate without a capturable centre?**
+
+The strict separation between control plane and data plane in Inox is the same architectural
+idea as the three-layer [MareNostrum](https://github.com/JeanHuguesRobert/marenostrum) framework
+(physical substrate → governance layer → cognitive layer), asked at the language level.
+It is also the same idea as the autodiscover protocol in
+[US patent US7606221B2](https://patents.google.com/patent/US7606221B2/en) — endpoint devices
+locating distributed infrastructure without a capturable server — asked at the network level.
+
+The *Democratic Humans in the Loop* paper
+([DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md))
+formalises the governance layer of this architecture, introducing the
+Compute eXergy Unit (CXU) as a thermodynamically grounded unit of account for AI compute.
+Inox is the intended runtime substrate for the edge layer of that architecture.
+
+Research, political, and institutional context:
+[barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani) ·
+[Les Carnets du Baron Mariani](https://jeanhugues.substack.com)
+
+---
 ---
 ---
 
