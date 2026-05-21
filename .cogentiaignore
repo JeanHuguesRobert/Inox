@@ -1,0 +1,13 @@
+# Inox — non-research markdown files.
+# Built-in defaults (README, LICENSE, TODO, CHANGELOG, …) are always applied.
+#
+# Note: research/corpus-status.md IS research (auto-refreshed by
+# `cogentia.js corpus-status`). It is intentionally NOT listed here.
+
+# Code, build artefacts, dependencies, examples — not research-grade markdown.
+src/**
+lib/**
+builds/**
+examples/**
+trace-browser/**
+node_modules/**
