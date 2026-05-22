@@ -377,5 +377,6 @@ Lines below are for jhrobert to track corrections.
 
 *These documents link to this file:*
 - [The Inox Programming Language — Specification](inox-spec.md)
+- [Inox naming conventions and design influences](naming-conventions.md)
 
 <!-- END_AUTO: backlinks -->
