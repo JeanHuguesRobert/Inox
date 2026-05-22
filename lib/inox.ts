@@ -16526,11 +16526,16 @@ primitive( "map.get", primitive_map_get );
  */
 
 function primitive_map_nice_get(){
+  // Contract: ( key map -- value | void ). All bail paths must leave a void
+  // cell on the stack where the result would have gone, not an empty stack
+  // (a missing result later trips primitive_make_local with an empty data
+  // stack when callers do `classes.get( /foo ) >var` and /foo isn't in the
+  // map — exactly the l9.nox:169 `classes.get( thing/ ) >class-superclass`
+  // crash during initial bootstrap when /thing isn't registered yet).
   const map_cell = TOS;
   if( ! is_a_reference( map_cell ) ){
-    reset( map_cell );
-    pop();
-    drop();
+    drop();         // drop the (non-reference) map
+    clear_top();    // turn the key cell into void
     return;
   }
   let map = value_of( map_cell );
@@ -16542,14 +16547,14 @@ function primitive_map_nice_get(){
   // First cell is the length of the map
   if( ! is_an_integer( map ) ){
     drop();
-    drop();
+    clear_top();
     return;
   }
   const map_length = value_of( map );
   const key_cell = TOS - ONE;
   if( ! is_a_tag( key_cell ) ){
     drop();
-    drop();
+    clear_top();
     return;
   }
   const key = value_of( key_cell );
@@ -16563,7 +16568,7 @@ function primitive_map_nice_get(){
   }
   if( ii > map_length ){
     drop();
-    drop();
+    clear_top();
     return;
   }
   copy_cell( map + ii * ONE, the_tmp_cell );
@@ -18943,6 +18948,7 @@ function primitive_definitions(){
         ndef++;
       }
     }
+    ii++;
   }
   // Allocate a stack object to hold all the definitions
   const list = stack_allocate( ndef );
@@ -18960,6 +18966,7 @@ function primitive_definitions(){
         stack_push( list, the_tmp_cell );
       }
     }
+    ii++;
   }
   // Return the list
   push();
