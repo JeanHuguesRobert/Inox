@@ -3,7 +3,7 @@ title: "Corpus Status — Inox"
 description: "Current state of the Inox knowledge corpus — what is proved, what is open, what remains possible"
 layout: default
 nav_order: 2
-last_modified_at: 2026-05-21
+last_modified_at: 2026-05-22
 ---
 
 # Corpus Status — Inox
@@ -26,7 +26,7 @@ last_modified_at: 2026-05-21
 | marenostrum | ✅ | main | 2026-05-21 |
 | barons-Mariani | ✅ | main | 2026-05-21 |
 | inseme | ✅ | main | 2026-05-21 |
-| Inox | ✅ | master | 2026-04-19 |
+| Inox | ✅ | master | 2026-05-22 |
 <!-- END_AUTO: registered_repos -->
 
 ---
@@ -146,9 +146,9 @@ graph LR
 ### Backlinks
 
 *These documents link to this file:*
-- [The Inox Programming Language — Specification](inox-spec.md)
-- [Concept Index — Inox](concepts.md)
 - [Corpus Status — Inox](corpus-status.md)
 - [Research Index — Inox](index.md)
+- [The Inox Programming Language — Specification](inox-spec.md)
+- [Concept Index — Inox](concepts.md)
 
 <!-- END_AUTO: backlinks -->

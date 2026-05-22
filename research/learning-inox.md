@@ -4,6 +4,8 @@ author: "Written collaboratively by an AI agent under jhrobert's review"
 canonical_source: "research/inox-spec.md"
 status: "working draft — sections marked ⚠️ need author review"
 date: "2026-05-22"
+canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/learning-inox.md
+last_stamped_at: 2026-05-22
 ---
 
 > **Post-draft note (2026-05-22).** §3 and §4.5 of this draft framed the

@@ -69,8 +69,8 @@ This repository instantiates the **language and runtime substrate layer** of the
 ### Backlinks
 
 *These documents link to this file:*
+- [Corpus Status — Inox](corpus-status.md)
 - [The Inox Programming Language — Specification](inox-spec.md)
 - [Concept Index — Inox](concepts.md)
-- [Corpus Status — Inox](corpus-status.md)
 
 <!-- END_AUTO: backlinks -->

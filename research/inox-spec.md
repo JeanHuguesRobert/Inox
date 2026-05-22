@@ -1566,6 +1566,7 @@ This is a list of the primitives that are currently implemented in the Iɴᴏx c
 
 *These documents link to this file:*
 - [Corpus Status — Inox](corpus-status.md)
+- [Learning Inox — A tutorial for AI agents (and humans in a hurry)](learning-inox.md)
 - [Research Index — Inox](index.md)
 
 <!-- END_AUTO: backlinks -->
