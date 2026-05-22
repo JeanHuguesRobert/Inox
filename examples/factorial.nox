@@ -1,0 +1,13 @@
+~| factorial.nox - recursive factorial, the spec's example |~
+
+to fact
+  if: duplicate <= 1 then: {
+    drop 1
+  } else: {
+    ( duplicate 1 - ) fact *
+  };
+.
+
+out( fact( 5 ) ) "\n" out
+out( fact( 6 ) ) "\n" out
+out( fact( 7 ) ) "\n" out
