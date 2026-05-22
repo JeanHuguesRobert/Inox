@@ -21,9 +21,9 @@ last_modified_at: 2026-05-22
 <!-- BEGIN_AUTO: registered_repos -->
 | Repository | research/index.md | Branch | Last commit |
 |---|---|---|---|
-| cogentia | ✅ | main | 2026-05-21 |
-| FractaVolta | ✅ | main | 2026-05-21 |
-| marenostrum | ✅ | main | 2026-05-21 |
+| cogentia | ✅ | main | 2026-05-22 |
+| FractaVolta | ✅ | main | 2026-05-22 |
+| marenostrum | ✅ | main | 2026-05-22 |
 | barons-Mariani | ✅ | main | 2026-05-21 |
 | inseme | ✅ | main | 2026-05-21 |
 | Inox | ✅ | master | 2026-05-22 |
@@ -146,9 +146,9 @@ graph LR
 ### Backlinks
 
 *These documents link to this file:*
+- [Concept Index — Inox](concepts.md)
 - [Corpus Status — Inox](corpus-status.md)
 - [Research Index — Inox](index.md)
 - [The Inox Programming Language — Specification](inox-spec.md)
-- [Concept Index — Inox](concepts.md)
 
 <!-- END_AUTO: backlinks -->

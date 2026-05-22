@@ -370,3 +370,12 @@ Lines below are for jhrobert to track corrections.
 - [ ] §4.5 — three candidate crash sites listed (embedded `map[]`, `make.object`, `classes .!`); confirm the framing.
 - [ ] §4.6 step 6 — verify that the leading `.` on line 96 terminates the previous definition (which one?) before `global: classes/ is: map[] :classes;`.
 - [ ] §5.1 — confirm `debugger` and `breakpoint` are interchangeable in the current runtime.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [The Inox Programming Language — Specification](inox-spec.md)
+
+<!-- END_AUTO: backlinks -->
