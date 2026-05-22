@@ -6678,7 +6678,8 @@ function stack_extend( stk : Area, len : Length ){
   }
   const old_stack = value_of( stk );
   const new_stack = stack_resize( old_stack, new_capacity );
-  stack_free( old_stack );
+  // stack_resize already calls stack_free(stk) internally; freeing here too
+  // would be a double-free, asserting on area_is_busy in area_free.
   set_value( stk, new_stack );
   de&&mand( stack_is_extended( stk ) );
   if( len > stack_length( stk ) ){
@@ -14788,7 +14789,10 @@ function primitive_forget_parameters(){
     limit = ACTOR_control_stack;
   }
 
-  while( is_with( CSP ) ){
+  // Drop parameter cells until we reach the /with sentinel, then drop the
+  // sentinel below. The previous `while( is_with(CSP) )` never entered the
+  // body for a typical parameter frame and left the stack misaligned for pop_ip.
+  while( ! is_with( CSP ) ){
     drop_control();
     if( check_de && CSP < limit ){
       FATAL( "/with sentinel out of reach" );
