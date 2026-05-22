@@ -97,9 +97,9 @@ to play
   loop: {
     out( "Guess? " )
     read-line, text-to-integer,
-    dup, if not an-integer? then: { drop,                     continue };
-    dup, if: >              then: { drop, out( "Too big"   ), continue };
-    dup, if: <              then: { drop, out( "Too small" ), continue };
+    duplicate, if not an-integer? then: { drop,                     continue };
+    duplicate, if: >              then: { drop, out( "Too big"   ), continue };
+    duplicate, if: <              then: { drop, out( "Too small" ), continue };
     out( "Yes!" ), break
   }
   clear
@@ -107,7 +107,7 @@ to play
 
 This code is a small game where the player must guess a number between 0 and 100. It illustrates two important _control structures_: _loops_ and _conditionnals_.
 
-`dup` duplicates the value on the top of the data stack whereas `drop` removes it, while `clear` empties the entire stack.
+`duplicate` duplicates the value on the top of the data stack whereas `drop` removes it, while `clear` empties the entire stack.
 
 `while: { ... } do: { ... };` and `do: { ... } until: { ... };` are special versions of the more general `loop: { ... };` structure where the loop breaks or continues depending on some condition.
 
@@ -773,16 +773,16 @@ to say:to:   ~| msg dest -- |~
 say: "Hello" to: "Bob";  ~~ outputs Say: Hello, To: Bob
 ```
 
-`over` is like `dup` but it duplicate NOS instead of TOS, ie it duplicates the next value on the stack instead of the top of stack value. Juggling with values on the stack gets tricky easely. That's why it is sometimes usefull to describe the _protocol_ of a _verb_ with special comment about their _effect_ on the stack.
+`over` is like `duplicate` but it duplicate NOS instead of TOS, ie it duplicates the next value on the stack instead of the top of stack value. Juggling with values on the stack gets tricky easely. That's why it is sometimes usefull to describe the _protocol_ of a _verb_ with special comment about their _effect_ on the stack.
 
 Here are such comments for the most common verbs to handle the top values of the data stack:
 
 ``` sh
-dup    ~| a -- a a |~
-drop   ~| x -- |~
-swap   ~| a b -- b a |~
-over   ~| a b -- a b a |~
-rotate ~| a b c -- b c a |~
+duplicate ~| a -- a a |~
+drop      ~| x -- |~
+swap      ~| a b -- b a |~
+over      ~| a b -- a b a |~
+rotate    ~| a b c -- b c a |~
 ```
 
 Fortunately you can avoid doing that if you want, using _local variables_, _functions_ and _methods_.
@@ -805,15 +805,15 @@ Verbs agree on protocols to manipulate values on the data stack. The most basic,
 
 ```
 to fib
-  dup
+  duplicate
   if: > 2 then: {
-    dup, fib( - 1 ) + fib( swap - 2 )
+    duplicate, fib( - 1 ) + fib( swap - 2 )
   }
 
 out( fib( 10 ) )  ~~ outputs the 10th number of the fibonacci suite
 ```
 
-In this example, `dup` duplicates the TOS (Top Of the Stack) and `swap` swaps it with the NOS (Next On Stack). Dealing this way with the stack can become rather complex quickly and using functions produces a solution that is more readable (but sligthly slower).
+In this example, `duplicate` copies the TOS (Top Of the Stack) and `swap` swaps it with the NOS (Next On Stack). Dealing this way with the stack can become rather complex quickly and using functions produces a solution that is more readable (but sligthly slower).
 
 
 Function protocol
@@ -839,10 +839,10 @@ Unfortunately it does not apply to the fidonacci function because the actual las
 
 ```
 to fib
-  dup
+  duplicate
   2 > {
-    dup,  1, -, fib
-    swap, 2, -, fib
+    duplicate, 1, -, fib
+    swap,      2, -, fib
     +
   } if
 ```
@@ -908,7 +908,7 @@ The opposite is true also, it is easy to implement the objet semantic of any val
 ``` sh
 to text.box              :box text-box:1 make-object.
 to text-box.super-class  /value.
-to text-box.push         dup >R ( .box swap & .box! ) R>.
+to text-box.push         duplicate >R ( .box swap & .box! ) R>.
 to text-box.value        .box.
 to text-box.out          .box out.
 
@@ -1241,7 +1241,7 @@ This is a list of the primitives that are currently implemented in the Iɴᴏx c
 | push | push the void on the data stack |
 | drop | remove the top of the data stack |
 | drops | remove cells from the data stack |
-| dup | duplicate the top of the data stack |
+| duplicate | duplicate the top of the data stack |
 | 2dup | duplicate the top two cells of the data stack |
 | ?dup | duplicates the top of the data stack if TOS is non zero |
 | dups | duplicate cells from the data stack |
@@ -1411,7 +1411,7 @@ This is a list of the primitives that are currently implemented in the Iɴᴏx c
 | stack.fetch-nice | get the nth entry of a stack object, or void |
 | stack.length | get the depth of a stack object |
 | stack.capacity | get the capacity of a stack object |
-| stack.dup | duplicate the top of a stack object |
+| stack.duplicate | duplicate the top of a stack object |
 | stack.clear | clear a stack object |
 | stack.swap | swap the top two values of a stack object |
 | stack.swap-nice | like swap but ok if stack is too short |

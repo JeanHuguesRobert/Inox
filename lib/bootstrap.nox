@@ -16,6 +16,7 @@ to immediate!  immediate
 ~~ Some synonyms, shorter than the original name
 to forget              forget-control
 to clear               clear-data
+to dup                 duplicate           ~~ Forth homage, see research/naming-conventions.md
 
 to basic-out           inox-out
 to out                 /basic-out tag.run  ~~ late binding
