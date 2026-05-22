@@ -127,3 +127,13 @@ a tradition, the departure is the point. Where it preserves the tradition
 syntax and semantics, [`README.md`](../README.md) for the corpus-level
 position, and [`research/learning-inox.md`](learning-inox.md) for a
 short tutorial.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [The Inox Programming Language — Specification](inox-spec.md)
+- [Learning Inox — A tutorial for AI agents (and humans in a hurry)](learning-inox.md)
+
+<!-- END_AUTO: backlinks -->
