@@ -1,4 +1,4 @@
 ~| hello.nox - the smallest possible Inox program |~
 
-to greet "Hello from Inox!" out.
+to greet "Hello from Inox!\n" out.
 greet

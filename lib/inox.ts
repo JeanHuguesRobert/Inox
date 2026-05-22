@@ -23518,10 +23518,17 @@ primitive( "trace", primitive_trace );
 
 /*
  *  inox-out - output text to the default output stream
+ *  Writes TOS as text to stdout. No prefix, no auto-newline — the caller
+ *  decides. `trace` is the verb to use for prefixed debug output.
  */
 
 function primitive_inox_out(){
-  primitive_trace();
+  const auto_ = cell_as_text( TOS );
+  if( trace_capture_enabled ){
+    trace_capture_buffer += auto_;
+  }
+  /**/ process.stdout.write( auto_ );
+  //c/ write( 1, auto_.c_str(), auto_.length() );
   drop();
 }
 primitive( "inox-out", primitive_inox_out );
