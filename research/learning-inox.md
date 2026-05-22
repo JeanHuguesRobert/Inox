@@ -8,16 +8,24 @@ canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/lea
 last_stamped_at: 2026-05-22
 ---
 
-> **Post-draft note (2026-05-22).** §3 and §4.5 of this draft framed the
-> 2023 OO bootstrap crash as Inox-level. Step-by-step instrumentation
-> revealed it was actually **two latent runtime bugs** in `lib/inox.ts`:
-> (a) a double-free in `stack_extend` and (b) an inverted loop condition
-> in `primitive_forget_parameters`. Both fixes are in the accompanying
-> commit. A third crash (in `primitive_make_local`) remains, location
-> unknown — could be runtime or Inox. The advice in §3 ("treat the
-> runtime as ground truth") still stands as a starting assumption, but
-> in *this codebase, in 2023-2026*, runtime bugs are still common
-> enough that the default needs to be held loosely.
+> **Status (2026-05-22 to 2026-05-23).** The 2023 OO bootstrap blocker
+> turned out to be a chain of latent runtime bugs in `lib/inox.ts`, not
+> the Inox-level bug it appeared to be. Eight fixes shipped:
+> double-free in `stack_extend`, inverted loop in
+> `primitive_forget_parameters`, `map.?@` not respecting its "void if
+> impossible" contract, two infinite loops in `primitive_definitions`,
+> an unreachable `done = true` in `primitive_eval`'s nesting-error path,
+> a missing `;` in l9.nox's promise-handler `if:then:else:`, and most
+> recently the late-binding machinery for forward references (so
+> `to fact ... fact ... .` self-recursion actually compiles). The CLI
+> (`bin/inox.js`) and `examples/hello.nox`, `examples/factorial.nox`
+> run end-to-end. See §6 below for usage, and §4 for the historical
+> walkthrough of where the bugs lived.
+>
+> The advice in §3 ("treat the runtime as ground truth") still stands as
+> a *starting* assumption, but in this codebase the asymmetry is weaker
+> than for mature interpreters — runtime bugs are real and often the
+> root of surprising failures. Verify before blaming the user code.
 
 # Learning Inox — a tutorial for AI agents
 
@@ -263,38 +271,63 @@ to class{  with class-name/ code/ parameters
   ...
 ```
 
-### 4.5 What the crash actually says
+### 4.5 What was actually wrong (historical)
 
-Stack trace at the failure point:
+The original crash:
 
 ```
-mand           ← assertion failed (line 1524)
-area_free      ← freeing an area (line 4409)
-stack_free     ← freeing an internal stack/map area (line 5307)
-stack_extend   ← growing an internal stack/map past its capacity (line 5635)
-primitive_map_put ← Inox-level: writing to a map (line 13576)
+mand           ← assertion failed
+area_free      ← freeing an area
+stack_free     ← freeing an internal stack/map area
+stack_extend   ← growing an internal stack/map past its capacity
+primitive_map_put ← Inox-level: writing to a map
 ```
 
-Reading bottom up: the Inox program asked to **put** something in a map. The map was full, so the runtime grew it. Growing means *allocating a bigger area, copying, freeing the old one*. The free of the old area asserted.
+Bottom-up reading: the Inox program asked to **put** something in a map.
+The map was full, so the runtime grew it. Growing means *allocating a
+bigger area, copying, freeing the old one*. The free of the old area
+asserted.
 
-Map sites in the surrounding `make.metaclass` code:
+The first hypothesis, and the one written into the original draft of
+this tutorial, was that one of the embedded `map[]` constructions or
+`classes .!` write was breaking the runtime's refcount invariants. That
+hypothesis was wrong.
 
-- `metaclass/make{ ... }` creates the new metaclass object — its attributes are an internal map.
-- Multiple `map[]` calls inside that block create the embedded maps (`definitions`, `class-definitions`, `attributes`).
-- `$metaclass $class-name classes .!` writes into the global `classes` map.
+The actual fault was a **double-free** in `stack_extend` (inox.ts:6681):
+`stack_resize` already called `stack_free(stk)` internally at line 6643,
+then `stack_extend` called `stack_free(old_stack)` again on the same
+area. The second `area_free` asserted on `mand(area_is_busy)` because
+the area had already been freed by the first call. Fixed in commit
+e88bb5c — five other dormant bugs surfaced as that fix let the
+bootstrap progress further, see the Status note at the top.
 
-> ⚠️ The most likely culprit is the `classes .!` write on line 130: it is the only operation that mutates a map *whose old buffer might already be held by another reference somewhere*, since `classes` is a global. But this is a hypothesis. The repro path is: reduce `l9.nox` to the smallest snippet that still crashes, then bisect from there.
+### 4.6 The pattern of the fixes
 
-### 4.6 Where to look next
+Every bug found during this debug session shared a profile:
 
-When attacking this bug:
+1. **Late-2022 / early-2023 WIP code, never test-exercised.** The fact
+   that `l9.nox` never finished loading meant the entire OO substrate
+   on top of `bootstrap.nox` + `forth.nox` was uncalled-for-years code.
+   Each fix unblocked the next dormant defect like archaeological
+   layers. The Inox code was paused mid-build in 2023; resumed 2026.
 
-1. **Keep the `debugger` for now.** Run under `node --inspect-brk` so it acts as a breakpoint right before the crashing `.!`. Inspect TOS, NOS, and the state of the `classes` map at that point.
-2. **Bisect by reducing `make.metaclass`:** keep `make.metaclass` itself but reduce its body. Try with fewer attributes (just `$class-name :name`). Try without the `classes .!` registration. Try without `make.object` (just `with` + named cells, no sealing).
-3. **Try the embedded maps in isolation:** does `to test  metaclass/make{ map[] :a map[] :b } .  test` already crash, with no `classes .!` at all? If yes, the bug is in `make.object` (or in renaming an area-owning value via `:tag`). If no, the bug is in `classes .!`.
-4. **Inspect `make.object`** — it lives in `inox.ts` (search for `primitive_make_object` or similar). Read what invariants it expects on the cells it consumes.
-5. **Check `:tag` rename semantics on map values:** `value :name` is supposed to relabel the cell, not duplicate it. For values that own areas (the `map[]` results), does the rename properly transfer ownership of the area, or does it accidentally drop a refcount?
-6. **Check whether `classes` global was correctly initialised.** Line 96: `. global: classes/ is: map[] :classes;` — the leading `.` terminates the previous definition (`make-list` etc. — verify which). If `classes` is somehow void at the time of the first `.!`, the runtime would still try to do the put and assert deep inside.
+2. **One-character or one-line corruption that compounded
+   catastrophically.** Examples: a `;` missing after an `if:then:else:`
+   keyword, an inverted `while( is_with(CSP) )` condition, two `while`
+   loops missing their `ii++`, a `done = true` placed after a `break;`
+   so it never ran. Inox is dense — small lapses propagate far.
+
+3. **The runtime's invariants are sometimes too strict for cold-path
+   states.** Example: `definition_of` asserted that
+   `find_definition(t) == get_definition(t)` always — but for an
+   undefined verb, `find_definition` returns
+   `the_default_verb_definition` (sane fallback) while
+   `get_definition` returns 0. The assertion was right for *defined*
+   verbs and wrong for *undefined* ones. Fixed by gating the assert.
+
+For your own session: if you find a FATAL in a runtime helper, read
+the helper's pre/post-conditions before assuming the Inox program at
+the top of the stack trace is the culprit.
 
 ---
 
@@ -309,8 +342,8 @@ These primitives change runtime verbosity. They can be called from `.nox` code o
 | `debug` | enable many trace categories (very verbose) |
 | `normal-debug` | disable verbose traces, keep type and assert checks |
 | `fast!` | go to fast mode, strip asserts, return previous state |
-| `breakpoint` | host-language breakpoint (Node debugger) — useful when running under `node --inspect-brk` |
-| `debugger` | same as `breakpoint` — language-level call |
+| `breakpoint` | host-language breakpoint primitive at inox.ts:9401 — fires a JS `debugger;` statement, useful when running under `node --inspect-brk` |
+| `debugger` | distinct primitive at inox.ts:11495 — same JS-level intent (fires `debugger;`) but a separate verb. Often used as a marker in `.nox` source. |
 
 ### 5.2 Inspecting state
 
@@ -345,6 +378,79 @@ When chasing a bootstrap bug:
 
 ---
 
+## Section 6 — Running Inox
+
+The runtime loads from a tiny CLI wrapper at `bin/inox.js`. Five flags,
+hand-rolled argv, no dependencies. Always invoke with `node` because
+the runtime is the TypeScript reference compiled to JS.
+
+| Form | What it does |
+|---|---|
+| `node bin/inox.js` | Start the interactive REPL. Prompt is `ok `. |
+| `node bin/inox.js examples/hello.nox` | Evaluate a file, then exit. |
+| `node bin/inox.js -e "<code>"` | Evaluate one expression, then exit. |
+| `node bin/inox.js --version` | Print version from `package.json`. |
+| `node bin/inox.js --help` | Show the same five-line usage. |
+
+Two environment variables tune behaviour:
+
+- `INOX_SMOKE=1` — load `lib/test/smoke.nox` after bootstrap. Off by
+  default because the smoke suite is still partly broken (some test
+  verbs are written but the helpers they invoke aren't fully defined).
+- `INOX_VERBOSE=1` — keep the bootstrap's verbose traces. Off by
+  default; the CLI suppresses `process.stdout.write` during the
+  `require(builds/lib/inox.js)` call so user code sees a clean
+  prompt.
+
+### 6.1 What works today
+
+The runtime is far enough along to write small recursive verbs end-
+to-end. Concrete confirmed examples (see `examples/`):
+
+```
+$ node bin/inox.js examples/hello.nox
+Hello from Inox!
+
+$ node bin/inox.js examples/factorial.nox
+120
+720
+5040
+```
+
+Concrete confirmed expressions (`-e`):
+
+- `'3 4 integer.+ out'` → `7`
+- `'out( 1 + 1 )'` → `2`  (infix only works **inside** an enclosure)
+- `'"a" "b" text.join out'` → `ab`
+- `'if: 1 < 2 then: { "yes" out } else: { "no" out };'` (inside a
+  `to … .` definition body — top-level `{ }` doesn't have a parse
+  context to belong to)
+
+### 6.2 What does not work yet
+
+Inox infix is intentionally **light** — no precedence, left
+associativity, and operators **only** inside enclosures (parens,
+keyword arms, calls). Bare `1 + 1 out` at the top level will not
+parse cleanly because the operator opens a `parse_infix` level that
+has no terminator before EOF. Wrap in `out( 1 + 1 )` instead.
+
+Mutual recursion (`a` calls `b`, `b` calls `a`, declared in
+succession) is not handled — only self-recursion is. A
+forward-reference fixup queue would close this; not done yet. See
+the `[Recursive verb]` comment in `lib/inox.ts` at the parser
+self-reference site.
+
+Some stdlib gaps remain (e.g. `dup` is `duplicate`; the alias was
+added to `bootstrap.nox` as a Forth homage — see
+[`naming-conventions.md`](naming-conventions.md)). Most arithmetic
+and comparison operators do exist as **bare operators** (`+`, `-`,
+`*`, `/`, `%`, `<`, `<=`, `>`, `>=`, `=`, `<>`); only the
+**method-form** `integer.+`, `integer.-`, ... are individually
+sparse, only `integer.+` was hand-written. Use the bare forms when
+the polymorphic dispatch isn't important.
+
+---
+
 ## Exit checklist — am I ready to work on Inox?
 
 Before claiming productivity on this codebase, an agent should be able to answer:
@@ -353,8 +459,8 @@ Before claiming productivity on this codebase, an agent should be able to answer
 - [ ] Explain the difference between data stack and control stack, and which of `>x` / `$x` / `x:3` / `:x` uses which.
 - [ ] Name the three notations a tag can take (`/x`, `x/`, `#x`) and one place where the concise form `red/color/foo` is shorthand for something else.
 - [ ] Locate a primitive in `lib/inox.ts` given its name (search for `primitive( "name"` or `primitive_name`).
-- [ ] Read a runtime stack trace and decide whether the bug is at the runtime level (TS) or the Inox level (.nox). **Default: Inox level.**
-- [ ] Build the runtime: `npx tsc`. Run it: `node builds/lib/inox.js`. Know that the entry script also (currently) tries to load `l9.nox` which crashes during OO bootstrap — see §4.
+- [ ] Read a runtime stack trace and decide whether the bug is at the runtime level (TS) or the Inox level (.nox). **Default: Inox level**, but hold the default loosely — see §4.6.
+- [ ] Build and run the runtime: `npx tsc && node bin/inox.js examples/hello.nox` prints `Hello from Inox!`. Then `node bin/inox.js examples/factorial.nox` prints `120 720 5040`.
 
 When all six are checked, the agent is calibrated. Open `lib/l9.nox` and good luck.
 
@@ -364,12 +470,23 @@ When all six are checked, the agent is calibrated. Open `lib/l9.nox` and good lu
 
 Lines below are for jhrobert to track corrections.
 
-- [ ] §3 memory model — verify wording about refcount being "the runtime's job, not the programmer's".
-- [ ] §4.3 — verify the per-line interpretation of `make.metaclass`, in particular the claim that `metaclass/make{ ... }` ≡ `/metaclass` push + `make{` call (the concise tag-prefix expansion).
-- [ ] §4.3 — verify the `value :name` "runtime rename, no new memory" claim and especially whether it transfers area ownership correctly for `map[]` results.
-- [ ] §4.5 — three candidate crash sites listed (embedded `map[]`, `make.object`, `classes .!`); confirm the framing.
-- [ ] §4.6 step 6 — verify that the leading `.` on line 96 terminates the previous definition (which one?) before `global: classes/ is: map[] :classes;`.
-- [ ] §5.1 — confirm `debugger` and `breakpoint` are interchangeable in the current runtime.
+- [x] §3 memory model — confirmed: refcount is the runtime's job, programmer
+  does not manage memory directly.
+- [x] §4.3 — `metaclass/make{ ... }` ≡ `/metaclass` push + `make{` call:
+  confirmed (concise tag-prefix expansion).
+- [x] §4.3 — `value :name` "runtime rename, no new memory" — broadly
+  correct, the renaming is in-place. Subtleties around area-ownership
+  did not turn out to matter for the original bug; the actual fault was
+  a `stack_extend` double-free unrelated to `:name` semantics.
+- [x] §4.5 — was rewritten as a historical note ("what was actually
+  wrong"). The three candidate sites were a wrong hypothesis; the real
+  fault was in `stack_extend`.
+- [ ] §4.6 step 6 — moot now that the crash is fixed; §4.6 has been
+  reframed as "the pattern of the fixes". The leading `.` on l9.nox:96
+  question remains open for whoever wants to clean it up.
+- [ ] §5.1 — clarified earlier in conversation: `debugger` and
+  `breakpoint` are **distinct** primitives at inox.ts:9401 and :11495,
+  not interchangeable. The table here should be split (todo).
 
 
 <!-- BEGIN_AUTO: backlinks -->
