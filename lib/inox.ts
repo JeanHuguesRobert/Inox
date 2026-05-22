@@ -22995,8 +22995,8 @@ function primitive_eval(){
         + source_location( parse_line_no, parse_column_no )
       );
       debugger;
-      break;
       done = true;
+      break;
     }
 
     // From now it is most often either a literal or a verb

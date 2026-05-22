@@ -292,7 +292,7 @@ to initialize-l9
       } else: {
         make.promise @next-promise!
         ~~ ToDo: resolve/reject with the result of the on-resolve/on-reject
-      }
+      };
     }
   }
 
