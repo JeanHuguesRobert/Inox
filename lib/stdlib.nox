@@ -1,0 +1,48 @@
+~| stdlib.nox - Smalltalk/Ruby-style conveniences synthesized from core primitives.
+ |  Loaded after l9.nox by bootstrap(). Per the locality and "synthesize before
+ |  primitive" principles: nothing here introduces a new TS primitive; everything
+ |  composes from what bootstrap.nox, forth.nox, l9.nox and the runtime already
+ |  provide.
+ |~
+
+~~ -- Integer predicates ----------------------------------------------------
+
+to even?      duplicate 2 % 0 =.
+to odd?       duplicate 2 % 0 <>.
+to zero?      duplicate =0.
+to non-zero?  duplicate <>0.
+to positive?  duplicate >0.
+
+~~ -- Integer aliases (Smalltalk/Ruby succ/pred) ----------------------------
+
+to succ  1 +.
+to pred  1 -.
+
+~~ -- min / max -------------------------------------------------------------
+
+to min  over over > then{ swap } drop.
+to max  over over < then{ swap } drop.
+
+~~ -- between? ( low high val -- bool ) -------------------------------------
+
+to between?  >val >high >low
+  $val $low >=  $val $high <=  and
+.
+
+~~ -- factorial (recursive, exercises self-binding) -------------------------
+
+to factorial
+  if: duplicate <= 1 then: {
+    drop 1
+  } else: {
+    ( duplicate 1 - ) factorial *
+  };
+.
+
+~~ -- text aliases / predicates ---------------------------------------------
+
+to text.empty?     text.none?.
+
+~~ text.find takes ( needle text -- index|void ); text.contains? is the
+~~ Smalltalk-style predicate with the more natural ( text needle ) order.
+to text.contains?  swap text.find void? not.

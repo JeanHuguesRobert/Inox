@@ -24385,6 +24385,10 @@ function bootstrap(){
   eval_file( "bootstrap.nox" );
   eval_file( "forth.nox" );
   eval_file( "l9.nox" );
+  // stdlib.nox: synthesized Smalltalk/Ruby-style conveniences (even?,
+  // succ, min, factorial, etc.) composed from existing primitives. See
+  // the file header for the design rule.
+  eval_file( "stdlib.nox" );
   // Smoke test loading is opt-in (set INOX_SMOKE=1) — smoke.nox contains
   // many tests that exercise verbs not yet defined, and surfaces test
   // scaffolding issues unrelated to runtime correctness. Re-enable when
