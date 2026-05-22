@@ -23039,7 +23039,39 @@ function primitive_eval(){
 
     // OK. It's a word token
 
-    if( verb_exists( token_text ) ){
+    // [Recursive verb] Self-reference inside a verb definition.
+    //
+    // When parsing the body of `to NAME ... NAME ... .`, the inner NAME
+    // reference is to the verb being defined, which is not yet registered.
+    // Without special handling the parser would emit a missing-verb
+    // placeholder, and the default missing-verb does not look up the verb
+    // at call time, so recursion silently does nothing.
+    //
+    // Fix: when the token matches `parse_new_verb_name` (set by `to`),
+    // treat it as if the verb already exists. We emit a tag-based call;
+    // the run loop fetches the definition from the verb table at execution
+    // time, by which point the `to ... .` definition is registered.
+    //
+    // This covers self-recursion only. Two extensions are deliberately
+    // not implemented here:
+    //
+    //   1. An explicit `recurse` verb (Forth tradition) that compiles to
+    //      the same tag-based call without relying on name comparison —
+    //      cleaner reading of intent, same runtime mechanism. Cheap to
+    //      add as syntactic sugar.
+    //
+    //   2. A forward-reference fixup queue: collect unresolved references
+    //      during parsing, patch them when each verb is finally
+    //      registered. This handles mutual recursion (a calls b, b calls
+    //      a, both being defined in succession) and other cross-file
+    //      forward references that self-reference cannot.
+    const is_self_recursion
+    =  ! verb_exists( token_text )
+    && eval_is_compiling()
+    && tsome( parse_new_verb_name )
+    && teq( token_text, parse_new_verb_name );
+
+    if( verb_exists( token_text ) || is_self_recursion ){
       // Existing verbs take precedence in all cases
       verb_id = tag( token_text );
       done = true;
