@@ -11,8 +11,6 @@ The l8 kernel was a single-threaded, event-driven kernel. The github repository 
 
  |~
 
- debug
-
 to with-debug-info     debug-info/enable/log
 to without-debug-info  debug-info/disable/log
 
@@ -52,8 +50,6 @@ to stack[]  make.extensible-object( (( 0 :stack )) )
 to queue[]  make.extensible-object( (( 0 :queue )) )
 to map[]    make.extensible-object( (( 0 :map   )) )
 to set[]    make.extensible-object( (( 0 :set   )) )
-
-. with-debug-info
 
 to stack{
   with
@@ -127,7 +123,7 @@ to make.metaclass  >class-name
     /metaclass  :class
     /thing      :superclass-name
   } >metaclass
-  $metaclass $class-name classes debugger .!
+  $metaclass $class-name classes .!
   $metaclass
 
 to update-classes  >pattern

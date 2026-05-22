@@ -1,6 +1,7 @@
 *.js.map
 *.js
 !index.js
+!bin/*.js
 *.log
 *.trace
 !test.trace
