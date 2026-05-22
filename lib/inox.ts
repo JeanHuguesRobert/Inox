@@ -23055,16 +23055,28 @@ function primitive_eval(){
     // This covers self-recursion only. Two extensions are deliberately
     // not implemented here:
     //
-    //   1. An explicit `recurse` verb (Forth tradition) that compiles to
-    //      the same tag-based call without relying on name comparison —
-    //      cleaner reading of intent, same runtime mechanism. Cheap to
-    //      add as syntactic sugar.
-    //
-    //   2. A forward-reference fixup queue: collect unresolved references
+    //   1. Forward-reference fixup queue: collect unresolved references
     //      during parsing, patch them when each verb is finally
     //      registered. This handles mutual recursion (a calls b, b calls
     //      a, both being defined in succession) and other cross-file
-    //      forward references that self-reference cannot.
+    //      forward references that self-reference alone cannot.
+    //
+    //   2. Tail call elimination (TCE): when the recursive call is the
+    //      LAST instruction of the verb body (immediately before the
+    //      terminating `.` or `;`), the compiler can emit a jump back to
+    //      the verb's entry point instead of a normal call. The control
+    //      stack does not grow; the verb effectively becomes a loop.
+    //      The spec mentions this as a ToDo for the Inox compiler (see
+    //      research/inox-spec.md §836, "tail call elimination"). The
+    //      manual workaround until then is `again`, the Forth-style
+    //      verb that jumps to the start of the current definition — use
+    //      that in hot recursive paths to avoid control-stack overflow.
+    //
+    //      Note: `again` is a JUMP, distinct from a self-call. A Forth-
+    //      style `recurse` verb (which is a CALL that compiles the
+    //      current definition's tag) is intentionally not added — the
+    //      fix above already lets the body reference the verb by name,
+    //      which is as readable as `recurse` with zero new vocabulary.
     const is_self_recursion
     =  ! verb_exists( token_text )
     && eval_is_compiling()
