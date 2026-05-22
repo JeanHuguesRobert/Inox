@@ -7485,19 +7485,18 @@ function find_definition_by_name( n : TxtC ) : Cell {
 
 
 function definition_of( id : Index  ) : Cell {
-// Given a verb, as a tag, return the address of its definition
-  const def = find_definition( id );
-  if( def != get_definition( id ) ){
-    if( tag_is_valid( id ) ){
-      const auto_ = tag_as_text( id );
-      debugger;
-    }else{
-      debugger;
-    }
-    get_definition( id );
-    find_definition( id );
+// Given a verb, as a tag, return the address of its definition.
+// For DEFINED verbs, find_definition and get_definition must agree —
+// that's the consistency invariant of the symbol table. For UNDEFINED
+// verbs (forward references, e.g. self-recursion in `to xxx ... .`),
+// find_definition falls back to `the_default_verb_definition` while
+// get_definition returns 0 — that's expected, not a bug, so we only
+// assert when there IS a definition.
+  const def     = find_definition( id );
+  const get_def = get_definition( id );
+  if( get_def != 0 ){
+    de&&mand_eq( def, get_def );
   }
-  de&&mand_eq( def, get_definition( id ) );
   return def;
 }
 
@@ -13212,7 +13211,7 @@ function checked_int_is_less_than(){
 function checked_int_is_less_or_equal(){
   const p2 = checked_int_second_parameter();
   const p1 = checked_int_first_parameter();
-  if( value_of( p1 ) <= value_of( p2 ) ){
+  if( p1 <= p2 ){
     set_top_boolean( tag_boolean, 1 );
   }else{
     set_top_boolean( tag_boolean, 0 );
@@ -18267,8 +18266,17 @@ function run(){
             // Push return address into control stack, named to help debugging
             defer( unpack_name( i ), IP + ONE );
           }
+          // Late-binding lookup: if the cell was emitted at compile time
+          // before the target verb's definition existed (forward reference,
+          // notably self-recursion inside `to xxx ... .`), the value field
+          // is 0. Resolve it now via the tag in the name field. See
+          // add_machine_code's forward-reference branch.
+          let next_ip = value_of( IP );
+          if( next_ip == 0 ){
+            next_ip = definition_of( unpack_name( i ) );
+          }
           // ToDo: set type to Act?
-          IP = value_of( IP );
+          IP = next_ip;
           // bug( text_of_verb_definition( unpack_name( verb ) ) );
           continue;
         }
@@ -22195,29 +22203,45 @@ function add_machine_code( code : Tag ){
 
   de&&mand( eval_is_compiling() );
 
-  // Inline code definition if it is very short or if verb requires it
-  const def = definition_of( code );
-
-  // The last code is always a return, hence the - 1
-  const def_len = definition_length( def ) - 1;
+  // Use get_definition (not definition_of) so an undefined verb returns 0
+  // instead of triggering definition_of's mand_eq assert. This is the path
+  // taken when compiling a forward reference (e.g. self-recursion inside
+  // `to xxx ... .` — the verb being defined is not yet registered).
+  const def = get_definition( code );
 
   add_debug_info();
 
-  // ToDo: don't inline the definition of "future" verbs, ie forward declared
-  // ToDo: process "late binding" verbs, ie verbs whose definition is not known
-
-  // Either inline the associated definition or add a code to reference it
-  if( def_len <= 1 || is_inline_verb( code ) ){
-
-    // ToDo: inlining a constant is not a good idea when it is actually
-    // a global variable..., see the hack avoiding this in primitive_constant()
-    stack_push_copies( parse_codes, def, def_len );
+  // Forward reference (self-recursion or any verb being defined right now):
+  // def is 0 because the definition is not registered yet. Emit a non-inline
+  // verb-call cell with value=0; the run loop falls back to looking up the
+  // definition via the tag at execution time (see the `t == type_verb`
+  // branch below — search for "late-binding lookup").
+  //
+  // ToDo: a fixup queue would let us patch the value once the definition is
+  // registered, avoiding the runtime tag lookup. Not done; the lookup is a
+  // single hash hit per call site per execution.
+  if( def == 0 ){
+    set( the_tmp_cell, type_verb, code, 0 );
+    stack_push( parse_codes, the_tmp_cell );
 
   }else{
 
-    // Add a code to reference the definition
-    set( the_tmp_cell, type_verb, code, def );
-    stack_push( parse_codes, the_tmp_cell );
+    // The last code is always a return, hence the - 1
+    const def_len = definition_length( def ) - 1;
+
+    // Either inline the associated definition or add a code to reference it
+    if( def_len <= 1 || is_inline_verb( code ) ){
+
+      // ToDo: inlining a constant is not a good idea when it is actually
+      // a global variable..., see the hack avoiding this in primitive_constant()
+      stack_push_copies( parse_codes, def, def_len );
+
+    }else{
+
+      // Add a code to reference the definition
+      set( the_tmp_cell, type_verb, code, def );
+      stack_push( parse_codes, the_tmp_cell );
+    }
   }
 
   const block_len = stack_length( parse_codes );
@@ -23150,7 +23174,12 @@ function primitive_eval(){
     // If existing verb, handle operators
     if( verb_id != 0 ){
 
-      is_operator = ! is_forth && !! is_operator_verb( verb_id );
+      // Skip the operator-verb flag lookup for self-recursive references —
+      // the verb is being defined right now, so its flags aren't readable
+      // yet (is_operator_verb -> definition_of would assert), and a verb
+      // being defined cannot itself be already flagged as an operator.
+      is_operator = ! is_forth && ! is_self_recursion
+        && !! is_operator_verb( verb_id );
 
       // If operator, transform order to get to RPN, Reverse Polish Notation
       if( is_operator
