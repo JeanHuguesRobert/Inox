@@ -29,7 +29,13 @@ to between?  >val >high >low
   $val $low >=  $val $high <=  and
 .
 
-~~ -- factorial (recursive, exercises self-binding) -------------------------
+~~ -- Unary integer helpers -------------------------------------------------
+
+to negate  0 swap -.
+to square  duplicate *.
+to cube    duplicate duplicate * *.
+
+~~ -- Number theory --------------------------------------------------------
 
 to factorial
   if: duplicate <= 1 then: {
@@ -37,6 +43,19 @@ to factorial
   } else: {
     ( duplicate 1 - ) factorial *
   };
+.
+
+to gcd  ~~ ( a b -- gcd )  Euclidean algorithm
+  if: duplicate =0 then: {
+    drop                    ~~ b == 0: gcd is a
+  } else: {
+    swap over %             ~~ ( a b -- b (a mod b) )
+    gcd
+  };
+.
+
+to lcm  >b >a               ~~ a b -- lcm  via lcm(a,b) = a*b / gcd(a,b)
+  $a $b *  $a $b gcd  /
 .
 
 ~~ -- text aliases / predicates ---------------------------------------------
