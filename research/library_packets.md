@@ -208,6 +208,39 @@ compression direction is favourable here, contrary to the
 counter-argument that specs are bigger than implementations. The
 ratio is task-dependent.
 
+*(2026-05-26, cross-corpus convergence)* Between 2026-05-22 and
+2026-05-26 the `cogentia` repository formalised the **Cogentia
+Pipeline method** in `cogentia/research/pipeline.md` v0.4 and
+`cogentia/research/derived_products.md` v0.2. The companion paper
+defines a **source corpus / derived products** split: the
+substantive content belongs to a versioned source corpus; academic
+papers, blogposts, social posts, parliamentary notes, public
+dashboards are all *derived products* adapted to a specific
+audience/platform/persona. Operating rule: *do not popularize from
+the academic paper; derive from the corpus*. **The point for
+library packets:** this is the same anti-concentration
+heterogeneity argument applied to *publications* rather than to
+*code*. Two parallel formulations:
+
+| Domain | Concentrated unit (risk) | Distributed unit (defence) |
+|---|---|---|
+| **Code (this paper)** | Shared implementation binary | Per-consumer generation from signed spec |
+| **Publications (Cogentia)** | Sovereign academic paper | Per-audience derivation from versioned source corpus |
+
+Both share three structural properties: (a) the *source* is
+versioned, signed, content-addressed; (b) the *form* (binary /
+publication) is generated late, on demand, for the specific
+consumer; (c) no two consumers receive bit-identical artefacts.
+The mature Cogentia practice is already deploying the source ↔
+derived discipline on real documents (`projet_1755.md` source +
+`1755.md` dashboard; `christianity_verticalization.md` source +
+`_blogpost.md` derived). This is **empirical existence proof** that
+the pattern is workable on prose; it does not yet show it is
+workable on code, but it does show the underlying epistemology
+(source-first, form-late) is operationally tractable. Cross-link:
+[[cogentia-pipeline-method]] (memory), `cogentia/research/pipeline.md`,
+`cogentia/research/derived_products.md`.
+
 ---
 
 *Add new entries here as observations accumulate.*

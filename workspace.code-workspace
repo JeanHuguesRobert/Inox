@@ -78,7 +78,7 @@
 		"editor.acceptSuggestionOnEnter": "on",
 		"editor.inlineSuggest.enabled": true,
 		"editor.lineHeight": 1.6,
-		"editor.minimap.autohide": true,
+		"editor.minimap.autohide": "mouseover",
 		"terminal.integrated.copyOnSelection": true,
 		"terminal.integrated.minimumContrastRatio": 7,
 		"terminal.integrated.tabs.focusMode": "singleClick",
