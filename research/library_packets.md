@@ -7,6 +7,7 @@ status: "working hypothesis, accumulating evidence"
 date: "2026-05-23"
 license: "CC BY-SA 4.0"
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/library_packets.md
+last_stamped_at: 2026-05-26
 ---
 
 # Library packets — when the library is a specification, not code

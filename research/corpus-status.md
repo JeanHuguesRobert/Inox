@@ -4,6 +4,8 @@ description: "Current state of the Inox knowledge corpus — what is proved, wha
 layout: default
 nav_order: 2
 last_modified_at: 2026-05-26
+canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/corpus-status.md
+last_stamped_at: 2026-05-26
 ---
 
 # Corpus Status — Inox

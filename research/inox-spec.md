@@ -8,7 +8,7 @@ status: "working-paper"
 version: "in-progress"
 license: "MIT (code) · CC BY-SA 4.0 (text)"
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-spec.md
-last_stamped_at: 2026-05-21
+last_stamped_at: 2026-05-26
 ---
 
 # The Iɴᴏx programming language

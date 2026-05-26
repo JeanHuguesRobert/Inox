@@ -4,6 +4,7 @@ author: "Jean Hugues Noël Robert, baron Mariani"
 status: "working notes"
 date: "2026-05-22"
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/naming-conventions.md
+last_stamped_at: 2026-05-26
 ---
 
 # Inox naming conventions and design influences

@@ -4,6 +4,8 @@ description: "Typed concept registry for the Inox programming language; structur
 layout: default
 nav_order: 3
 last_modified_at: 2026-05-21
+canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/concepts.md
+last_stamped_at: 2026-05-26
 ---
 
 # Concept Index — Inox

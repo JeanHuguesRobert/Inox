@@ -5,7 +5,7 @@ canonical_source: "research/inox-spec.md"
 status: "working draft — sections marked ⚠️ need author review"
 date: "2026-05-22"
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/learning-inox.md
-last_stamped_at: 2026-05-22
+last_stamped_at: 2026-05-26
 ---
 
 > **Status (2026-05-22 to 2026-05-23).** The 2023 OO bootstrap blocker
