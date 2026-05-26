@@ -39,6 +39,8 @@ This repository instantiates the **language and runtime substrate layer** of the
 | [The Unconscious Grid](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/UNCONSCIOUS_GRID.md) *(§8 names the cross-layer packetization pattern of which Inox is the language-level instance)* | FractaVolta |
 | [VIGILIA — Distributed avoidance, signalling, and territorial perception](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/vigilia.md) | barons-Mariani |
 | [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) | barons-Mariani |
+| [Cogentia Pipeline](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/pipeline.md) *(method note v0.4 — operational counterpart of the Discours; isomorphic to the library-as-spec hypothesis in `research/library_packets.md` — both are anti-concentration heterogeneity arguments)* | cogentia |
+| [COP — Cognitive Orchestration Protocol (Architecture)](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/Architecture.md) *(canonical orchestration substrate; potential future re-implementation target for an Inox-native `cop-core`)* | inseme |
 
 ---
 
