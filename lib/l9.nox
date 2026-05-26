@@ -84,12 +84,12 @@ to object.each-key{  >code, >it
     name-of( ii $this .@ ) $code .run
   }
 
-to array.push  stack.push
-to list.push   stack.push
-to array.pop   stack.pop
-to list.pop    stack.pop
+to array.push  stack.push.
+to list.push   stack.push.
+to array.pop   stack.pop.
+to list.pop    stack.pop.
 
-. global: classes/ is: map[] :classes;
+global: classes/ is: map[] :classes;
 
 
 to classes.get  classes .?@
@@ -465,7 +465,7 @@ to initialize-l9
     }
   }
 
-  make.task( _, false, false ), drop.
+  make.task( _, false, false ), drop
 
 initialize-l9
 

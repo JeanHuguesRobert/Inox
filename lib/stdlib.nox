@@ -5,23 +5,40 @@
  |  provide.
  |~
 
+
+~~ ==========================================================================
 ~~ -- Integer predicates ----------------------------------------------------
+~~ ==========================================================================
 
 to even?      duplicate 2 % 0 =.
 to odd?       duplicate 2 % 0 <>.
 to zero?      duplicate =0.
 to non-zero?  duplicate <>0.
 to positive?  duplicate >0.
+to negative?  duplicate <0.
+
 
 ~~ -- Integer aliases (Smalltalk/Ruby succ/pred) ----------------------------
 
 to succ  1 +.
 to pred  1 -.
 
+
 ~~ -- min / max -------------------------------------------------------------
 
 to min  over over > then{ swap } drop.
 to max  over over < then{ swap } drop.
+
+
+~~ -- clamp ( low high val -- clamped ) --------------------------------------
+
+to clamp  >val >high >low
+  if: $val $low < then: { $low }
+  else: {
+    if: $val $high > then: { $high } else: { $val };
+  };
+.
+
 
 ~~ -- between? ( low high val -- bool ) -------------------------------------
 
@@ -29,11 +46,14 @@ to between?  >val >high >low
   $val $low >=  $val $high <=  and
 .
 
+
 ~~ -- Unary integer helpers -------------------------------------------------
 
 to negate  0 swap -.
 to square  duplicate *.
 to cube    duplicate duplicate * *.
+to abs     duplicate <0 then{ negate }.
+
 
 ~~ -- Number theory --------------------------------------------------------
 
@@ -58,10 +78,180 @@ to lcm  >b >a               ~~ a b -- lcm  via lcm(a,b) = a*b / gcd(a,b)
   $a $b *  $a $b gcd  /
 .
 
-~~ -- text aliases / predicates ---------------------------------------------
 
-to text.empty?     text.none?.
+~~ ==========================================================================
+~~ -- text aliases / predicates ---------------------------------------------
+~~ ==========================================================================
+
+to text.empty?      text.none?.
+to text.not-empty?  text.some?.
 
 ~~ text.find takes ( needle text -- index|void ); text.contains? is the
 ~~ Smalltalk-style predicate with the more natural ( text needle ) order.
-to text.contains?  swap text.find void? not.
+to text.contains?   swap text.find void? not.
+
+~~ text.lowercase / text.uppercase — long forms for text.low / text.up
+to text.lowercase   text.low.
+to text.uppercase   text.up.
+
+~~ text.repeat ( text n -- repeated ) — concatenate text n times
+to text.repeat
+  >count >src
+  "" >result
+  from: 1 to: $count do: { $result $src text.join >result! }
+  $result
+.
+
+~~ text.replace ( text old new -- result )
+~~ Simple non-recursive single-pass replacement.
+to text.replace  >new >old >src
+  "" >result
+  loop{
+    $src text.find( $old ) >index
+    break-unless( $index something? )
+    $src text.cut( $index ) >prefix
+    $result $prefix text.join >result!
+    $result $new text.join >result!
+    $src text.but( $index $old text.length + ) >src!
+  }
+  $result $src text.join
+.
+
+~~ text.split ( text sep -- array-of-parts )
+to text.split  >sep >src
+  array[] >parts
+  loop{
+    $src text.find( $sep ) >index
+    break-unless( $index something? )
+    $src text.cut( $index ) >head
+    $parts $head stack.push drop
+    $src text.but( $index $sep text.length + ) >src!
+  }
+  $parts $src stack.push drop
+  $parts
+.
+
+~~ text.join-by ( array sep -- text )
+to text.join-by  >sep >arr
+  "" >result
+  true >first?
+  from: 0 to: ( $arr stack.length - 1 ) do: {
+    $first? then{
+      false >first?!
+    } else: {
+      $result $sep text.join >result!
+    }
+    $arr ii stack.fetch >item
+    $result $item text.join >result!
+  }
+  $result
+.
+
+~~ text.starts-with? ( text prefix -- bool )  natural order
+to text.starts-with?  swap text.start-with?.
+
+~~ text.ends-with? ( text suffix -- bool )  natural order
+to text.ends-with?    swap text.end-with?.
+
+~~ text.trim-left ( text -- text )
+to text.trim-left
+  >t
+  loop{
+    break-if( $t text.empty? )
+    $t text.at( 0 ) whitespace? then{
+      $t text.but( 1 ) >t!
+    } else: { break }
+  }
+  $t
+.
+
+~~ text.trim-right ( text -- text )
+to text.trim-right
+  >t
+  loop{
+    $len  $t text.length >len
+    break-if( $len =0 )
+    $t text.at( $len 1 - ) whitespace? then{
+      $t text.cut( $len 1 - ) >t!
+    } else: { break }
+  }
+  $t
+.
+
+
+~~ ==========================================================================
+~~ -- stack / array / list OO method aliases --------------------------------
+~~ ==========================================================================
+
+~~ For each collection type the OO pattern is:
+~~   object.method runs-as-it{ ... }   (it = the collection object)
+~~ We use the plain to ... form here because the l9 class system is loaded
+~~ but direct method registration is complex to express without the make.metaclass
+~~ infrastructure being fully stable. Flat verbs that take the collection as TOS
+~~ are the safe approach at this bootstrapping layer.
+
+~~ stack
+to stack.empty?      stack.length =0.
+to stack.some?       stack.length <>0.
+to stack.peek        stack.top.    ~~ non-destructive look at top element
+
+~~ array
+to array.empty?      array.length =0.
+to array.some?       array.length <>0.
+to array.peek        >arr $arr array.length 1 - $arr array.get.
+
+~~ list (backed by the same stack mechanism)
+to list.empty?       stack.length =0.
+to list.some?        stack.length <>0.
+to list.length       stack.length.
+to list.capacity     stack.capacity.
+to list.clear        stack.clear.
+to list.peek         stack.top.
+
+~~ queue
+to queue.empty?      queue.length =0.
+to queue.some?       queue.length <>0.
+
+
+~~ ==========================================================================
+~~ -- map convenience -------------------------------------------------------
+~~ ==========================================================================
+
+to map.empty?        map.length =0.
+to map.some?         map.length <>0.
+
+~~ map.set: key value map  (keyword-style alias for map.!)
+to map.set  >m >v >k  $v /k $m map.!.
+
+~~ map.at: key map  (alias for map.?@ — returns void if missing)
+to map.at  map.?@.
+
+
+~~ ==========================================================================
+~~ -- general utilities not fitting a single class --------------------------
+~~ ==========================================================================
+
+~~ identity — returns its argument unchanged
+to identity.
+
+~~ tap ( a block -- a )  — run block for side effects, leave a unchanged
+to tap  >blk >val
+  $val $blk run
+  drop
+  $val
+.
+
+~~ apply ( a block -- result )  — run block with a as argument
+to apply  swap >a >blk  $a $blk run.
+
+~~ both? ( bool bool -- bool )  — and without short-circuit
+to both?  and.
+
+~~ either? ( bool bool -- bool )  — or without short-circuit
+to either?  or.
+
+~~ neither? ( bool bool -- bool )
+to neither?  or not.
+
+~~ xor? ( bool bool -- bool )
+to xor?  <>.

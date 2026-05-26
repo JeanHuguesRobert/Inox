@@ -16218,7 +16218,10 @@ primitive( "queue.length", primitive_queue_length );
 
 
 /*
- *  queue.pull - extract the oldest element from the queue
+ *  queue.pull - extract the oldest (first-in) element from the queue (FIFO dequeue)
+ *  Stack effect: ( queue -- value )
+ *  Removes element at index 1 (the oldest), shifts remaining elements down,
+ *  decrements the queue length, and pushes the dequeued value onto the data stack.
  */
 
 function primitive_queue_pull(){
@@ -16228,19 +16231,34 @@ function primitive_queue_pull(){
   clear_top();
   pop();
   const queue_length = value_of( queue );
-  if( queue_length + 1 >= to_cell( area_size( queue ) ) ){
-    FATAL( "queue.pull, queue overflow" );
+  if( queue_length == 0 ){
+    FATAL( "queue.pull, empty queue" );
     return;
   }
-  // Make room for new element
+  // Move out the oldest element (at index 1) to the data stack
+  move_cell( queue + ONE, push() );
+  // Shift remaining elements left (down in index)
   let ii;
-  for( ii = queue_length ; ii > 0 ; ii-- ){
-    move_cell( queue + ii * ONE, queue + ( ii + 1 ) * ONE );
+  for( ii = 1 ; ii < queue_length ; ii++ ){
+    move_cell( queue + ( ii + 1 ) * ONE, queue + ii * ONE );
   }
-  // Push new element
-  move_cell( pop(), queue + ONE );
+  // Clear the now-empty slot at the end
+  reset( queue + queue_length * ONE );
+  // Decrement queue length
+  set_value( queue, queue_length - 1 );
 }
 primitive( "queue.pull", primitive_queue_pull );
+primitive( "queue.dequeue", primitive_queue_pull );  // idiomatic alias
+
+
+/*
+ *  queue.enqueue - add an element to the end of the queue (alias for queue.push)
+ */
+
+function primitive_queue_enqueue(){
+  primitive_stack_push();
+}
+primitive( "queue.enqueue", primitive_queue_enqueue );
 
 
 /*
