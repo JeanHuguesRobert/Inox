@@ -31,7 +31,7 @@ last_stamped_at: 2026-05-26
 
 > This document is **not** the Inox specification. The canonical reference is [`inox-spec.md`](inox-spec.md). This tutorial exists so that an agent (or a fresh human reader) can become productive on the Inox codebase in one session, without having to read 1500+ lines of spec first. The audience is someone who already knows Forth-family or stack-based languages by reputation, but has not internalised Inox specifically.
 >
-> Read this top to bottom. Run the examples. Cross-check against `inox-spec.md` when this tutorial sounds vague — it is intentionally lossy.
+> Read this top to bottom. Run the examples. Cross-check against [`inox-spec.md`](inox-spec.md) when this tutorial sounds vague — it is intentionally lossy.
 
 ---
 

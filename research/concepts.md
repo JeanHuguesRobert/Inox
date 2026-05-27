@@ -38,7 +38,7 @@ A programming paradigm in which programs are built by juxtaposing verbs (functio
 - Named values
 
 **Reference documents:**
-- `research/inox-spec.md`
+- [`research/inox-spec.md`](inox-spec.md)
 
 ---
 
@@ -57,7 +57,7 @@ A virtual machine in which the primary data structure is one or more stacks, rat
 - Named values
 
 **Reference documents:**
-- `research/inox-spec.md`
+- [`research/inox-spec.md`](inox-spec.md)
 
 ---
 
@@ -80,7 +80,7 @@ This is the same pattern as the EPN's separation between routing protocol and op
 - Cognitive Packet envelope/payload (Cogentia)
 
 **Reference documents:**
-- `research/inox-spec.md`
+- [`research/inox-spec.md`](inox-spec.md)
 
 ---
 
@@ -97,7 +97,7 @@ Every Inox value carries a name (a tag) in addition to its type and content. Nam
 - Stack VM
 
 **Reference documents:**
-- `research/inox-spec.md`
+- [`research/inox-spec.md`](inox-spec.md)
 
 ---
 
@@ -111,7 +111,7 @@ Every Inox value carries a name (a tag) in addition to its type and content. Nam
 Inox sets that propagate changes to dependent computations across distributed nodes. Intended as the foundation of dataflow processing in the future *Fractanet*. Implementation is exploratory.
 
 **Reference documents:**
-- `research/inox-spec.md`
+- [`research/inox-spec.md`](inox-spec.md)
 
 ---
 
@@ -125,7 +125,7 @@ Inox sets that propagate changes to dependent computations across distributed no
 Concurrency unit in Inox: an actor owns a stack, exchanges messages asynchronously with other actors, and may be local or remote. Lineage: Erlang. Used to express asynchronicity, parallelism, and distribution across the *Fractanet*.
 
 **Reference documents:**
-- `research/inox-spec.md`
+- [`research/inox-spec.md`](inox-spec.md)
 
 ---
 
@@ -139,7 +139,7 @@ Concurrency unit in Inox: an actor owns a stack, exchanges messages asynchronous
 Multiple predefined and custom notations (prefix, infix, postfix) for the same underlying concatenative semantics. Inox supports several dialects so the same program can be written in the form most appropriate to its audience or its domain. This is a deliberate refusal of the *one true syntax* assumption common to mainstream languages.
 
 **Reference documents:**
-- `research/inox-spec.md`
+- [`research/inox-spec.md`](inox-spec.md)
 
 ---
 
@@ -168,5 +168,6 @@ Working name for the FractaVolta network — the distributed mesh of autonomous 
 *These documents link to this file:*
 - [Corpus Status — Inox](corpus-status.md)
 - [Research Index — Inox](index.md)
+- [The Inox Programming Language — Specification](inox-spec.md)
 
 <!-- END_AUTO: backlinks -->

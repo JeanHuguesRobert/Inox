@@ -21,8 +21,8 @@ last_stamped_at: 2026-05-26
 > The note is hosted in `Inox/research/` by locality principle —
 > the thinking emerged while building the Inox runtime and CLI, and
 > belongs near that work. The connection to
-> `FractaVolta/research/generalized_packet_networks.md` and
-> `cogentia/research/cogentia_commons_method_packets.md` is by
+> [`FractaVolta/research/generalized_packet_networks.md`](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/generalized_packet_networks.md) and
+> [`cogentia/research/cogentia_commons_method_packets.md`](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cogentia_commons_method_packets.md) is by
 > reference, not by relocation.
 
 ## Hypothesis
@@ -44,8 +44,8 @@ be the specification, not the implementation.** Each consumer
 generates their own implementation, locally, on demand, from a signed
 spec. We call this unit a **library packet** — a specification
 treated as a discrete, addressable, reproducible thing, in the same
-sense as `cognitive_packets.md` (envelope + payload) and
-`generalized_packet_networks.md` (cross-domain framework). Library
+sense as [`cognitive_packets.md`](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cognitive_packets.md) (envelope + payload) and
+[`generalized_packet_networks.md`](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/generalized_packet_networks.md) (cross-domain framework). Library
 packets are the **code-substrate declination** of the packet
 framework.
 
@@ -211,8 +211,8 @@ ratio is task-dependent.
 
 *(2026-05-26, cross-corpus convergence)* Between 2026-05-22 and
 2026-05-26 the `cogentia` repository formalised the **Cogentia
-Pipeline method** in `cogentia/research/pipeline.md` v0.4 and
-`cogentia/research/derived_products.md` v0.2. The companion paper
+Pipeline method** in [`cogentia/research/pipeline.md`](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/pipeline.md) v0.4 and
+[`cogentia/research/derived_products.md`](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/derived_products.md) v0.2. The companion paper
 defines a **source corpus / derived products** split: the
 substantive content belongs to a versioned source corpus; academic
 papers, blogposts, social posts, parliamentary notes, public
@@ -233,15 +233,24 @@ versioned, signed, content-addressed; (b) the *form* (binary /
 publication) is generated late, on demand, for the specific
 consumer; (c) no two consumers receive bit-identical artefacts.
 The mature Cogentia practice is already deploying the source ↔
-derived discipline on real documents (`projet_1755.md` source +
-`1755.md` dashboard; `christianity_verticalization.md` source +
+derived discipline on real documents ([`projet_1755.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/projet_1755.md) source +
+[`1755.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/autonomia/1755.md) dashboard; [`christianity_verticalization.md`](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/christianity_verticalization.md) source +
 `_blogpost.md` derived). This is **empirical existence proof** that
 the pattern is workable on prose; it does not yet show it is
 workable on code, but it does show the underlying epistemology
 (source-first, form-late) is operationally tractable. Cross-link:
-[[cogentia-pipeline-method]] (memory), `cogentia/research/pipeline.md`,
-`cogentia/research/derived_products.md`.
+[[cogentia-pipeline-method]] (memory), [`cogentia/research/pipeline.md`](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/pipeline.md),
+[`cogentia/research/derived_products.md`](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/derived_products.md).
 
 ---
 
 *Add new entries here as observations accumulate.*
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Research Index — Inox](index.md)
+
+<!-- END_AUTO: backlinks -->
