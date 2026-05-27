@@ -3,7 +3,7 @@ title: "Library packets — when the library is a specification, not code"
 subtitle: "LLM-generation as a defensive heterogeneity layer against supply-chain attacks, and as a substrate-specific instance of the packet framework"
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
-status: "working hypothesis, accumulating evidence"
+status: working-paper — working hypothesis, accumulating evidence
 date: "2026-05-23"
 license: "CC BY-SA 4.0"
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/library_packets.md

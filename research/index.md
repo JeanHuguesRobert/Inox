@@ -4,6 +4,11 @@ description: "A map of what is, what is in progress, and what could be."
 layout: default
 nav_order: 1
 last_modified_at: 2026-05-21
+license: CC BY-SA 4.0
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+date: 2026-05-21
+creator: Jean Hugues Noël Robert, baron Mariani
+canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/main/research/index.md
 ---
 
 # Research Index — Inox
