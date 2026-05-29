@@ -2,6 +2,8 @@
 title: "Learning Inox — A tutorial for AI agents (and humans in a hurry)"
 author: "Written collaboratively by an AI agent under jhrobert's review"
 canonical_source: "research/inox-spec.md"
+derived_by: agent
+derived_from: "research/inox-spec.md"
 status: working-paper — tutorial for AI agents (and humans in a hurry); sections marked ⚠️ need author review
 date: "2026-05-22"
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/learning-inox.md

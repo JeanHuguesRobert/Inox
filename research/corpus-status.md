@@ -3,7 +3,7 @@ title: "Corpus Status — Inox"
 description: "Current state of the Inox knowledge corpus — what is proved, what is open, what remains possible"
 layout: default
 nav_order: 2
-last_modified_at: 2026-05-27
+last_modified_at: 2026-05-29
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/corpus-status.md
 last_stamped_at: 2026-05-26
 license: CC BY-SA 4.0
@@ -27,12 +27,13 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 <!-- BEGIN_AUTO: registered_repos -->
 | Repository | research/index.md | Branch | Last commit |
 |---|---|---|---|
-| cogentia | ✅ | main | 2026-05-27 |
+| cogentia | ✅ | main | 2026-05-29 |
 | FractaVolta | ✅ | main | 2026-05-27 |
 | marenostrum | ✅ | main | 2026-05-27 |
-| barons-Mariani | ✅ | main | 2026-05-27 |
-| inseme | ✅ | main | 2026-05-27 |
+| barons-Mariani | ✅ | main | 2026-05-29 |
+| inseme | ✅ | main | 2026-05-29 |
 | Inox | ✅ | master | 2026-05-27 |
+| JeanHuguesRobert | ✅ | main | 2026-05-29 |
 <!-- END_AUTO: registered_repos -->
 
 ---
@@ -48,42 +49,56 @@ graph LR
   barons-Mariani["📄 barons-Mariani"]
   inseme["📄 inseme"]
   Inox["📄 Inox"]
+  JeanHuguesRobert["📄 JeanHuguesRobert"]
   cogentia --> marenostrum
+  cogentia --> JeanHuguesRobert
   cogentia --> barons-Mariani
   cogentia --> FractaVolta
   cogentia --> inseme
   cogentia --> Inox
   FractaVolta --> marenostrum
+  FractaVolta --> JeanHuguesRobert
   FractaVolta --> barons-Mariani
   FractaVolta --> cogentia
   FractaVolta --> inseme
   FractaVolta --> Inox
   marenostrum --> barons-Mariani
+  marenostrum --> JeanHuguesRobert
   marenostrum --> FractaVolta
   marenostrum --> cogentia
   marenostrum --> inseme
   marenostrum --> Inox
   barons-Mariani --> marenostrum
+  barons-Mariani --> JeanHuguesRobert
   barons-Mariani --> FractaVolta
   barons-Mariani --> cogentia
   barons-Mariani --> inseme
   barons-Mariani --> Inox
   inseme --> cogentia
+  inseme --> JeanHuguesRobert
   inseme --> marenostrum
   inseme --> FractaVolta
   inseme --> barons-Mariani
   inseme --> Inox
   Inox --> marenostrum
+  Inox --> JeanHuguesRobert
   Inox --> FractaVolta
   Inox --> cogentia
   Inox --> barons-Mariani
   Inox --> inseme
+  JeanHuguesRobert --> cogentia
+  JeanHuguesRobert --> marenostrum
+  JeanHuguesRobert --> FractaVolta
+  JeanHuguesRobert --> barons-Mariani
+  JeanHuguesRobert --> inseme
+  JeanHuguesRobert --> Inox
   click cogentia "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/index.md" "Open research/index.md"
   click FractaVolta "https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md" "Open research/index.md"
   click marenostrum "https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md" "Open research/index.md"
   click barons-Mariani "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md" "Open research/index.md"
   click inseme "https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md" "Open research/index.md"
   click Inox "https://github.com/JeanHuguesRobert/Inox/blob/main/research/index.md" "Open research/index.md"
+  click JeanHuguesRobert "https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/index.md" "Open research/index.md"
 ```
 <!-- END_AUTO: graph -->
 
