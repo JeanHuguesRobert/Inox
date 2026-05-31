@@ -3,12 +3,12 @@ title: "Research Index — Inox"
 description: "A map of what is, what is in progress, and what could be."
 layout: default
 nav_order: 1
-last_modified_at: 2026-05-21
+last_modified_at: 2026-06-01
 license: CC BY-SA 4.0
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 date: 2026-05-21
 creator: Jean Hugues Noël Robert, baron Mariani
-canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/main/research/index.md
+canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/index.md
 ---
 
 # Research Index — Inox
@@ -29,6 +29,7 @@ This repository instantiates the **language and runtime substrate layer** of the
 | Title | Location | Date |
 |---|---|---|
 | [The Inox Programming Language — Specification](inox-spec.md) *(language reference, control structures, named values, dialects, actors, design notes)* | this repo | 2021-06 → |
+| [Reactive Sets in Inox — Native Implementation Path](reactive_sets_inox_cop_implementation.md) *(Toubkal/COP/Cogentia implementation path for native reactive sets, queries, attractors and pressure strategies)* | this repo | 2026-06-01 |
 | [Corpus Status](corpus-status.md) *(living view — auto-refreshed by `cogentia.js corpus-status`)* | this repo | refreshable |
 | [Concept Index](concepts.md) *(typed concept registry — mapped by `cogentia.js concepts`)* | this repo | refreshable |
 
@@ -44,8 +45,11 @@ This repository instantiates the **language and runtime substrate layer** of the
 | [The Unconscious Grid](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/UNCONSCIOUS_GRID.md) *(§8 names the cross-layer packetization pattern of which Inox is the language-level instance)* | FractaVolta |
 | [VIGILIA — Distributed avoidance, signalling, and territorial perception](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/vigilia.md) | barons-Mariani |
 | [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) | barons-Mariani |
-| [Cogentia Pipeline](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/pipeline.md) *(method note v0.4 — operational counterpart of the Discours; isomorphic to the library-as-spec hypothesis in [`research/library_packets.md`](library_packets.md) — both are anti-concentration heterogeneity arguments)* | cogentia |
+| [Cogentia Pipeline](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/pipeline.md) *(method note v0.4 — operational counterpart of the Discours; source-to-derived packet workflow used by the reactive sets artifacts)* | cogentia |
+| [Cognitive Packets](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cognitive_packets.md) *(envelope/payload pattern used by the reactive cognitive layer)* | cogentia |
 | [COP — Cognitive Orchestration Protocol (Architecture)](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/Architecture.md) *(canonical orchestration substrate; potential future re-implementation target for an Inox-native `cop-core`)* | inseme |
+| [Reactive Cognitive COP Extension](https://github.com/JeanHuguesRobert/inseme/blob/main/research/reactive_cognitive_cop_extension.md) *(COP-side source document for Packet Attractors, pressure strategies and control/data plane)* | inseme |
+| [COP Reactive Cognitive Extension](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/REACTIVE_COGNITIVE_EXTENSION.md) *(operational COP-core protocol note derived from the source document)* | inseme |
 
 ---
 
@@ -54,6 +58,7 @@ This repository instantiates the **language and runtime substrate layer** of the
 - WebAssembly target — bridge from TypeScript reference implementation to browser-embedded edge runtime
 - C/C++ implementation — Linux first, broader OS coverage
 - Formal grammar specification — current spec is descriptive, not yet a formal BNF
+- Inox-native Reactive Sets seed — see [`prompts/implement_reactive_sets_seed.md`](../prompts/implement_reactive_sets_seed.md)
 
 ---
 
@@ -65,6 +70,8 @@ This repository instantiates the **language and runtime substrate layer** of the
 - Inox as the implementation language of a future `cop-core` (currently TypeScript)
 - Inox dialect for cognitive packets (continuation-as-language-primitive)
 - Reactive-set primitives as the basis for a distributed dataflow Fractanet runtime
+- Native Packet Attractors for routing without fixed addresses
+- Pressure strategies (`best-effort`, `ttl`, `bounded`, `demand`, `durable`) as runtime policies
 
 ---
 
