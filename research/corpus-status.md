@@ -27,13 +27,13 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 <!-- BEGIN_AUTO: registered_repos -->
 | Repository | research/index.md | Branch | Last commit |
 |---|---|---|---|
-| cogentia | ✅ | main | 2026-05-29 |
-| FractaVolta | ✅ | main | 2026-05-29 |
-| marenostrum | ✅ | main | 2026-05-29 |
-| barons-Mariani | ✅ | main | 2026-05-29 |
+| cogentia | ✅ | main | 2026-05-30 |
+| FractaVolta | ✅ | main | 2026-05-30 |
+| marenostrum | ✅ | main | 2026-05-30 |
+| barons-Mariani | ✅ | main | 2026-05-30 |
 | inseme | ✅ | main | 2026-05-29 |
-| Inox | ✅ | master | 2026-05-29 |
-| JeanHuguesRobert | ✅ | main | 2026-05-29 |
+| Inox | ✅ | master | 2026-05-30 |
+| JeanHuguesRobert | ✅ | main | 2026-05-30 |
 <!-- END_AUTO: registered_repos -->
 
 ---
