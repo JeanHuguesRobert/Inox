@@ -20,6 +20,8 @@ tags:
   - pressure-strategies
   - cop
   - fractanet
+canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/prompts/implement_reactive_sets_seed.md
+last_stamped_at: 2026-06-01
 ---
 
 # Implement Inox Reactive Sets Seed

@@ -9,7 +9,7 @@ date: "2026-05-22"
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/learning-inox.md
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0"
-last_stamped_at: 2026-05-26
+last_stamped_at: 2026-06-01
 ---
 
 > **Status (2026-05-22 to 2026-05-23).** The 2023 OO bootstrap blocker

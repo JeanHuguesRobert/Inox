@@ -9,7 +9,8 @@ version: "0.1"
 license: "CC BY-SA 4.0"
 ai_assisted_by:
   - "Claude — articulation 2026-05-31"
-canonical_url: "https://github.com/JeanHuguesRobert/Inox/blob/main/research/test_critere_rossignol_inox.md"
+canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/test_critere_rossignol_inox.md
+last_stamped_at: 2026-06-01
 ---
 
 # Test du critère Rossignol — Inox

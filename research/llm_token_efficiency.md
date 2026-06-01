@@ -7,7 +7,7 @@ status: working-paper — working hypothesis, accumulating evidence
 date: "2026-05-23"
 license: "CC BY-SA 4.0"
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/llm_token_efficiency.md
-last_stamped_at: 2026-05-26
+last_stamped_at: 2026-06-01
 ---
 
 # Inox token-efficiency for LLMs — open hypothesis

@@ -31,6 +31,7 @@ ai_assisted_by:
   - "ChatGPT"
   - "Grok"
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/reactive_sets_inox_cop_implementation.md
+last_stamped_at: 2026-06-01
 ---
 
 # Reactive Sets in Inox — Native Implementation Path
