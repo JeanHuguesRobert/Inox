@@ -252,5 +252,6 @@ workable on code, but it does show the underlying epistemology
 
 *These documents link to this file:*
 - [Research Index — Inox](index.md)
+- [Test du critère Rossignol — Inox](test_critere_rossignol_inox.md)
 
 <!-- END_AUTO: backlinks -->
