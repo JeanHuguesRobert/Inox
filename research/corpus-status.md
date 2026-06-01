@@ -3,7 +3,7 @@ title: "Corpus Status — Inox"
 description: "Current state of the Inox knowledge corpus — what is proved, what is open, what remains possible"
 layout: default
 nav_order: 2
-last_modified_at: 2026-05-31
+last_modified_at: 2026-06-01
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/corpus-status.md
 last_stamped_at: 2026-05-26
 license: CC BY-SA 4.0
@@ -27,13 +27,13 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 <!-- BEGIN_AUTO: registered_repos -->
 | Repository | research/index.md | Branch | Last commit |
 |---|---|---|---|
-| cogentia | ✅ | main | 2026-05-31 |
+| cogentia | ✅ | main | 2026-06-01 |
 | FractaVolta | ✅ | main | 2026-05-31 |
 | marenostrum | ✅ | main | 2026-05-31 |
-| barons-Mariani | ✅ | main | 2026-05-31 |
-| inseme | ✅ | main | 2026-05-31 |
-| Inox | ✅ | master | 2026-05-31 |
-| JeanHuguesRobert | ✅ | main | 2026-05-31 |
+| barons-Mariani | ✅ | main | 2026-06-01 |
+| inseme | ✅ | main | 2026-06-01 |
+| Inox | ✅ | master | 2026-06-01 |
+| JeanHuguesRobert | ✅ | main | 2026-06-01 |
 <!-- END_AUTO: registered_repos -->
 
 ---
@@ -111,6 +111,7 @@ graph LR
 |---|---|---|
 | [The Inox Programming Language — Specification](inox-spec.md) *(language reference, control structures, named values, dialects, actors, design notes)* | this repo | 2021-06 → |
 | [Test du critère Rossignol — Inox (FR)](test_critere_rossignol_inox.md) *(working-note v0.1, 2026-05-31 — Inox au crible du critère « pas de stabilisateur sans Rossignol » ; hiérarchie 7 étages ; frontière courante = étage 5→6)* | this repo | 2026-05-31 |
+| [Reactive Sets in Inox — Native Implementation Path](reactive_sets_inox_cop_implementation.md) *(Toubkal/COP/Cogentia implementation path for native reactive sets, queries, attractors and pressure strategies)* | this repo | 2026-06-01 |
 | [Corpus Status](corpus-status.md) *(living view — auto-refreshed by `cogentia.js corpus-status`)* | this repo | refreshable |
 | [Concept Index](concepts.md) *(typed concept registry — mapped by `cogentia.js concepts`)* | this repo | refreshable |
 <!-- END_AUTO: published -->
@@ -161,6 +162,8 @@ graph LR
 - Inox as the implementation language of a future `cop-core` (currently TypeScript)
 - Inox dialect for cognitive packets (continuation-as-language-primitive)
 - Reactive-set primitives as the basis for a distributed dataflow Fractanet runtime
+- Native Packet Attractors for routing without fixed addresses
+- Pressure strategies (`best-effort`, `ttl`, `bounded`, `demand`, `durable`) as runtime policies
 <!-- END_AUTO: possibilities -->
 
 ---
