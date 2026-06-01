@@ -30,6 +30,8 @@ Inox is **not yet** the runtime running the other repos. JavaScript and TypeScri
 
 The strict separation between **control plane** and **data plane** in Inox is the same architectural idea as the EPN's separation between routing protocol (commons) and operation (diverse), expressed at the language level. The corpus's [UNCONSCIOUS_GRID §8](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/UNCONSCIOUS_GRID.md) names this pattern across layers; Inox is its language-level instance.
 
+The corpus's **Rossignol criterion** — a dispositif is a valid procedural stabiliser iff it can produce a Rossignol, a *point d'attestation exposable hors-cadre* — is applied reflexively to Inox itself in [`research/test_critere_rossignol_inox.md`](research/test_critere_rossignol_inox.md) (v0.1 working note). The test reveals that a layered dispositif carries **multiple superposed Rossignols**, and shifts the relevant question from *does it have one?* to *which one is its highest living attestation?*
+
 ---
 
 ## What Inox is, in a few lines
@@ -37,7 +39,7 @@ The strict separation between **control plane** and **data plane** in Inox is th
 - **Concatenative** — verbs are juxtaposed, not nested. Forth lineage, with Smalltalk's message-passing and Erlang's actor-based concurrency.
 - **Stack-based virtual machine** — the basic data element is a 64-bit cell carrying a *typed value AND a name*.
 - **Named values** — every value has a name attached; access is by tag rather than by index or pointer identity.
-- **Reactive sets** — for distributed dataflow processing.
+- **Reactive sets** — for distributed dataflow processing. Implementation path from Toubkal-style dataflow toward the [COP Reactive Cognitive Extension](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/REACTIVE_COGNITIVE_EXTENSION.md): see [`research/reactive_sets_inox_cop_implementation.md`](research/reactive_sets_inox_cop_implementation.md) (v0.1 working paper). inseme delegates the native runtime of that extension to Inox.
 - **Actors** — concurrency, asynchronicity, message passing.
 - **Multiple dialects** — prefix, infix, postfix notation; predefined and custom dialects per style.
 - **Strict separation of control plane and data plane** — data stays on stacks longer; state machines are expressed natively.
