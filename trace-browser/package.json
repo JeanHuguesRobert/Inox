@@ -19,6 +19,6 @@
   "license": "WTFPL",
   "devDependencies": {
     "jest": "^29.5.0",
-    "puppeteer": "^20.4.0"
+    "puppeteer": "^20.9.0"
   }
 }
