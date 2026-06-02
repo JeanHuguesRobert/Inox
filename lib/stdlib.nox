@@ -169,7 +169,7 @@ to text.trim-left
 to text.trim-right
   >t
   loop{
-    $len  $t text.length >len
+    $t text.length >len
     break-if( $len =0 )
     $t text.at( $len 1 - ) whitespace? then{
       $t text.cut( $len 1 - ) >t!
@@ -221,7 +221,7 @@ to map.empty?        map.length =0.
 to map.some?         map.length <>0.
 
 ~~ map.set: key value map  (keyword-style alias for map.!)
-to map.set  >m >v >k  $v /k $m map.!.
+to map.set  >m >v >k  $v $k $m map.!.
 
 ~~ map.at: key map  (alias for map.?@ — returns void if missing)
 to map.at  map.?@.
