@@ -1,0 +1,70 @@
+diff --git a/lib/inox.ts b/lib/inox.ts
+index 0000000..0000000 100644
+--- a/lib/inox.ts
++++ b/lib/inox.ts
+@@
+- *  Constants and variables
+- *  a constant is just a verb that pushes a literal onto the data stack.
+- *  a global variable is two words, xxx and xxx!, to get/set the value.
+- *  a control variable is a transient cell in the control stack.
+- *  a data variable is a transient cell in the data stack.
+- *  Read and write access to variables is possible directly or by address.
+- *  Local and data variables use dynanic scopes, ie the variables are
+- *  searched in a stack, from top to bottom.
++ *  Constants and named stack cells
++ *  a constant is just a verb that pushes a literal onto the data stack.
++ *  a global variable is two words, xxx and xxx!, to get/set the value.
++ *  a local named value is a transient named cell in the control stack.
++ *  a data named value is a transient named cell in the data stack.
++ *  Read and update access to named cells is possible directly or by address.
++ *  Local and data named values use dynamic scopes, ie matching names are
++ *  searched in a stack, from top to bottom.
+@@
+- *  poke - set the value of a cell, using a cell's address
++ *  poke - update the value of a cell, using a cell's address
+@@
+- *  make.global - create a global variable and verbs to get/set it
++ *  make.global - create a global variable and verbs to get/update it
+@@
+- *  make.local - create a local variable in the control stack
++ *  make.local - consume a value and create a local named cell in the control stack
+@@
+- *  parameters - create local variables for the parameters of a verb
++ *  parameters - create local named cells for the parameters of a verb
+@@
+- *  local - copy a control variable to the data stack
++ *  local - copy a local named cell from the control stack to the data stack
+@@
+- *  set-local - assign a value to a local variable
++ *  local! - update an existing local named cell from the data stack
+@@
+- *  data - lookup for a named value in the data stack and copy it to the top
++ *  data - look up a named cell in the data stack and copy it to the top
+@@
+- *  set-data - change the value of an existing data variable
++ *  data! - update an existing named cell in the data stack
+@@
+- *  lookup - find a variable in a memory area.
++ *  lookup - find a named cell in a memory area.
+@@
+- *  The variable is defined by a tag.
+- *  The nth variable is found.
+- *  The result is an integer pointer to the variable, or 0 if not found.
++ *  The named cell is identified by a tag.
++ *  The nth matching named cell is found.
++ *  The result is an integer pointer to the named cell, or 0 if not found.
+@@
+- *  data-index - find the position of a data variable in the data stack
++ *  data-index - find the position of a named cell in the data stack
+@@
+- *  upper-local - non local access to a local variable
++ *  upper-local - non-local access to a local named cell
+@@
+- *  upper-data - non local access to a data variable
++ *  upper-data - non-local access to a data-stack named cell
+@@
+- *  set-upper-local - set a local variable in the nth upper frame
++ *  upper-local! - update a local named cell in the nth upper frame
+@@
+- *  set-upper-data - set a data variable in the nth upper frame
++ *  upper-data! - update a data-stack named cell in the nth upper frame
