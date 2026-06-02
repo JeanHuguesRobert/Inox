@@ -2,12 +2,13 @@
   "name": "trace-browser",
   "version": "0.0.1",
   "description": "Browse source file using trace files",
-  "main": "server.js",
+  "type": "module",
+  "main": "index.js",
   "directories": {
     "test": "tests"
   },
   "scripts": {
-    "test": "jest"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "keywords": [
     "debug",
@@ -19,6 +20,6 @@
   "license": "WTFPL",
   "devDependencies": {
     "jest": "^29.5.0",
-    "puppeteer": "^20.4.0"
+    "puppeteer": "^25.1.0"
   }
 }
