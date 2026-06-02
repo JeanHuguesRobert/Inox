@@ -1,0 +1,17 @@
+{
+  // Auxiliary tools under src/ (integration, dashboard). They import the built
+  // runtime ../builds/inox.js, so this builds AFTER `npm run build` has emitted
+  // it. Decoupled from the primary runtime build on purpose so src/ issues
+  // never break the runtime build.
+  //
+  // NOTE: src/ currently imports the untyped JS runtime (../builds/inox.js) and
+  // therefore does not type-check cleanly. That is a pre-existing gap (the
+  // runtime ships no .d.ts), independent of the TypeScript 6 upgrade.
+  "extends": "./tsconfig.json",
+  "include": ["src"],
+  "exclude": ["builds"],
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "builds/src"
+  }
+}

@@ -10,6 +10,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "build:src": "tsc -p tsconfig.src.json",
     "run": "tsc && node --enable-source-maps builds/inox.js",
     "replit": "tsc&& node builds/inox.js"
   },
@@ -29,7 +30,7 @@
   "dependencies": {
   },
   "devDependencies": {
-    "typescript": "*",
-    "@types/node": "^18.14.4"
+    "typescript": "^6.0.3",
+    "@types/node": "^25.9.1"
   }
 }
