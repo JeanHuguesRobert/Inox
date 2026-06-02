@@ -55,6 +55,9 @@ Research, political, and institutional context:
 [barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani) ·
 [Les Carnets du Baron Mariani](https://jeanhugues.substack.com)
 
+Language-design note:
+[`inox-naming-and-assignment.md`](inox-naming-and-assignment.md) clarifies the doctrine of named stack cells and the absence of an assignment operator in core Inox.
+
 ---
 ---
 ---
@@ -74,7 +77,7 @@ So, what's new?
   - Actors - concurrency, asynchronicity & message passing
   - Ranges - smart references to slices of data
   - Stacks - pervasive, even objects are stacks of named values
-  - Variables - in the data stack, in the control stack or in some other stack
+  - Named stack cells - local/data named values in the data stack, in the control stack or in some other stack
   - Verbs - simple verbs are concatenated to make complex ones
   - Notations - prefix, infix or postfix notation, your choice
   - Dialects - multiple predefined and custom dialects for different styles
@@ -247,7 +250,7 @@ say: "Hello" to: "the world!";
 
 ```
 
-Local variables are created and initialized using the top of the data stack. The syntax is `>xxx` where xxx is the name of the local variable. The local variables are then accessible using either `$xxx` syntax or the `xxx>`. Both syntaxes are equivalent and means pushing the value of the local variable onto the data stack.
+Local named values are created and initialized using the top of the data stack. The syntax is `>xxx` where xxx is the name of the local named value. More precisely, this creates a transient named cell in the control stack. Local named values are then accessible using either `$xxx` syntax or `xxx>`. Both syntaxes are equivalent and mean pushing the value of the nearest matching local named cell onto the data stack.
 
 ``` sh
   msg> out ~~ postfix style
@@ -442,6 +445,24 @@ The form changes but the meaning keeps the same.
 Variables
 =========
 
+Inox uses the word _variable_ as a convenience, but the exact concept is a **named stack cell**.
+
+A local variable is a transient named cell in the _control stack_. A data variable is a transient named cell in the _data stack_. Lookup is dynamic: the relevant stack is searched from top to bottom and the nearest matching name is used.
+
+There is no assignment operator in core Inox. In particular, `=` must not be used or taught as assignment. Stack effects over named cells replace classical assignment:
+
+``` sh
+42 >x       ~~ create local named value x from TOS
+x>          ~~ retrieve local named value x, postfix style
+$x          ~~ retrieve local named value x, prefix style
+43 >x!      ~~ update existing local named value x from TOS
+_x          ~~ retrieve named value x from the data stack
+99 _x!      ~~ update existing named value x in the data stack
+:x          ~~ rename the top stack value as x
+```
+
+See [`inox-naming-and-assignment.md`](inox-naming-and-assignment.md) for the full doctrine.
+
 Global variables
 ----------------
 
@@ -476,15 +497,15 @@ to say-to  >{ >msg
 say-to( "Hello", "Bob" )  ~~ outputs Say Hello to Bob
 ```
 
-Local variables are variables stored into another stack, the _control stack_. Syntax `>xyz` creates such variables using values from the top of the _data stack_. It reads _"create and initialize local variable x"_. Use either `$xyz` or `xyz>` to later retrieve the value of the local variable. It reads _"get local variable x's value"_.
+Local variables are named cells stored into another stack, the _control stack_. Syntax `>xyz` creates such a named cell using the value from the top of the _data stack_. It reads _"consume TOS and create local named value xyz"_. Use either `$xyz` or `xyz>` to later retrieve the value of the nearest matching local named cell. It reads _"get local named value xyz"_.
 
-To set the value of a local variable using the top of the stack, use `>xyz!`. `!` (exclamation point) means "set" in this context and by convention it means _"some side effect or surprise involved"_ is a more general sense. `$xyz!` is a valid syntax too, it means the exact same thing.
+To update an existing local named value using the top of the stack, use `>xyz!`. `!` (exclamation point) means "update" in this context and by convention it more generally signals _"some side effect or surprise involved"_. `$xyz!` is accepted as an equivalent form when supported by the dialect/compiler.
 
 ``>{`` and `}` specify respectively the begining and the end of the **scope** within which local variables are created and used. These scopes can nest in such a way that a local variable created by a verb can be accessed from the other verbs invoked while the scope exists, unless that verb created another local variable with the same name.
 
 This type of scoping for variables is named _"dynamic"_ by opposition to the more frequent static style named _"lexical"_ where a local variable stays purely local to the function that created it. Note: changing the value of a local variable outside the verb that created it is usually considered _"harmful"_ and should be avoided.
 
-There is no _assignment_ operator in Iɴᴏx. The `!` (exclamation point) is used to set the value of an already existing variable. The `=` (equal sign) is used to compare values. This is a common convention in many programming languages but not in all. For example in the C language, the `=` (equal sign) is used to assign a value to a variable and the `==` (double equal sign) is used to compare values.
+There is no _assignment_ operator in Iɴᴏx. The `!` (exclamation point) is used to update an already existing named cell. The `=` (equal sign) is used to compare values. This is a common convention in many programming languages but not in all. For example in the C language, the `=` (equal sign) is used to assign a value to a variable and the `==` (double equal sign) is used to compare values. Inox deliberately does not follow that C-style assignment convention.
 
 
 Object variables

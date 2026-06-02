@@ -14498,13 +14498,13 @@ primitive( "primitive.from", primitive_primitive_from );
 
 
 /* -----------------------------------------------------------------------------
- *  Constants and variables
+ *  Constants and named stack cells
  *  a constant is just a verb that pushes a literal onto the data stack.
  *  a global variable is two words, xxx and xxx!, to get/set the value.
- *  a control variable is a transient cell in the control stack.
- *  a data variable is a transient cell in the data stack.
- *  Read and write access to variables is possible directly or by address.
- *  Local and data variables use dynanic scopes, ie the variables are
+ *  a local named value is a transient named cell in the control stack.
+ *  a data named value is a transient named cell in the data stack.
+ *  Read and update access to named cells is possible directly or by address.
+ *  Local and data named values use dynamic scopes, ie matching names are
  *  searched in a stack, from top to bottom.
  *  See https://wiki.c2.com/?DynamicScoping
  */
@@ -14522,7 +14522,7 @@ primitive( "peek", primitive_peek );
 
 
 /*
- *  poke - set the value of a cell, using a cell's address
+ *  poke - update the value of a cell, using a cell's address
  *  This is very low level, it is the Forth ! word (store).
  */
 
@@ -14651,7 +14651,7 @@ primitive( "tag.to-verb", primitive_tag_to_verb );
 
 
 /*
- *  make.global - create a global variable and verbs to get/set it
+ *  make.global - create a global variable and verbs to get/update it
  *  Getter is named like the variable, setter is named like the variable with
  *  a "!" suffix.
  */
@@ -14711,7 +14711,7 @@ primitive( "make.global", primitive_make_global );
 
 
 /*
- *  make.local - create a local variable in the control stack
+ *  make.local - consume a value and create a local named cell in the control stack
  */
 
 function primitive_make_local(){
@@ -14915,7 +14915,7 @@ primitive( "run-with-parameters", primitive_run_with_parameters );
 
 
 /*
- *  parameters - create local variables for the parameters of a verb
+ *  parameters - create local named cells for the parameters of a verb
  */
 
 function primitive_parameters(){
@@ -14953,7 +14953,7 @@ primitive( "parameters", primitive_parameters );
 
 
 /*
- *  local - copy a control variable to the data stack
+ *  local - copy a local named cell from the control stack to the data stack
  */
 
 function primitive_local(){
@@ -15026,7 +15026,7 @@ primitive( "cached-local", primitive_cached_local );
 
 
 /*
- *  set-local - assign a value to a local variable
+ *  local! - update an existing local named cell from the data stack
  */
 
 function primitive_set_local(){
@@ -15049,7 +15049,7 @@ primitive( "local!", primitive_set_local );
 
 
 /*
- *  data - lookup for a named value in the data stack and copy it to the top
+ *  data - look up a named cell in the data stack and copy it to the top
  */
 
 function primitive_data(){
@@ -15074,7 +15074,7 @@ primitive( "data", primitive_data );
 
 
 /*
- *  set-data - change the value of an existing data variable
+ *  data! - update an existing named cell in the data stack
  */
 
 function primitive_set_data(){
@@ -15164,11 +15164,11 @@ static Cell cell_lookup(
 
 
 /*
- *  lookup - find a variable in a memory area.
+ *  lookup - find a named cell in a memory area.
  *  The memory area is defined by a start and end pointer.
- *  The variable is defined by a tag.
- *  The nth variable is found.
- *  The result is an integer pointer to the variable, or 0 if not found.
+ *  The named cell is identified by a tag.
+ *  The nth matching named cell is found.
+ *  The result is an integer pointer to the named cell, or 0 if not found.
  *  Usage: lookup( tag, start, end, nth )
  *  See peek() and poke() for read and write access to the variable.
  */
@@ -15185,7 +15185,7 @@ primitive( "lookup", primitive_lookup );
 
 
 /*
- *  data-index - find the position of a data variable in the data stack
+ *  data-index - find the position of a named cell in the data stack
  */
 
 function primitive_data_index(){
@@ -15209,7 +15209,7 @@ primitive( "data-index", primitive_data_index );
 
 
 /*
- *  upper-local - non local access to a local variable
+ *  upper-local - non-local access to a local named cell
  *  ToDo: should be previous-local, it is actually lower in the stack
  */
 
@@ -15229,7 +15229,7 @@ primitive( "upper-local", primitive_upper_local );
 
 
 /*
- *  upper-data - non local access to a data variable
+ *  upper-data - non-local access to a data-stack named cell
  */
 
 function primitive_upper_data(){
@@ -15246,7 +15246,7 @@ primitive( "upper-data", primitive_upper_data );
 
 
 /*
- *  set-upper-local - set a local variable in the nth upper frame
+ *  upper-local! - update a local named cell in the nth upper frame
  */
 
 function primitive_set_upper_local(){
@@ -15264,7 +15264,7 @@ primitive( "upper-local!", primitive_set_upper_local );
 
 
 /*
- *  set-upper-data - set a data variable in the nth upper frame
+ *  upper-data! - update a data-stack named cell in the nth upper frame
  */
 
 function primitive_set_upper_data(){
