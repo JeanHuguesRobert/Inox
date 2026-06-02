@@ -974,7 +974,7 @@ d:"Hi"                            ~~ idem
 
 ```
 
-To assign the value of a local variable to another one, one of the shorthands is ``a> >b!``. The `!` is there to remind that this is a _side effect_. Whenever possible, it is better to create a new local variable instead of changing an existing one, this is easy: `a> >b`. The absence of `!` signals that the assignment does not _mutate_ anything. Avoiding mutations is often a good idea to avoid bugs.
+To copy the value of a local named value into another existing one, one of the shorthands is ``a> >b!``. The `!` is there to remind that this is a _side effect_: it updates an existing named cell. Whenever possible, it is better to create a new local named value instead of updating an existing one, this is easy: `a> >b`. The absence of `!` signals that no existing named cell is _mutated_. Avoiding mutations is often a good idea to avoid bugs.
 
 
 Modules
@@ -1400,24 +1400,24 @@ This is a list of the primitives that are currently implemented in the Iɴᴏx c
 | tag.defined? | true if text described tag is defined |
 | verb.defined? | true if text described verb is defined |
 | tag.to_verb | convert a tag to a verb or void |
-| make-global | create a global variable and verbs to get/set it |
-| make-local | create a local variable in the control stack |
+| make-global | create a global variable and verbs to get/update it |
+| make-local | consume a value and create a local named cell in the control stack |
 | forget-parameters | internal, return from function with parameters |
 | run-with-parameters | run a block with the "function" protocol |
-| parameters | create local variables for the parameters of a verb |
-| get-local | copy a control variable to the data stack |
-| inlined-get-local | copy a control variable to the data stack, internal |
-| set-local | assign a value to a local variable |
-| data | lookup for a named value in the data stack and copy it to the top |
-| set-data | change the value of an existing data variable |
+| parameters | create local named cells for the parameters of a verb |
+| get-local | copy a local named cell from the control stack to the data stack |
+| inlined-get-local | copy a local named cell from the control stack to the data stack, internal |
+| set-local | update an existing local named cell from the data stack |
+| data | look up a named cell in the data stack and copy it to the top |
+| set-data | update an existing named cell in the data stack |
 | size-of-cell | constant that depends on the platform, 8 for now |
-| lookup | find a variable in a memory area. |
-| data-index | find the position of a data variable in the data stack |
-| upper-local | non local access to a local variable |
-| upper-data | non local access to a data variable |
-| set-upper-local | set a local variable in the nth upper frame |
-| set-upper-data | set a data variable in the nth upper frame |
-| forget-data | remove stack elements until a previous variable, included |
+| lookup | find a named cell in a memory area. |
+| data-index | find the position of a named cell in the data stack |
+| upper-local | non-local access to a local named cell |
+| upper-data | non-local access to a data-stack named cell |
+| set-upper-local | update a local named cell in the nth upper frame |
+| set-upper-data | update a data-stack named cell in the nth upper frame |
+| forget-data | remove stack elements until a previous named cell, included |
 | make-fixed-object | create a fixed size object |
 | make-object | create an object of the given length |
 | make-extensible-object | create an empty object with some capacity |

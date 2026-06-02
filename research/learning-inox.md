@@ -118,7 +118,7 @@ to greet  >name           ~~ pop the data stack, create local 'name'
 | `>x` | pop data stack TOS, create local variable `x` |
 | `$x` | push the value of local `x` onto data stack |
 | `x>` | same as `$x` (postfix style) |
-| `>x!` or `$x!` | assign top of data stack to existing local `x` |
+| `>x!` or `$x!` | update existing local `x` from top of data stack |
 
 Locals live on the **control stack** and are scoped to the surrounding block. Scope opens with `>{ ... }`, `/{ ... }`, or implicitly with control structures.
 
