@@ -483,8 +483,11 @@ static milliseconds now( void ){
  *  Assertion macros
  */
 
-/**/ import { strict as assert } from 'assert';
-import { parse } from 'path';
+/**/ import { strict as assert } from 'node:assert';
+/**/ import { parse } from 'node:path';
+/**/ import fs from 'node:fs';
+/**/ import nodeRepl from 'node:repl';
+/**/ import { pathToFileURL } from 'node:url';
 
 // In C++, custom assert() macro that avoids using any external library
 /*c{
@@ -8730,7 +8733,7 @@ function build_targets(){
 // Build the C++ and AssemblyScript targets
 
   // Starting from this very file itself
-  const source = require( "fs" ).readFileSync( "lib/inox.ts", "utf8" );
+  const source = fs.readFileSync( "lib/inox.ts", "utf8" );
 
   // In C++, primitive declarations are postponed
   let all_primitive_declarations = "";
@@ -9030,7 +9033,7 @@ function build_targets(){
   );
 
   // Done, write the C++ source code
-  require( "fs" ).writeFileSync( "builds/inox.cpp", c_source, "utf8" );
+  fs.writeFileSync( "builds/inox.cpp", c_source, "utf8" );
 
   const lines_of_code = len - ( comment_lines + blank_lines );
 
@@ -9067,7 +9070,7 @@ function build_targets(){
   }
 
   // Done, write the AssemblyScript source code
-  require( "fs" ).writeFileSync( "builds/inox.as.ts", as_source, "utf8" );
+  fs.writeFileSync( "builds/inox.as.ts", as_source, "utf8" );
 
   // Build the html help file that lists all primitives
   let html_source = "<html>"
@@ -9099,7 +9102,7 @@ function build_targets(){
   + "</html>\n";
 
   // Done, write the html source code
-  require( "fs" ).writeFileSync( "builds/inox.html", html_source, "utf8" );
+  fs.writeFileSync( "builds/inox.html", html_source, "utf8" );
 
   // Build the Markdown help file that lists all primitives
   let md_source = "# Inox primitives\n\n";
@@ -9123,7 +9126,7 @@ function build_targets(){
   md_source += NL;
 
   // Done, write the Markdown source code
-  require( "fs" ).writeFileSync( "builds/inox.md", md_source, "utf8" );
+  fs.writeFileSync( "builds/inox.md", md_source, "utf8" );
 
   // ToDo: build the Java version!
 
@@ -24354,7 +24357,7 @@ function eval_file( name : TxtC ){
   debug_info_file   = tag( name );
 
   /*ts{*/
-    const source_code = require( "fs" ).readFileSync( "lib/" + name, "utf8" );
+    const source_code = fs.readFileSync( "lib/" + name, "utf8" );
     current_eval_content = source_code;
     I.processor( "{}", "{}", source_code );
   /*}*/
@@ -24477,8 +24480,6 @@ static void init_globals(){
 
 function repl(){
 
-  const repl = require( "node:repl" );
-
   // repl-out primitive
 
   function primitive_repl_dot(){
@@ -24507,7 +24508,7 @@ function repl(){
   // ToDo: fill some global ENV object
   // ToDo: push ENV object onto the data stack
   // ToDo: push command line arguments onto the data stack
-  const loop = repl.start( {
+  const loop = nodeRepl.start( {
     prompt: "ok ",
     eval: ( cmd, context, filename, callback ) => {
       const result = I.evaluate( "~~\n" + cmd );
@@ -24545,15 +24546,14 @@ function repl(){
 } // repl()
 
 
-// Start the REPL if this file is run directly
-if( require && require.main === module ){
+// Export the inox object together with its repl
+inox.repl = repl;
+export { inox };
+
+// Start the REPL if this file is run directly (not when imported)
+if( process.argv[ 1 ] && import.meta.url === pathToFileURL( process.argv[ 1 ] ).href ){
   build_targets();
   repl();
-
-// Or else export it together with the inox object
-}else{
-  inox.repl = repl;
-  exports.inox = inox;
 }
 
 /*}*/

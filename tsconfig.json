@@ -7,17 +7,19 @@
   "include": ["lib/inox.ts"],
   "compilerOptions": {
     "target": "es2022",
-    "module": "Commonjs",
+    // ESM only, never CommonJS: emit a native ES module. The runtime has no
+    // relative imports (only node: built-ins), so nodenext adds no extension
+    // churn. package.json "type":"module" makes node load builds/inox.js as ESM.
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "sourceMap": true,
     "outDir": "builds",
     "rootDir": "lib",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    // TS 6 deprecated the "node" alias and stopped auto-including every @types
-    // package. "bundler" is non-deprecated; "types":["node"] restores the node
-    // built-ins this file imports (assert, path).
-    "moduleResolution": "bundler",
+    // TS 6 stopped auto-including every @types package; restore the node
+    // built-ins this file imports (assert, path, fs, repl, url).
     "types": ["node"],
     // The C++/TS dual-source trick stores C++ in /*c{ ... }*/ block comments.
     // TS <= 4.9 dropped these detached comments; TS 6 preserves them and can

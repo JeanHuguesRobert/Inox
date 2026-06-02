@@ -2,6 +2,7 @@
   "name": "inox",
   "version": "0.3.0",
   "description": "The Inox programming language.",
+  "type": "module",
   "main": "builds/inox.js",
   "directories": {
     "lib": "lib",
