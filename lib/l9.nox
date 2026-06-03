@@ -177,7 +177,12 @@ to class{  with class-name/ code/ parameters
   update-class(  it )
   $code .run
   define-method( it, /superclass, attach( $class-superclass, {} ) )
-  define-verb(   it, attach( $class-superclass .name as-verb, {} ) )
+  ~~ A root class defined before its superclass is registered (e.g. metaclass
+  ~~ before thing) has a void class-superclass; skip the superclass-named verb
+  ~~ then ( $class-superclass .name would dispatch .name on void ).
+  $class-superclass something? then{
+    define-verb( it, attach( $class-superclass .name as-verb, {} ) )
+  }
   update-class(  it )
 
 to superclass  classes.get >class-superclass!
