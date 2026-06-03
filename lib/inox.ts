@@ -19651,6 +19651,12 @@ let toker_line_no = 0;
 // This is activated after a "to" to get the verb name.
 let toker_eager_mode = false;
 
+// Set when a "," followed by a blank was just skipped. A comma is a readability
+// separator that also closes the current collection (an open infix operator),
+// so that e.g. `f( a, x & y, b )` applies & to x and y before the next argument.
+// The flag is consumed at the top of the eval loop.
+let toker_post_comma = false;
+
 // One token ahead sometime, see unget_token()
 let back_token_type = 0;
 
@@ -20897,8 +20903,12 @@ function process_word_state(){
   // Get some next characters, some lookahead helps sometimes
   refill_next( toker_next_index );
 
-  // Comma is ignored when followed by space, it is there for readability only
-  if( teq( toker_ch, "," ) && teq( toker_next_1, " " ) ){
+  // A comma followed by a blank (space, tab, CR or LF) is a readability
+  // separator that also closes the current collection (an open infix operator);
+  // see toker_post_comma, consumed in the eval loop. A comma that is NOT
+  // followed by a blank stays an ordinary character, ie part of a verb name.
+  if( teq( toker_ch, "," ) && ch_is_space( toker_next_1 ) ){
+    toker_post_comma = true;
     return;
   }
 
@@ -22933,6 +22943,15 @@ function primitive_eval(){
     is_special_form = false;
     is_int          = false;
     is_operator     = false;
+
+    // A "," followed by a blank closed the previous token's collection: apply
+    // any pending infix operator now, before the next argument is parsed.
+    if( toker_post_comma ){
+      toker_post_comma = false;
+      if( parsing( parse_infix ) ){
+        parse_leave();
+      }
+    }
 
     stack_de&&mand_stacks_are_in_bounds();
 
