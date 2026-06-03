@@ -23339,13 +23339,18 @@ function primitive_eval(){
       // if xxx{
       }else{
         if( eval_is_compiling() ){
-          eval_block_begin( token_text );
 
-          // If .xxx{
+          // If .xxx{, save the target into the control stack BEFORE entering
+          // the block, so the save is emitted in the enclosing code stream and
+          // not inside the block itself (as the .xxx( path does). Otherwise the
+          // matching from-control at } restores a scope sentinel (#scope-close#)
+          // instead of the receiver, and the method dispatch fails.
           if( teq( tat( token_text, 0 ), "." ) ){
             // Save target into control stack
             eval_do_machine_code( tag_to_control );
           }
+
+          eval_block_begin( token_text );
 
           parse_de&&bug( S()+ "Eval. Block call:" + parse_name );
           done = true;
