@@ -49,6 +49,11 @@ out( "hello" )
 
 Both styles should still be understood through stack effects.
 
+**Two syntax conveniences you will meet:**
+
+- A verb definition starts with `to` and ends with `.`. That `.` is usually optional: a `to` at the **start of a line** automatically ends the previous definition. Write an explicit `.` when a definition is followed by code that runs it.
+- A `, ` (a comma followed by a blank) is mostly for readability, but it also **closes the current item** — it applies a pending operator before the next one, e.g. in `f( a, x & y, b )` the comma after `y` finishes `x & y`. A comma with no blank after it is an ordinary character.
+
 ## 3. Numbers and verbs
 
 ```inox

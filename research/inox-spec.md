@@ -204,6 +204,8 @@ Verbs take their arguments from the _data stack_. They can also push results ont
 
 Verb `to` starts a verb _definition_ that an often optional `.` (dot) terminates. Inside that definition there are other verbs and litteral values like numbers or pieces of text.
 
+The `.` is _often optional_ because a `to` found at the **start of a line** (column 1, optionally after a blank line) auto-terminates the previous definition, as if a `.` had been written. So consecutive definitions need no explicit `.`; a `.` is only required when a definition is followed on the same flow by code that is not a new top-level `to`, e.g. a call that exercises the verb just defined.
+
 Note: the name of a _verb_ can be made of anything, not just letters. As a result `even?` is a valid name for a verb, it could be the name of a verb that tests if a number is even. By convention verbs with a `?` suffix are _predicates_, their result is a _boolean value_ that is either true or false.
 
 As a convenience the verb to invoke can be specified before the pushed data, using the `( )` parentheses. This is the _prefix_ notation.
@@ -868,7 +870,7 @@ to fib
   } if
 ```
 
-Note: `, ` (comma + space) is purely cosmetic, it is  there just to make the source code clear, somehow.
+Note: `, ` (a comma followed by a blank — space, tab, CR or LF) is mostly cosmetic, there to make the source code clear, but it also has one effect: it **closes the current collection**, i.e. it applies any pending infix operator before the next item. For example, in `f( a, x & y, b )` the comma after `y` makes `x & y` a complete argument; without it the parser could not tell where the operator expression ends. A comma that is _not_ followed by a blank is an ordinary character and may appear inside a verb name.
 
 
 Named parameters protocol
