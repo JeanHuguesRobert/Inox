@@ -24467,6 +24467,16 @@ function bootstrap(){
   /**/ try{
   eval_file( "bootstrap.nox" );
   eval_file( "forth.nox" );
+  // Test harness, opt-in via INOX_TEST=1: load lib/test.nox right after the
+  // core (bootstrap + forth already provide scopes, return, with, etc.) and
+  // stop, for fast isolated iteration on a minimal repro without the l9.nox
+  // bootstrap. lib/test.nox is a scratch file, edit it freely.
+  /**/ if( typeof process !== "undefined" && process.env && process.env.INOX_TEST === "1" ){
+  //c/ if( false ){
+    eval_file( "test.nox" );
+    return;
+  /**/ }
+  //c/ }
   eval_file( "l9.nox" );
   // stdlib.nox: synthesized Smalltalk/Ruby-style conveniences (even?,
   // succ, min, factorial, etc.) composed from existing primitives. See
