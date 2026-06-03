@@ -1,0 +1,31 @@
+# Lien avec C.O.R.S.I.C.A. et l’Institut Mariani
+
+Ce dépôt documente **Inox**, langage, runtime et substrat technique bas niveau du corpus, notamment dans la perspective des futurs nœuds Fractanet.
+
+Il est lié à l’association **C.O.R.S.I.C.A.** et à l’**Institut Mariani** par des liens de recherche, de doctrine, d’architecture et de préfiguration technique.
+
+## Dépôts liés
+
+- C.O.R.S.I.C.A. / gouvernance : [`acorsica/gouvernance`](https://github.com/acorsica/gouvernance)
+- Institut Mariani : [`acorsica/institut-mariani`](https://github.com/acorsica/institut-mariani)
+- FractaVolta : [`JeanHuguesRobert/FractaVolta`](https://github.com/JeanHuguesRobert/FractaVolta)
+- MareNostrum : [`JeanHuguesRobert/marenostrum`](https://github.com/JeanHuguesRobert/marenostrum)
+- Cogentia : [`JeanHuguesRobert/cogentia`](https://github.com/JeanHuguesRobert/cogentia)
+
+## Rôle d’Inox
+
+Inox appartient à la couche technique bas niveau du corpus.
+
+Il explore notamment les architectures distribuées, les runtimes sobres, les systèmes de coordination, la séparation contrôle / données, les nœuds locaux et les substrats possibles de Fractanet.
+
+## Lien avec l’autonomie de capacité
+
+Inox contribue à l’hypothèse générale selon laquelle l’autonomie ne se réduit pas à un statut formel : elle dépend aussi de capacités techniques effectives, auditables, réutilisables et transmissibles.
+
+## Principe de séparation
+
+Les liens entre Inox, C.O.R.S.I.C.A., l’Institut Mariani, FractaVolta, MareNostrum, Cogentia ou d’autres dépôts sont des liens documentaires, doctrinaux, historiques ou techniques.
+
+Ils ne valent ni fusion institutionnelle, ni portage juridique, ni financement, ni exploitation commerciale, ni soutien politique ou électoral.
+
+> L’interconnexion documentaire ne vaut pas confusion institutionnelle.
