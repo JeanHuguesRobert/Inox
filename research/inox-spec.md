@@ -1182,6 +1182,8 @@ The initial implementation of Iɴᴏx uses reference counters to free the memory
 
 There are cases where a different solution is preferable or even necessary. That's why other solutions can be implemented to either extend or replace the default solution. This is done at the class level (ToDo).
 
+Reference counters _saturate_: when a counter reaches a reserved maximum value it stays there, and the area becomes _eternal_ — increment and decrement turn into no-ops and the area is never freed. This protects against counter overflow and, more interestingly, lets objects whose lifetime matches the program's opt out of reference counting entirely. Verb definitions (and the values they capture, for example via `attach`) are naturally eternal: the dictionary only grows. This is the same idea as CPython's _immortal objects_ (PEP 683) and Swift's _immortal reference counts_; reusing the existing counter field as a saturating sentinel avoids introducing a separate "eternal reference" type, and the extra test is essentially free since the counter word is already loaded on every lock/free. A bounded supply of eternal objects (definitions, constants, bootstrap structures) is safe; eternalizing dynamically created objects in a loop would leak (cf. Erlang's atom table).
+
 The memory is made of _cells_ stored in a unique global array.
 
 Each cell is a _named value_. There are verbs to read and write the content of these cells to determine the type, name and value of each one of them: `value` to read the value. `value!` to change it, `type` to get the type, `type!` to change it, `name` to read the name and `name!` to change it. Read verbs require the _address_ of a cell, an integer number. Write verbs require an additional parameter, a value, a type or a name.

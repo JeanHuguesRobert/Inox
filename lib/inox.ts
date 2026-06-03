@@ -5197,6 +5197,11 @@ function area_free( area : Area ){
   alloc_de&&mand( area_is_busy( area ) );
   const old_count = area_ref_count( area );
 
+  // Eternal/saturated areas are never decremented nor freed
+  if( old_count >= area_eternal_ref_count ){
+    return;
+  }
+
   // Just decrement the reference counter if it is not the last reference
   if( old_count != 1 ){
     area_set_ref_count( area, old_count - 1 );
@@ -5297,6 +5302,27 @@ function area_free( area : Area ){
 }
 
 
+// Reference counters saturate at this value. A "saturated" area is treated as
+// eternal: incref/decref become no-ops and it is never freed. This both
+// protects against counter overflow and lets long-lived objects (verb
+// definitions and the values they capture) opt out of reference counting.
+const area_eternal_ref_count = 0x40000000;  // 2^30, far above any real count
+
+
+function area_is_eternal( area : Area ) : boolean {
+  if( area == 0 )return false;
+  return area_ref_count( area ) >= area_eternal_ref_count;
+}
+
+
+function area_make_eternal( area : Area ){
+// Pin an area so it is never reference-counted nor freed again.
+  if( area == 0 )return;
+  alloc_de&&mand( area_is_busy( area ) );
+  area_set_ref_count( area, area_eternal_ref_count );
+}
+
+
 function area_lock( area : Area ){
 // Increment reference counter of bytes area allocated using allocate_bytes()
   // When area_free() is called, that counter is decremented and the area
@@ -5309,9 +5335,18 @@ function area_lock( area : Area ){
 
   alloc_de&&mand( area_is_busy( area ) );
 
-  // Increment reference counter
+  // Increment reference counter, saturating into the "eternal" state
   const old_count = area_ref_count( area );
+  // Already eternal/saturated: incref is a no-op
+  if( old_count >= area_eternal_ref_count ){
+    return;
+  }
   const new_count = old_count + 1;
+  // Saturate instead of overflowing: the area becomes eternal forever
+  if( new_count >= area_eternal_ref_count ){
+    area_set_ref_count( area, area_eternal_ref_count );
+    return;
+  }
   area_set_ref_count( area, new_count );
 
 }
@@ -14598,6 +14633,9 @@ function primitive_define_verb(){
   const def  = value_of( top );
   const len  = area_length( def );
   define_verb( name, def, len );
+  // A verb definition lives as long as the dictionary, ie forever; pin its
+  // area so reference counting can never free it (and the values it captured).
+  area_make_eternal( def );
   clear_top();
 }
 primitive( "define-verb", primitive_define_verb );
