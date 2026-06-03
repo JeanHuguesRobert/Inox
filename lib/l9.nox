@@ -66,10 +66,20 @@ to [#{  (( array{/ as-verb ))
 
 to [:{  with, swap run, with-length :map make.extensible-object, drop-with
 
-to object.each{  >code, >it
+to object.each{  >it, >code
   this-it
   from: 0 to: @length - 1 do: {
     $code .run( @object.@( ii ) )
+  }
+
+~~ Stack iteration with stack primitives (a stack has no @length object
+~~ attribute). Defined directly so the very first update-classes can iterate
+~~ the definitions stack before the class hierarchy is registered. `coll` is
+~~ used instead of `it` because from:to:do: reuses `it`/`ii` internally.
+~~ Add other collection methods here only when a boot actually requires them.
+to stack.each{  >coll, >code
+  from: 0 to: $coll stack.length - 1 do: {
+    $code .run( ii $coll stack.fetch )
   }
 
 to object.each-index( >code, >it
