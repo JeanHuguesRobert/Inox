@@ -122,7 +122,12 @@ to thing.understand?  understand?
 to make{ >make-code >it
   with
     $make-code run
-  with-length{ make.object( it rename ) }
+  ~~ Objects are extensible by default (correctness first): methods/attributes
+  ~~ can always be added later, e.g. thing's on-the-fly class extension. Build
+  ~~ the populated object then extend it in place (extend-object consumes one
+  ~~ reference and mutates the shared area, leaving an extensible object). A
+  ~~ future compaction verb will opt into the faster fixed layout where proven.
+  with-length{ make.object( it rename ) duplicate extend-object }
 
 to make.metaclass  >class-name
   metaclass/make{
