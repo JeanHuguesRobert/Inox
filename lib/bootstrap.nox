@@ -28,6 +28,7 @@ to toDo                ToDo  ~~ Literate mode friendly, it becomes ToDo
 to do             .run().        inline
 to if:then:       if.            inline
 to if:then:else:  if-else.       inline
+to then:else:     if-else.       inline
 to if:do:         if:then:.      inline
 to unless:then:   not if:do:.    inline
 to unless:do:     not if:do:.    inline

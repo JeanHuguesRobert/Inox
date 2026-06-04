@@ -109,6 +109,8 @@ to method-text-name  >method >class
 
 to method-name  method-text-name as-tag
 
+to parameter  parameters. inline
+
 to define-method  with class/ method/ code/ parameters
   define-verb( method-name( $class, $method ), $code )
 
@@ -455,11 +457,11 @@ to initialize-l9
     csp/it-method{ @actor.csp }
     pause/it-method{  true  @paused?!, @schedule }
     resume/it-method{ false @paused?!, @schedule }
-    await/it-method{  with condition/ parameters
+    await/it-method{  with condition/ parameter
     }
-    signal/it-method{  with result/ parameters
+    signal/it-method{  with result/ parameter
     }
-    raise/it-method{ with reason/ parameters
+    raise/it-method{ with reason/ parameter
     }
     setup-stacks/it-method{  with data-stack/ control-stack/ parameters
       $data-stack @actor         .>data-stack!
@@ -477,11 +479,11 @@ to initialize-l9
       make.actor( $ip ) @actor!
       it
     }
-    join/it-method{  with result/ parameters
+    join/it-method{  with result/ parameter
     }
-    exit/it-method{  with result/ parameters
+    exit/it-method{  with result/ parameter
     }
-    sleep/it-method{  with milliseconds/ parameters
+    sleep/it-method{  with milliseconds/ parameter
     }
   }
 
