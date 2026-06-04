@@ -1851,7 +1851,7 @@ function mand2( b : boolean, m : string ) : boolean {
  *  When compiled using AssemblyScript some changes will be required.
  */
 
-/**/ de&&bug( "Inox is starting." );
+/**/ if( de && typeof process !== "undefined" ){ process.stderr.write( "Inox is starting.\n" ); }
 
 
 /* -----------------------------------------------------------------------------
@@ -20813,6 +20813,19 @@ function process_comment_state(){
     // Prolog style, %
     }else if( teq( toker_ch, "%" ) ){
       set_style( "prolog" );
+
+    // No recognized comment introducer: there is no leading dialect-selecting
+    // comment. Default to the inox dialect and reprocess this character as
+    // ordinary code, instead of swallowing the whole source as a malformed
+    // comment (which yields a premature eof). This is what lets a program
+    // file or piped source that begins with code — not a comment — actually
+    // run. The REPL sidesteps this by prepending "~~\n"; loaded files do not.
+    }else{
+      set_style( "inox" );        // also sets toker_first_comment_seen = true
+      toker_buf = "";             // process_base_state re-adds toker_ch
+      toker_state = token_base;
+      process_base_state();
+      return;
     }
   }
 
@@ -24544,17 +24557,21 @@ function bootstrap(){
   /**/ try{
   eval_file( "bootstrap.nox" );
   eval_file( "forth.nox" );
-  // Test harness, opt-in via INOX_TEST=1: load lib/test.nox right after the
-  // core (bootstrap + forth already provide scopes, return, with, etc.) and
-  // stop, for fast isolated iteration on a minimal repro without the l9.nox
-  // bootstrap. lib/test.nox is a scratch file, edit it freely.
-  // CLI mode (INOX_TEST=1): the OO layer (l9.nox) does not bootstrap yet; skip
-  // it and run lib/test.nox as the program. NOTE: this works for programs that
-  // exit themselves; a proper synchronous CLI runner (no async REPL) is still
-  // to be written — see the analysis in the session notes.
+  // CLI / minimal-core mode, opt-in via INOX_TEST=1: load the core (bootstrap
+  // + forth) plus stdlib.nox (Smalltalk/Ruby-style conveniences composed from
+  // core primitives), then stop — skipping the l9.nox OO layer, which does not
+  // bootstrap yet. The program to run, if any, is NOT evaluated here — the
+  // entry point below (see run_program() and the `import.meta.url` block) runs
+  // it synchronously to completion and then exits, so the async REPL never
+  // starts and never seizes stdin. This is the synchronous, C-stdlib-like CLI
+  // flavour of Inox.
   /**/ if( typeof process !== "undefined" && process.env && process.env.INOX_TEST === "1" ){
   //c/ if( false ){
-    eval_file( "test.nox" );
+    // NOTE: stdlib.nox is NOT loaded here — it is built on top of l9.nox
+    // (array[] via make.extensible-object, operator-methods) and currently
+    // also references verbs missing from the minimal core (<, >, =0, <0…), so
+    // loading it without l9 corrupts the parser. Load it once those gaps are
+    // filled (see eval_file below for the full-stack path).
     return;
   /**/ }
   //c/ }
@@ -24703,8 +24720,53 @@ function repl(){
 inox.repl = repl;
 export { inox };
 
-// Start the REPL if this file is run directly (not when imported)
+
+/* ----------------------------------------------------------------------------
+ *  Synchronous CLI runner.
+ *
+ *  Loads a program from a file and evaluates it to completion, synchronously,
+ *  with no async REPL. Output goes through inox-out (fs.writeSync) so nothing
+ *  is lost on a fast process exit. The program decides its own exit code via
+ *  the `exit` verb; if it just falls off the end, the entry point below exits
+ *  with code 0. This is the C-stdlib-like CLI flavour of Inox: run a script,
+ *  read stdin, write stdout, exit — the REPL is only for interactive use.
+ */
+
+/*ts{*/
+function run_program( path : string ){
+  const source_code    = fs.readFileSync( path, "utf8" );
+  current_eval_file    = tag( path );
+  debug_info_file      = tag( path );
+  current_eval_content = source_code;
+  I.processor( "{}", "{}", source_code );
+}
+/*}*/
+
+
+// When run directly (not imported), either run a program (synchronous CLI) or
+// start the interactive REPL.
 if( process.argv[ 1 ] && import.meta.url === pathToFileURL( process.argv[ 1 ] ).href ){
+
+  // An explicit non-flag argument is a script path to run. Otherwise, the
+  // INOX_TEST=1 harness runs the lib/test.nox scratch program. With neither,
+  // there is no program to run, so start the REPL.
+  // NOTE: a program only loads the minimal core (bootstrap + forth) when
+  // INOX_TEST=1; without it, bootstrap also loads l9.nox, which does not yet
+  // bootstrap — so run CLI programs as `INOX_TEST=1 node builds/inox.js prog.nox`
+  // until the l9 OO layer is fixed.
+  const cli_arg = ( process.argv[ 2 ] && ! process.argv[ 2 ].startsWith( "-" ) )
+    ? process.argv[ 2 ] : "";
+  const program_path = cli_arg
+    ? cli_arg
+    : ( ( process.env && process.env.INOX_TEST === "1" ) ? "lib/test.nox" : "" );
+
+  if( program_path ){
+    // Libraries are already loaded (bootstrap ran at module init). Run the
+    // program to completion, then exit. No REPL, no stdin seizure.
+    run_program( program_path );
+    process.exit( 0 );
+  }
+
   build_targets();
   repl();
 }
