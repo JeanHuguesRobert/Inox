@@ -19917,6 +19917,83 @@ primitive( "input", primitive_inox_input );
 
 
 /*
+ *  exit - stop the process; the exit code is the integer on the data stack.
+ */
+
+function primitive_exit(){
+  const code = pop_integer();
+  /**/ if( typeof process !== "undefined" && process.exit ){ process.exit( code ); }
+  //c/ exit( (int) code );
+}
+primitive( "exit", primitive_exit );
+
+
+/*
+ *  read-line - read one line from stdin (fd 0), or "" at end of input.
+ *  The trailing newline (and a preceding CR) are not included.
+ */
+
+function primitive_read_line(){
+  /**/ let line = "";
+  /**/ const one = new Uint8Array( 1 );
+  /**/ while( true ){
+  /**/   let n = 0;
+  /**/   try{ n = fs.readSync( 0, one, 0, 1, null ); }
+  /**/   catch( e ){ if( ( e as { code?: string } ).code === "EAGAIN" ){ continue; } n = 0; }
+  /**/   if( n === 0 )break;
+  /**/   const ch = String.fromCharCode( one[ 0 ] );
+  /**/   if( ch === "\n" )break;
+  /**/   if( ch !== "\r" ){ line += ch; }
+  /**/ }
+  /**/ push_text( line );
+  //c/ // ToDo: C++ getline from stdin
+}
+primitive( "read-line", primitive_read_line );
+
+
+/*
+ *  read-all - read all of stdin (fd 0) into a single text, until end of input.
+ */
+
+function primitive_read_all(){
+  /**/ let data = "";
+  /**/ const buf = new Uint8Array( 65536 );
+  /**/ while( true ){
+  /**/   let n = 0;
+  /**/   try{ n = fs.readSync( 0, buf, 0, buf.length, null ); }
+  /**/   catch( e ){ if( ( e as { code?: string } ).code === "EAGAIN" ){ continue; } n = 0; }
+  /**/   if( n === 0 )break;
+  /**/   data += Buffer.from( buf.buffer, 0, n ).toString( "utf8" );
+  /**/ }
+  /**/ push_text( data );
+  //c/ // ToDo: C++ read all of stdin
+}
+primitive( "read-all", primitive_read_all );
+
+
+/*
+ *  arg-count - number of command-line arguments (after the script name).
+ *  arg - the nth command-line argument as a text, or "" if out of range.
+ */
+
+function primitive_arg_count(){
+  /**/ push_integer( ( typeof process !== "undefined" && process.argv ) ? process.argv.length - 2 : 0 );
+  //c/ push_integer( 0 );
+}
+primitive( "arg-count", primitive_arg_count );
+
+function primitive_arg(){
+  const n = pop_integer();
+  /**/ {
+  /**/   const args = ( typeof process !== "undefined" && process.argv ) ? process.argv.slice( 2 ) : [];
+  /**/   push_text( ( n >= 0 && n < args.length ) ? args[ n ] : "" );
+  /**/ }
+  //c/ push_text( "" );
+}
+primitive( "arg", primitive_arg );
+
+
+/*
  *  input-until - get characters until a given delimiter
  */
 
@@ -23683,7 +23760,7 @@ function primitive_inox_out(){
   if( trace_capture_enabled ){
     trace_capture_buffer += auto_;
   }
-  /**/ process.stdout.write( auto_ );
+  /**/ fs.writeSync( 1, auto_ );
   //c/ write( 1, auto_.c_str(), auto_.length() );
   drop();
 }
@@ -24471,6 +24548,10 @@ function bootstrap(){
   // core (bootstrap + forth already provide scopes, return, with, etc.) and
   // stop, for fast isolated iteration on a minimal repro without the l9.nox
   // bootstrap. lib/test.nox is a scratch file, edit it freely.
+  // CLI mode (INOX_TEST=1): the OO layer (l9.nox) does not bootstrap yet; skip
+  // it and run lib/test.nox as the program. NOTE: this works for programs that
+  // exit themselves; a proper synchronous CLI runner (no async REPL) is still
+  // to be written — see the analysis in the session notes.
   /**/ if( typeof process !== "undefined" && process.env && process.env.INOX_TEST === "1" ){
   //c/ if( false ){
     eval_file( "test.nox" );
