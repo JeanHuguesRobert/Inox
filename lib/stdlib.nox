@@ -90,11 +90,11 @@ to text.not-empty?  text.some?.
 ~~ Smalltalk-style predicate with the more natural ( text needle ) order.
 to text.contains?   swap text.find void? not.
 
-~~ text.lowercase / text.uppercase — long forms for text.low / text.up
+~~ text.lowercase / text.uppercase -- long forms for text.low / text.up
 to text.lowercase   text.low.
 to text.uppercase   text.up.
 
-~~ text.repeat ( text n -- repeated ) — concatenate text n times
+~~ text.repeat ( text n -- repeated ) -- concatenate text n times
 to text.repeat
   >count >src
   "" >result
@@ -223,7 +223,7 @@ to map.some?         map.length <>0.
 ~~ map.set: key value map  (keyword-style alias for map.!)
 to map.set  >m >v >k  $v $k $m map.!.
 
-~~ map.at: key map  (alias for map.?@ — returns void if missing)
+~~ map.at: key map  (alias for map.?@ -- returns void if missing)
 to map.at  map.?@.
 
 
@@ -231,23 +231,23 @@ to map.at  map.?@.
 ~~ -- general utilities not fitting a single class --------------------------
 ~~ ==========================================================================
 
-~~ identity — returns its argument unchanged
+~~ identity -- returns its argument unchanged
 to identity.
 
-~~ tap ( a block -- a )  — run block for side effects, leave a unchanged
+~~ tap ( a block -- a )  -- run block for side effects, leave a unchanged
 to tap  >blk >val
   $val $blk run
   drop
   $val
 .
 
-~~ apply ( a block -- result )  — run block with a as argument
+~~ apply ( a block -- result )  -- run block with a as argument
 to apply  swap >a >blk  $a $blk run.
 
-~~ both? ( bool bool -- bool )  — and without short-circuit
+~~ both? ( bool bool -- bool )  -- and without short-circuit
 to both?  and.
 
-~~ either? ( bool bool -- bool )  — or without short-circuit
+~~ either? ( bool bool -- bool )  -- or without short-circuit
 to either?  or.
 
 ~~ neither? ( bool bool -- bool )
