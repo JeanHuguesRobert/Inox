@@ -98,5 +98,7 @@ This repository instantiates the **language and runtime substrate layer** of the
 - [Corpus Status — Inox](corpus-status.md)
 - [The Inox Programming Language — Specification](inox-spec.md)
 - [Library packets — when the library is a specification, not code](library_packets.md)
+- [Reactive Sets in Inox — Native Implementation Path](reactive_sets_inox_cop_implementation.md)
+- [Test du critère Rossignol — Inox](test_critere_rossignol_inox.md)
 
 <!-- END_AUTO: backlinks -->

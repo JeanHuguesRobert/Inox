@@ -40,3 +40,14 @@ Les liens entre Inox, C.O.R.S.I.C.A., l’Institut Mariani, FractaVolta, MareNos
 Ils ne valent ni fusion institutionnelle, ni portage juridique, ni financement, ni exploitation commerciale, ni soutien politique ou électoral.
 
 > L’interconnexion documentaire ne vaut pas confusion institutionnelle.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Lien avec C.O.R.S.I.C.A. et l’Institut Mariani](../acorsica-institut-mariani.md)
+- [Corpus Status — Inox](corpus-status.md)
+- [Research Index — Inox](index.md)
+
+<!-- END_AUTO: backlinks -->

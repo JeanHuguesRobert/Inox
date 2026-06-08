@@ -422,3 +422,14 @@ _x!      update data-stack named value
 :x       rename top stack value
 /x x/    tag/name literals
 ```
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — Inox](corpus-status.md)
+- [Research Index — Inox](index.md)
+- [Inox Documentation Index](inox-docs-index.md)
+
+<!-- END_AUTO: backlinks -->

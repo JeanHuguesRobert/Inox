@@ -1593,7 +1593,10 @@ This is a list of the primitives that are currently implemented in the Iɴᴏx c
 - [Concept Index — Inox](concepts.md)
 - [Corpus Status — Inox](corpus-status.md)
 - [Research Index — Inox](index.md)
+- [Inox Documentation Index](inox-docs-index.md)
+- [Inox Tutorial Generation Guidelines](inox-tutorial-generation-guidelines.md)
 - [Learning Inox — A tutorial for AI agents (and humans in a hurry)](learning-inox.md)
 - [Inox naming conventions and design influences](naming-conventions.md)
+- [Reactive Sets in Inox — Native Implementation Path](reactive_sets_inox_cop_implementation.md)
 
 <!-- END_AUTO: backlinks -->

@@ -121,5 +121,6 @@ continuation:
 *These documents link to this file:*
 - [Corpus Status — Inox](corpus-status.md)
 - [Research Index — Inox](index.md)
+- [Library packets — when the library is a specification, not code](library_packets.md)
 
 <!-- END_AUTO: backlinks -->

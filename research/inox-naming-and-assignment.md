@@ -315,3 +315,16 @@ Specification: named value, more precisely named stack cell.
 Implementation: named stack cell.
 No core assignment operator.
 ```
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — Inox](corpus-status.md)
+- [Research Index — Inox](index.md)
+- [Inox Documentation Index](inox-docs-index.md)
+- [The Inox Programming Language — Specification](inox-spec.md)
+- [Inox Tutorial Generation Guidelines](inox-tutorial-generation-guidelines.md)
+
+<!-- END_AUTO: backlinks -->

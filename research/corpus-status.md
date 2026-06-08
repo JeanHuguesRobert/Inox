@@ -190,5 +190,6 @@ graph LR
 - [Corpus Status — Inox](corpus-status.md)
 - [Research Index — Inox](index.md)
 - [The Inox Programming Language — Specification](inox-spec.md)
+- [Test du critère Rossignol — Inox](test_critere_rossignol_inox.md)
 
 <!-- END_AUTO: backlinks -->

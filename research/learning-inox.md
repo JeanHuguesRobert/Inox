@@ -497,6 +497,8 @@ Lines below are for jhrobert to track corrections.
 ### Backlinks
 
 *These documents link to this file:*
+- [Corpus Status — Inox](corpus-status.md)
+- [Research Index — Inox](index.md)
 - [The Inox Programming Language — Specification](inox-spec.md)
 - [Inox naming conventions and design influences](naming-conventions.md)
 

@@ -521,3 +521,13 @@ Do not implement:
 2. Update `research/index.md` to list this document.
 3. Consider adding a small `lib/reactive/README.md` before code.
 4. After a working seed, define the COP bridge in Inseme.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — Inox](corpus-status.md)
+- [Research Index — Inox](index.md)
+
+<!-- END_AUTO: backlinks -->

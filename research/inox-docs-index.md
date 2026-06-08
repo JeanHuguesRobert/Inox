@@ -304,3 +304,13 @@ value >x
 x>
 value >x!
 ```
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — Inox](corpus-status.md)
+- [Research Index — Inox](index.md)
+
+<!-- END_AUTO: backlinks -->

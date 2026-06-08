@@ -346,3 +346,14 @@ An existing named value may be updated.
 
 That is not classical assignment.
 ```
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — Inox](corpus-status.md)
+- [Research Index — Inox](index.md)
+- [Inox Documentation Index](inox-docs-index.md)
+
+<!-- END_AUTO: backlinks -->

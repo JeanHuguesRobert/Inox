@@ -163,3 +163,13 @@ unless models are trained heavily on Inox.
 ---
 
 *Add new entries here as observations accumulate.*
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Corpus Status — Inox](corpus-status.md)
+- [Research Index — Inox](index.md)
+
+<!-- END_AUTO: backlinks -->

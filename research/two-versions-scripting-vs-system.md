@@ -76,3 +76,14 @@ Hence the two versions, as stated.
 See `cli-stdlib.nox` (top banner + the recall/remember/with-update/obsolete section) for the current "obvious" surface implementation.
 
 This document is the primary codification of the user's idea.
+
+
+<!-- BEGIN_AUTO: backlinks -->
+### Backlinks
+
+*These documents link to this file:*
+- [Inox: Two Versions — Scripting (Obvious for Agents) vs System Programming (l9 + COP)](../docs/two-versions-scripting-vs-system.md)
+- [Corpus Status — Inox](corpus-status.md)
+- [Research Index — Inox](index.md)
+
+<!-- END_AUTO: backlinks -->
