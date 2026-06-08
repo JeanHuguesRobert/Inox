@@ -3,7 +3,7 @@ title: "Corpus Status — Inox"
 description: "Current state of the Inox knowledge corpus — what is proved, what is open, what remains possible"
 layout: default
 nav_order: 2
-last_modified_at: 2026-06-02
+last_modified_at: 2026-06-08
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/corpus-status.md
 last_stamped_at: 2026-06-01
 license: CC BY-SA 4.0
@@ -27,13 +27,13 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 <!-- BEGIN_AUTO: registered_repos -->
 | Repository | research/index.md | Branch | Last commit |
 |---|---|---|---|
-| cogentia | ✅ | main | 2026-06-02 |
-| FractaVolta | ✅ | main | 2026-06-02 |
-| marenostrum | ✅ | main | 2026-06-02 |
-| barons-Mariani | ✅ | main | 2026-06-02 |
-| inseme | ✅ | main | 2026-06-02 |
-| Inox | ✅ | master | 2026-06-02 |
-| JeanHuguesRobert | ✅ | main | 2026-06-02 |
+| cogentia | ✅ | main | 2026-06-08 |
+| FractaVolta | ✅ | main | 2026-06-08 |
+| marenostrum | ✅ | main | 2026-06-08 |
+| barons-Mariani | ✅ | main | 2026-06-08 |
+| inseme | ✅ | main | 2026-06-08 |
+| Inox | ✅ | master | 2026-06-08 |
+| JeanHuguesRobert | ✅ | main | 2026-06-08 |
 <!-- END_AUTO: registered_repos -->
 
 ---
@@ -110,8 +110,15 @@ graph LR
 | Title | Location | Date |
 |---|---|---|
 | [The Inox Programming Language — Specification](inox-spec.md) *(language reference, control structures, named values, dialects, actors, design notes)* | this repo | 2021-06 → |
+| [Lien avec C.O.R.S.I.C.A. et l’Institut Mariani](acorsica-institut-mariani.md) *(institutional boundary note — Inox, C.O.R.S.I.C.A. and Institut Mariani)* | this repo | 2026-06-03 |
 | [Test du critère Rossignol — Inox (FR)](test_critere_rossignol_inox.md) *(working-note v0.1, 2026-05-31 — Inox au crible du critère « pas de stabilisateur sans Rossignol » ; hiérarchie 7 étages ; frontière courante = étage 5→6)* | this repo | 2026-05-31 |
 | [Reactive Sets in Inox — Native Implementation Path](reactive_sets_inox_cop_implementation.md) *(Toubkal/COP/Cogentia implementation path for native reactive sets, queries, attractors and pressure strategies)* | this repo | 2026-06-01 |
+| [JS Interop API for the "Inox for scripts" layer](js-interop-api-for-scripting-layer.md) *(working API note — explicit bridge to the underlying JavaScript VM for scripting and agent extension)* | this repo | 2026-06-05 |
+| [Inox: Two Versions — Scripting vs System Programming](two-versions-scripting-vs-system.md) *(source design note — scripting layer obvious for agents; system layer for l9 + COP complexity)* | this repo | 2026-06-05 |
+| [Inox Documentation Index](inox-docs-index.md) *(working index v0.1 — documentation map for current Inox learning and design notes)* | this repo | 2026-06-02 |
+| [Basic Inox Tutorial](inox-tutorial-basic.md) *(working tutorial v0.1)* | this repo | 2026-06-02 |
+| [Inox Naming and the Absence of Assignment](inox-naming-and-assignment.md) *(working note v0.1)* | this repo | 2026-06-02 |
+| [Inox Tutorial Generation Guidelines](inox-tutorial-generation-guidelines.md) *(working note v0.1)* | this repo | 2026-06-02 |
 | [Learning Inox — A tutorial for AI agents (and humans in a hurry)](learning-inox.md) *(working-paper tutorial — sections marked ⚠️ need author review)* | this repo | 2026-05-22 |
 | [Inox naming conventions and design influences](naming-conventions.md) *(working notes)* | this repo | 2026-05-22 |
 | [Inox token-efficiency for LLMs — open hypothesis](llm_token_efficiency.md) *(working hypothesis — does concatenative composition + named values + multi-dialect dispatch align Inox with autoregressive code generation? Living note accumulating evidence over time)* | this repo | 2026-05-23 |
