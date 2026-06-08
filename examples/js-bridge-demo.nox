@@ -1,0 +1,31 @@
+~~ js-bridge-demo.nox
+~~ Demonstration of the js.* bridge.
+~~ No ~| literate header in this version so that direct "node builds/inox.js examples/..." works
+~~ (there is a pre-existing fragility in the literate file loader + processor path for ~| files).
+
+"=== js.* bridge demo - embracing the JS host as an advantage ===" out "\n" out
+
+~~ 1. require + call
+"path" js.require >pathmod
+"dir1" "dir2" "file.txt" $pathmod "join" js.get  3 js.call >joined
+"joined: " out $joined out "\n" out
+
+~~ 2. eval escape
+"Math.floor(100*Math.random())" js.eval >r
+"random via js.eval: " out $r out "\n" out
+
+~~ 3. globals
+js.global "process" js.get >proc
+"node: " out $proc "version" js.get out " on " out $proc "platform" js.get out "\n" out
+
+~~ 4. objects + set/get
+"({})" js.eval >o
+$o "msg" "hello from js.set" js.set
+"msg via get: " out $o "msg" js.get out "\n" out
+
+"---" out "\n" out
+"This is the point: the scripting layer is on JS on purpose." out "\n" out
+"Specific needs are one js.require / js.eval / js.call away." out "\n" out
+"Stay in .nox for the agent logic; escape explicitly when you must." out "\n" out
+"Full API description: research/js-interop-api-for-scripting-layer.md" out "\n" out
+0 exit

@@ -1,9 +1,12 @@
 {
   "name": "inox",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "The Inox programming language.",
   "type": "module",
   "main": "builds/inox.js",
+  "bin": {
+    "inox": "bin/inox.js"
+  },
   "directories": {
     "lib": "lib",
     "builds": "builds",

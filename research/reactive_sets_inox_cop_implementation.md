@@ -108,6 +108,8 @@ This means:
 - COP events should be projected from or into Inox runtime state;
 - JavaScript may remain a reference/prototype layer, but not the conceptual owner.
 
+**Lineage note (l8 / side → Inox + COP)**: l8 (cooperative Tasks/Steps in JS) and side (retry + slot capitalization + delayed side-effect commit for "sync face") are the historical JS-era expressions of ideas now evolving here. See Inox#17 for the destiny discussion and user confirmation: the goal is to move out of Javascript into Inox; while there is no stabilized Inox yet we keep producing (plain) Javascript code for transitional bridges and interop (l8 face for Cogitors, side-style wrappers, artifact stability/granularity, etc.) and avoid TypeScript investment on that portable/transitional code when reasonable. The primary homes are Inox (native runtime primitives, l9.nox as direct "from l8.js" descendant) for the substrate and inseme/COP for the distributed protocol surfaces (Cogitors as generalized steps, continuations, artifacts with stability/cache/retention, judgment-driven exploration). Historical code and attestations are preserved in the l8 and side repositories with pointers; new work on the ideas happens in Inox + inseme. See also inseme/packages/cop-kernel/docs/task-step-continuation-lineage.md .
+
 ---
 
 ## Implementation layers

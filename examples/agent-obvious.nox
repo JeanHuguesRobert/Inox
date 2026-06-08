@@ -1,0 +1,51 @@
+~| agent-obvious.nox
+ |  Demonstration of the "obvious" scripting surface for coding Agents.
+ |  Per the two-versions idea: this layer (cli-stdlib + core) should feel natural
+ |  for maintaining working memory (maps), exploration, capitalization, etc.
+ |  The complex COP/artifacts/judgment version is the other (non-obvious) layer.
+ |  Note: some higher helpers (remember/with-update/inc-field! using the keyword
+ |  > > forms + map.put) currently hit VM type asserts in primitive_map_put due
+ |  to map header/reference expectations and local binding interactions.
+ |  The raw primitives (map.new + map.! + map.?@ + /key tags) work for basic cases.
+ |  The declarations in cli-stdlib.nox express the intended obvious surface.
+ |~
+
+"=== obvious agent scripting demo (raw primitives for now) ===" out "\n" out
+
+~~ Working memory as map (belief state)
+map.new >memory
+"start" /phase $memory map.!
+42 /budget $memory map.!
+
+"initial phase=" out /phase $memory map.?@ out " budget=" out /budget $memory map.?@ out "\n" out
+
+~~ Update (direct map.!)
+"working" /phase $memory map.!
+1 /budget $memory map.?@ + /budget $memory map.!
+
+"after update phase=" out /phase $memory map.?@ out " budget=" out /budget $memory map.?@ out "\n" out
+
+~~ Branch (separate map for a path in exploration)
+map.new >branch
+"exploring-A" /phase $branch map.!
+100 /budget $branch map.!
+
+"branch phase=" out /phase $branch map.?@ out " budget=" out /budget $branch map.?@ out "\n" out
+"parent unchanged phase=" out /phase $memory map.?@ out "\n" out
+
+~~ Record-style (map + convention)
+map.new >task
+"explore-rational" /name $task map.!
+23 /id $task map.!
+
+"name=" out /name $task map.?@ out " id=" out /id $task map.?@ out "\n" out
+
+~~ (Higher obvious helpers like recall/remember/with-update/fork-memory/inc-field!
+~~  and the begin-turn/commit/obsolete pattern are declared in cli-stdlib.nox
+~~  as the target "obvious for Agents" surface. They layer on the same primitives
+~~  once the map/reference/keyword-binding details are solid.)
+
+"(higher helpers declared in cli-stdlib for the obvious agent style; raw map.! works today)" out "\n" out
+
+"demo complete - scripting layer is the obvious one per the two-versions idea" out "\n" out
+0 exit

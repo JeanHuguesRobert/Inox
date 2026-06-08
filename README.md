@@ -44,7 +44,20 @@ The corpus's **Rossignol criterion** — a dispositif is a valid procedural stab
 - **Multiple dialects** — prefix, infix, postfix notation; predefined and custom dialects per style.
 - **Strict separation of control plane and data plane** — data stays on stacks longer; state machines are expressed natively.
 
+**Current status (2026)**: a first usable *CLI / synchronous* flavour exists and is the default. Run `node builds/inox.js examples/hello.nox` (or `node bin/inox.js ...` / `npx inox` after setup). It uses only the core (bootstrap.nox + forth.nox) — no l9 OO yet — with sync primitives for stdin/args/exit/out so scripts behave like small C/Forth tools. The l9 layer (classes, tasks, actors from the l8 lineage) is still under repair; set `INOX_WITH_L9=1` to exercise it (expect FATALS during bootstrap for now). See `bin/inox.js`, the bottom of `lib/inox.ts` (run_program + direct entry), and `lib/arg-test.nox` (historical) for details. Postfix style is reliable; some parenthesized call syntax lives in l9.
+
 The pattern is old (Forth, 1970). The application is new: building **uncapturable computational nodes** that descend gracefully from Node.js to bare metal as the underlying network matures.
+
+## Two versions / two audiences (scripting vs system programming)
+
+Per the explicit design idea:
+
+> my idea is that the "scripting" version should be fairly "obvious" for coding Agents ; whereas the "system programming" cannot be obvious because it manipulate more complex and much less usual concepts ; hence the two versions
+
+- **Scripting (default, the obvious one for Agents)**: `cli-stdlib.nox` (loaded automatically). Old-school rich stdlib + decent modern script update ergonomics + the `js.*` bridge (js.require / js.eval / js.get+js.call etc.). The fact that it runs on a real JS VM is treated as an advantage for easy extension to specific needs. Agents write natural `.nox` here. See `research/js-interop-api-for-scripting-layer.md` + `examples/js-bridge-demo.nox`.
+- **System programming (opt-in, intentionally non-obvious)**: `INOX_WITH_L9=1` loads `l9.nox` (the dynamic objects/actors layer from l8) + future COP integration. This is where continuations-as-input, cognitive packets, artifacts with stability/retention/cache, judgment-based obsolescence, fork/join of cogitors, control/data plane, reactive sets etc. live. It cannot be "obvious" because those are the complex and unusual concepts the substrate must manipulate.
+
+The split keeps agent logic obvious while the full power (and complexity) is available when needed. This is the practical path while the l9 layer stabilizes, and aligns with the larger goal of moving the corpus out of JavaScript and into Inox-native `.nox` (see Inox#17).
 
 ---
 

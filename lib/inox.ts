@@ -488,6 +488,8 @@ static milliseconds now( void ){
 /**/ import fs from 'node:fs';
 /**/ import nodeRepl from 'node:repl';
 /**/ import { pathToFileURL } from 'node:url';
+/**/ import { createRequire } from 'node:module';
+/**/ const js_node_require = createRequire( import.meta.url );
 
 // In C++, custom assert() macro that avoids using any external library
 /*c{
@@ -1771,6 +1773,11 @@ static bool trace_const_c_str( const char* msg ){
 
 /**/ let bootstrapping         = true;
 //c/ static bool bootstrapping = true;
+//c/ // delayed free debug (nestable, for allocator diagnostics)
+//c/ static int debug_delayed_free_depth = 0;
+//c/ #define DEBUG_MAX_DELAYED_FREES 4096
+//c/ static Area debug_delayed_free_queue[ DEBUG_MAX_DELAYED_FREES ];
+//c/ static int debug_delayed_free_queue_count = 0;
 
 function breakpoint() : boolean {
   debugger;
@@ -1801,11 +1808,12 @@ function mand( b : boolean ) : boolean {
   mand_reenter_level++;
   if( mand_reenter_level > 1 ){
     mand_reenter_level--;
-    bug( "Assert failure" );
+    bug( "Assert failure (reenter)" );
     return true;
   }
-  bug( "Assert failure" );
-  breakpoint();
+  bug( "Assert failure at IP=" + C( IP ) + " name=" + tag_as_text( name_of( IP - ONE || 0 ) ) + " CSP=" + C( CSP ) + " name=" + tag_as_text( name_of( CSP ) ) );
+  // do not call breakpoint/trace_context/dump here (can blow string len on corrupt stacks during l9 class setup with underflows)
+  // just the simple info + let the assert throw with TS stack
   mand_reenter_level--;
   assert( b );
   return true;
@@ -1852,6 +1860,36 @@ function mand2( b : boolean, m : string ) : boolean {
  */
 
 /**/ if( de && typeof process !== "undefined" ){ process.stderr.write( "Inox is starting.\n" ); }
+
+// Early decision for the "first usable CLI" path (synchronous script runner,
+// minimal core without the l9.nox OO/class/actor layer inherited from l8 which
+// is still buggy/WIP). Default is now minimal/CLI-usable (bootstrap + forth only).
+// This lets you do `node builds/inox.js examples/hello.nox` or just
+// `node builds/inox.js` for a minimal REPL with no env var and no crash.
+// Set INOX_WITH_L9=1 (or INOX_FULL=1) to opt into loading l9 + stdlib (for work
+// on the OO layer). Use INOX_L9_FILE=foo.nox (with WITH_L9) to load a custom
+// l9 file for selective testing (e.g. only up to certain class{ defs for
+// hierarchy building bug). Legacy INOX_TEST=1 still forces minimal + defaults to
+// lib/test.nox when no file given.
+//
+// Two versions (per user 2026):
+//   "my idea is that the "scripting" version should be fairly "obvious" for coding Agents ;
+//    whereas the "system programming" cannot be obvious because it manipulate more
+//    complex and much less usual concepts ; hence the two versions"
+// The default (cli_minimal_core) is the scripting layer: rich old-school stdlib
+// (cli-stdlib.nox) with update ergonomics and agent conveniences (recall/remember,
+// fork-memory, with-update, obsolete, turn sketches) that feel natural for agent
+// inner loops (working memory, exploration branches, capitalization, safe effects).
+// The l9 path is the system programming layer (dynamic objects, actors, and later
+// COP packets/artifacts/judgment/continuations-as-input etc.). It is intentionally
+// non-obvious. See docs/two-versions-scripting-vs-system.md and Inox#17.
+/**/ let cli_minimal_core = true;
+/**/ if( typeof process !== "undefined" && process.argv ){
+/**/   const env = process.env || {};
+/**/   if( env.INOX_WITH_L9 === "1" || env.INOX_FULL === "1" || env.INOX_L9 === "1" ){
+/**/     cli_minimal_core = false;
+/**/   }
+/**/ }
 
 
 /* -----------------------------------------------------------------------------
@@ -3825,6 +3863,10 @@ function mand_eq( a : i32, b : i32 ) : boolean {
       trace( S()+ "bad eq " + N( a ) + " / " + tag_as_text( b ) );
     }
   }
+  if( ( a == 14 && b == 7 ) || ( a == 7 && b == 14 ) || ( a == 2 && b == 4 ) || ( a == 4 && b == 2 ) ){
+    bug( "mand_eq bad " + N(a) + "/" + N(b) + " context: IP=" + C( IP ) + " name=" + tag_as_text( name_of( IP - ONE || 0 ) ) + " CSP top=" + C( CSP ) + " name=" + tag_as_text( name_of( CSP ) ) );
+    bug( "data TOS=" + N( TOS ) + " near: " + C( TOS ) + " " + C( TOS - ONE ) );
+  }
   mand2( false, S()+ "bad eq " + N( a ) + " / " + N( b ) );
 
   mand_entered = 0;
@@ -4681,6 +4723,12 @@ let area_stat_freed_small_bytes       = 0;
 let area_stat_allocated_small_areas   = 0;
 let area_stat_freed_small_areas       = 0;
 
+// Debug support for delayed area frees. Used to rule out bugs in the
+// custom allocator / free list / refcount logic by deferring actual
+// area_free operations across a region of code (nestable).
+/**/ let debug_delayed_free_depth = 0;
+/**/ let debug_delayed_free_queue : Area[] = [];
+
 
 function area_is_empty( area : Area ) : boolean {
 // Return true if the area is full of zeroes, false otherwise
@@ -5208,6 +5256,21 @@ function area_free( area : Area ){
     return;
   }
 
+  // Debug: delay the physical reclaim of the area (put on free lists etc.)
+  // This lets us rule out use-after-free / double-free / allocator reuse bugs
+  // by keeping the memory content alive (and not linked into free lists)
+  // across a region of code. Nestable via counter.
+  /**/ if( debug_delayed_free_depth > 0 ){
+  /**/   debug_delayed_free_queue.push( area );
+  /**/   return;
+  /**/ }
+  //c/ if( debug_delayed_free_depth > 0 ){
+  //c/   if( debug_delayed_free_queue_count < DEBUG_MAX_DELAYED_FREES ){
+  //c/     debug_delayed_free_queue[ debug_delayed_free_queue_count++ ] = area;
+  //c/   }
+  //c/   return;
+  //c/ }
+
   // The whole area should be full of zeros, ie cleared
   alloc_de&&mand_empty_area( area );
 
@@ -5299,6 +5362,60 @@ function area_free( area : Area ){
   /*c{
     #endif
   }*/
+}
+
+
+/*
+ *  Debug helpers for delayed area frees (nestable counter + queue).
+ *  These are to help diagnose whether a bug is in the custom area allocator
+ *  (free lists, coalescing, refcount reclaim, etc.) by deferring the
+ *  physical "turn free + put on free lists" step.
+ *
+ *  Usage (from .nox, to wrap the suspect code, possibly l9 bootstrap etc.):
+ *    debug-delay-frees
+ *      ... code that used to crash ...
+ *    debug-flush-frees
+ *
+ *  The counter makes it nestable: only when depth returns to 0 do we
+ *  actually reclaim the queued areas (by forcing their refcount to "last"
+ *  and calling area_free which will now see depth==0).
+ */
+
+function primitive_debug_delay_frees(){
+  debug_delayed_free_depth ++;
+  //c/ debug_delayed_free_depth ++;
+}
+
+function debug_flush_delayed_frees_impl(){
+  /**/ if( debug_delayed_free_depth > 0 ){
+  /**/   debug_delayed_free_depth --;
+  /**/ }
+  /**/ if( debug_delayed_free_depth == 0 && debug_delayed_free_queue.length > 0 ){
+  /**/   const q = debug_delayed_free_queue;
+  /**/   debug_delayed_free_queue = [];
+  /**/   for( let i = 0; i < q.length; i++ ){
+  /**/     const a = q[i];
+  /**/     if( a != 0 && area_is_busy( a ) ){
+  /**/       area_set_ref_count( a, 1 );
+  /**/       area_free( a );  // depth is 0, will do the real reclaim now
+  /**/     }
+  /**/   }
+  /**/ }
+  //c/ if( debug_delayed_free_depth > 0 ){ debug_delayed_free_depth--; }
+  //c/ if( debug_delayed_free_depth == 0 && debug_delayed_free_queue_count > 0 ){
+  //c/   for(int i=0; i<debug_delayed_free_queue_count; i++){
+  //c/     Area a = debug_delayed_free_queue[i];
+  //c/     if( a && area_is_busy(a) ){
+  //c/       area_set_ref_count( a, 1 );
+  //c/       area_free( a );
+  //c/     }
+  //c/   }
+  //c/   debug_delayed_free_queue_count = 0;
+  //c/ }
+}
+
+function primitive_debug_flush_frees(){
+  debug_flush_delayed_frees_impl();
 }
 
 
@@ -8221,6 +8338,9 @@ function pop_block() : Cell {
 
 function pop_tag() : Tag {
 // Pop a tag from the stack
+  if( run_de && TOS <= ACTOR_data_stack ){
+    try { console.error( "DIAG: pop_tag() under or at base, TOS=" + C(TOS) + " CSP=" + C(CSP) + " cspname=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
+  }
   check_de&&mand_tag( TOS );
   return pop_raw_value();
 }
@@ -8290,25 +8410,50 @@ function eat_ip( c : Cell ) : Cell {
 
 
 function pop_ip(){
-// Pop IP from the control stack
-  IP = eat_ip( CSP );
+// Pop IP from the control stack. Accept both type_ip (some user call frames
+// in de path) and type_verb (frames pushed by call()/defer() helpers for
+// internal run-with-*, run-with-it, etc). The value always holds the return
+// IP address.
+  const t = type_of( CSP );
+  check_de&&mand( t == type_ip || t == type_verb );
+  IP = eat_raw_value( CSP );
   CSP -= ONE;
 }
 
 
 function drop(){
 // Drop the top of the data stack
+  if( run_de && TOS <= ACTOR_data_stack ){
+    try { console.error( "DIAG: drop() under or at base before pop, TOS=" + C(TOS) + " CSP=" + C(CSP) + " cspname=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
+  }
   clear( pop() );
 }
 
 
 function raw_drop(){
 // Drop the top of the data stack, assuming it is not a reference
+  if( run_de && TOS <= ACTOR_data_stack ){
+    try { console.error( "DIAG: raw_drop() under or at base before pop, TOS=" + C(TOS) + " CSP=" + C(CSP) + " cspname=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
+  }
   reset( pop() );
 }
 
 
 function drop_control(){
+  if( run_de && CSP <= ACTOR_control_stack ){
+    try { console.error( "DIAG: drop_control() CSP low/under, CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) + " TOS=" + C(TOS) ); } catch(e){}
+  }
+  if( CSP <= ACTOR_control_stack ){
+    // Clamp to prevent underflow into area headers (_dynsz cells etc) during
+    // error recovery clears (FATAL, bootstrap missing-verb handlers) or end-of-script
+    // when param/scope/with frames from "to" defs or the final make.task stub call
+    // (with its 3 > formals -> parameters frame) are still on CSP. Raw drop would
+    // land CSP on the memory cell immediately below the control base, which has
+    // name=_dynsz (allocator size header), leading to "name=_dynsz" in asserts,
+    // garbage on pop as bool, control underflow in dump, etc.
+    CSP = ACTOR_control_stack;
+    return;
+  }
 // Drop the top of the control stack
   clear( CSP );
   CSP -= ONE;
@@ -8316,6 +8461,16 @@ function drop_control(){
 
 
 function raw_drop_control(){
+  if( run_de && CSP <= ACTOR_control_stack ){
+    try { console.error( "DIAG: raw_drop_control() CSP low/under, CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
+  }
+  if( CSP <= ACTOR_control_stack ){
+    // Clamp (see drop_control for rationale: prevents hitting _dynsz header cells
+    // below control base during recovery clears while frames from l9 prereqs or
+    // stub calls with parameters/scope are active).
+    CSP = ACTOR_control_stack;
+    return;
+  }
 // Drop the top of the control stack, assuming it is not a reference
   reset( CSP );
   CSP -= ONE;
@@ -9296,12 +9451,37 @@ primitive( "a-primitive?", primitive_is_a_primitive );
 function primitive_return(){
 // primitive "return" is jump to return address. Eqv R> IP!
   // ToDo: this should be primitive 0
-  debugger;
   run_de&&bug( S()
     + "primitive, return to IP " + C( value_of( CSP ) )
     + " from " + C( name_of( CSP ) ) + "/" + tag_as_text( name_of( CSP ) )
   );
-  debugger;
+  // Unwind any pending with/it/params/control frames (pushed by run-with-*
+  // or make_local_it) before the final pop_ip. Direct pop would eat a local
+  // cell (type != verb/ip) instead of the return frame, leading to
+  // "Invalid return, not a verb", bad CSP, "non extensible stack" during
+  // parse, etc. This was triggered by "return" inside class{ redef branch
+  // (which has active "with parameters"), and by "return-if" inside
+  // it-method bodies (which set up "it").
+  // Drain *all* pending on this return (each forget prim does its own pop_ip
+  // of its paired frame, which may expose another forget for an outer scope).
+  while( type_of( CSP ) == type_verb ){
+    const n = name_of( CSP );
+    if( n == tag_forget_it ){
+      primitive_forget_it();
+      return;
+    }else if( n == tag_forget_locals ){
+      primitive_forget_locals();
+      return;
+    }else if( n == tag_forget_parameters ){
+      primitive_forget_parameters();
+      return;
+    }else if( n == tag( "forget-control" ) ){
+      primitive_forget_control();
+      return;
+    }else{
+      break;
+    }
+  }
   pop_ip();
   // ToDo: detect special cases, including:
   // - spaggethi stacks, see https://wiki.c2.com/?SpaghettiStack
@@ -9338,6 +9518,25 @@ primitive( "return", primitive_return );
 
 function primitive_return_if(){
   if( pop_boolean() ){
+    // see primitive_return for explanation of the unwind
+    while( type_of( CSP ) == type_verb ){
+      const n = name_of( CSP );
+      if( n == tag_forget_it ){
+        primitive_forget_it();
+        return;
+      }else if( n == tag_forget_locals ){
+        primitive_forget_locals();
+        return;
+      }else if( n == tag_forget_parameters ){
+        primitive_forget_parameters();
+        return;
+      }else if( n == tag( "forget-control" ) ){
+        primitive_forget_control();
+        return;
+      }else{
+        break;
+      }
+    }
     pop_ip();
   }
 }
@@ -9350,10 +9549,29 @@ primitive( "return-if", primitive_return_if );
 
 function primitive_return_unless(){
   if( ! pop_boolean() ){
+    // see primitive_return for explanation of the unwind
+    while( type_of( CSP ) == type_verb ){
+      const n = name_of( CSP );
+      if( n == tag_forget_it ){
+        primitive_forget_it();
+        return;
+      }else if( n == tag_forget_locals ){
+        primitive_forget_locals();
+        return;
+      }else if( n == tag_forget_parameters ){
+        primitive_forget_parameters();
+        return;
+      }else if( n == tag( "forget-control" ) ){
+        primitive_forget_control();
+        return;
+      }else{
+        break;
+      }
+    }
     pop_ip();
   }
 }
-primitive( "return-unless", primitive_return_if );
+primitive( "return-unless", primitive_return_unless );
 
 
 function trace_context( msg : TxtC ){
@@ -10062,6 +10280,9 @@ primitive( "control-depth", primitive_control_depth );
 const tag_clear_control = tag( "clear-control" );
 
 function primitive_clear_control(){
+  if( run_de ){
+    try { console.error( "DIAG: primitive_clear_control entry CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) + " TOS=" + C(TOS) ); } catch(e){}
+  }
   // Use the return address if type is appropriate
   let return_ip = 0;
   if( type_of( CSP ) == type_verb ){
@@ -10073,6 +10294,9 @@ function primitive_clear_control(){
   }
   CSP = ACTOR_control_stack;
   set( CSP, type_ip, tag_clear_control, return_ip );
+  if( run_de ){
+    try { console.error( "DIAG: primitive_clear_control after CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
+  }
 }
 primitive( "clear-control", primitive_clear_control );
 
@@ -10625,6 +10849,9 @@ function cell_looks_safe( c : Cell ) : boolean {
         + "Invalid boolean value, " + N( v )
         + " at " + C( c )
       );
+      if( run_de || verbose_stack_de ){
+        try { console.error( "DIAG: Invalid boolean value, " + N( v ) + " at " + C( c ) + " CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) + " TOS=" + C(TOS) ); } catch(e){}
+      }
       return false;
     }
     return true;
@@ -11479,6 +11706,9 @@ function dump_stacks() : Text {
     + ", excess pop " + N( ( csp - return_base ) / ONE );
     // ToDo: fatal error?
     some_dirty = true;
+    if( run_de || verbose_stack_de ){
+      try { console.error( "DIAG: control underflow in dump_stacks, CSP=" + C(csp) + " base=" + C(return_base) + " name=" + tag_as_text( name_of(csp) ) ); } catch(e){}
+    }
     // return_base = ptr + 5 * ONE;
   }
 
@@ -11508,6 +11738,9 @@ function dump_stacks() : Text {
     + ", excess pop " + N( ( top - base ) / ONE );
     // base = ptr + 5 * ONE;
     some_dirty = true;
+    if( run_de || verbose_stack_de ){
+      try { console.error( "DIAG: 0 :data-stack underflow detected in dump_stacks, TOS=" + N(top) + " base=" + C(base) + " CSP=" + C(CSP) + " cspname=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
+    }
   }
 
   nn = ptr - base;
@@ -13636,6 +13869,7 @@ function primitive_float_as_text(){
   const auto_ = pop_float();
   push_text( float_as_text( auto_ ) );
 }
+primitive( "float.as-text", primitive_float_as_text );
 
 
 /*
@@ -14627,6 +14861,9 @@ primitive( "make.constant", primitive_make_constant );
  */
 
 function primitive_define_verb(){
+  if( run_de ){
+    try { console.error( "DIAG: primitive_define_verb entry TOS=" + C(TOS) + " CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
+  }
   primitive_as_block();
   const top  = pop()
   const name = pop_tag();
@@ -14637,6 +14874,9 @@ function primitive_define_verb(){
   // area so reference counting can never free it (and the values it captured).
   area_make_eternal( def );
   clear_top();
+  if( run_de ){
+    try { console.error( "DIAG: primitive_define_verb after TOS=" + C(TOS) + " CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
+  }
 }
 primitive( "define-verb", primitive_define_verb );
 
@@ -14756,13 +14996,34 @@ primitive( "make.global", primitive_make_global );
  */
 
 function primitive_make_local(){
+  if( run_de ){
+    try {
+      console.error( "DIAG: primitive_make_local entry TOS=" + C(TOS) + " CSP=" + C(CSP) + " cspname=" + tag_as_text( name_of(CSP) ) + " data_low=" + (TOS <= ACTOR_data_stack) );
+    } catch(e){ console.error("DIAG: make.local entry err"); }
+  }
   const n = pop_tag();
   // the return value on the top of the control stack must be preserved
   const old_csp = CSP;
+  if( run_de ){
+    try {
+      console.error( "DIAG: primitive_make_local after pop_tag n=" + tag_as_text(n) + " TOS=" + C(TOS) + " CSP=" + C(CSP) + " cspname=" + tag_as_text( name_of(CSP) ) );
+    } catch(e){}
+  }
   CSP += ONE;
   move_cell( old_csp, CSP );
-  move_cell( pop(), old_csp );
+  const data_pop = pop();
+  if( run_de ){
+    try {
+      console.error( "DIAG: primitive_make_local before move data_pop=" + C(data_pop) + " (after pop) TOSnow=" + C(TOS) );
+    } catch(e){}
+  }
+  move_cell( data_pop, old_csp );
   set_name( old_csp, n );
+  if( run_de ){
+    try {
+      console.error( "DIAG: primitive_make_local after, CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) + " TOS=" + C(TOS) );
+    } catch(e){}
+  }
 }
 primitive( "make.local", primitive_make_local );
 
@@ -14943,13 +15204,22 @@ function primitive_run_with_parameters(){
     copy_count++;
   }
 
-  // Skip actual arguments and formal parameters in data stack
-  TOS = TOS - ( ( count * 2 ) - 1 ) * ONE;
-
-  CSP = actual_argument_cell - ONE;
-
-  // Schedule call to the parameters remover
-  defer( tag_forget_parameters, forget_parameters_definition );
+  // Skip actual arguments and formal parameters in data stack.
+  // Guard to avoid underflow/TOS below base at def/compile time of it-method{
+  // / maker{ / class{ etc (similar to parameters primitive fix above; at def
+  // time no actuals, direct assign would set TOS low, leaving 0 :data-stack
+  // sentinel, causing later underflow in if/pop_block, dirty, bad eqs, IP0,
+  // alloc recursion). Only skip (and defer) if it won't underflow (i.e. call
+  // time with real actuals provided).
+  const skip = ( ( count * 2 ) - 1 ) * ONE;
+  if( TOS - skip >= ACTOR_data_stack ){
+    TOS = TOS - skip;
+    CSP = actual_argument_cell - ONE;
+    defer( tag_forget_parameters, forget_parameters_definition );
+  } else {
+    // def time: still set CSP to the param area (for scope), but no skip/defer
+    CSP = actual_argument_cell - ONE;
+  }
 
 }
 primitive( "run-with-parameters", primitive_run_with_parameters );
@@ -14961,6 +15231,59 @@ primitive( "run-with-parameters", primitive_run_with_parameters );
 
 function primitive_parameters(){
   const top = TOS;
+  // Injection for call time to 2-param meta words (class{ / it-method{ / extend-class{ )
+  // when the special /class{ /it-method{ syntax pushed only the actuals (name/class-name + code block)
+  // but not the with + formals that the parameters while expects at call time.
+  // Without this, the while pops the actuals as "names", nparams=2, the for pops 2 more from below (steal from
+  // outer payload data), causing the underflow in the class{ payload's ifs etc.
+  // We push the with + 3 formals on top of the actuals ( "class-name/" "name/" "code/" in order so that
+  // while pops code first (install "code"), name, class-name last; for pops code block first to "code" cell,
+  // name actual to "name" cell; then copy to "class-name" cell for class{ body that uses $class-name.
+  if( ! is_with( TOS ) ){
+    if( TOS > ACTOR_data_stack && is_block( TOS ) ){
+      const below = TOS - ONE;
+      if( below > ACTOR_data_stack && is_a_tag( below ) ){
+        // Guard against false trigger at def time of meta words (to class{ / to it-method{ etc)
+        // or other words that happen to have a block + tag on data when their "parameters"
+        // (from a normal "with f/ ..." in their def header, or inner) runs. At those times a
+        // payload block for the word being defined may be on TOS (or nearby), below a tag
+        // (name or formal), which would match the "block + tag" shape of a special call site.
+        // Injecting extra would double the with+formals, cause wrong nparams, extra defer at
+        // def time (leaving forget on CSP for later words' > / scope / make.local), data low,
+        // 0 :data-stack, _dynsz (area size header) cells reachable on CSP when underflow,
+        // garbage bools, asserts in scope/define-verb etc.
+        // At true special call site (metaclass/class{ <payload-block> or similar from parser
+        // sugar that bypasses emitting "with ... parameters" at call site), there is no "with"
+        // sentinel deeper on data yet; the actuals (class-name tag + code block) are the top 2.
+        // So scan a bit deeper: if we see a with already, this is normal with-decl parameters,
+        // skip injection. Only inject for the bypass/special case.
+        if( run_de ){
+          try { console.error( "DIAG: primitive_parameters see block+tag at TOS=" + C(TOS) + " below=" + C(below) + " has? scan start" ); } catch(e){}
+        }
+        let has_with_already = false;
+        for( let p = TOS - 2 * ONE; p > ACTOR_data_stack && p >= TOS - 20 * ONE; p -= ONE ){
+          if( is_with( p ) ){ has_with_already = true; break; }
+        }
+        if( run_de ){
+          try { console.error( "DIAG: primitive_parameters has_with_already=" + has_with_already + " TOS=" + C(TOS) + " CSP=" + C(CSP) + " cspname=" + tag_as_text(name_of(CSP)) ); } catch(e){}
+        }
+        if( ! has_with_already ){
+          // push with sentinel on data
+          push(); set( TOS, type_tag, tag_with, tag_with );
+          // push formals deeper "class-name/" , "name/" , "code/" top (while pops reverse: code first, name, class-name)
+          let f = tag( "class-name" );
+          push(); set( TOS, type_tag, f, f );
+          f = tag( "name" );
+          push(); set( TOS, type_tag, f, f );
+          f = tag( "code" );
+          push(); set( TOS, type_tag, f, f );
+          if( run_de ){
+            try { console.error( "DIAG: primitive_parameters DID INJECT with+formals, now TOS=" + C(TOS) ); } catch(e){}
+          }
+        }
+      }
+    }
+  }
   // Push /with sentinel onto control stack
   CSP += ONE;
   set( CSP, type_tag, tag_with, tag_with );
@@ -14968,27 +15291,73 @@ function primitive_parameters(){
   const csp = CSP;
   let name;
   let nparams = 0;
+  if( run_de ){
+    try { console.error( "DIAG: primitive_parameters about to push /with to CSP, TOS=" + C(TOS) + " CSP=" + C(CSP) ); } catch(e){}
+  }
   while( true ){
     // ToDo: optional default value for when argument is void
     if( is_with( TOS ) ){
       raw_drop();
       break;
     }
+    if( TOS <= ACTOR_data_stack ){
+      break;  // tolerant
+    }
     name = pop_tag();
     CSP += ONE;
     set( CSP, type_void, name, 0 );
     nparams++;
   }
-  // Now eat values from the data stack to initialize the parameters
+  if( run_de ){
+    try { console.error( "DIAG: primitive_parameters after while nparams=" + nparams + " CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) + " TOS=" + C(TOS) ); } catch(e){}
+  }
+  // Now eat values from the data stack to initialize the parameters.
+  // Refined compile-time detection for inner with decls (the remaining source
+  // of imbalances in task/class etc during initialize-classes).
+  // If this with's formals include "code" or "class-name", it is the top-level
+  // with for it-method{/class{/extend-class{ (the special /it-method{ syntax
+  // provides actual name+code block on data) -- eat the actuals and defer (call
+  // time for the meta word).
+  // Otherwise (e.g. "data-stack/ control-stack/" inside a setup-stacks/it-method
+  // body, "result/" inside join/it-method, "parent/ fork?/ spawn?/" inside a
+  // maker{ inside a class{ payload), this is compile-time execution of the with
+  // decl while parsing the *body* of a user-defined method/maker; no actual values
+  // for those params are provided yet (they come at call time of the defined
+  // method), so eating would steal the outer class{ payload's data (code block
+  // or previous lines), causing the underflow in the class{ 's own ifs (the
+  // verb.exist? ifs etc in the class{ definition code), "0 :data-stack" sentinels,
+  // DIRTY, bad eqs, IP 0, alloc recursion.
+  // The maker's with has no "code", correctly treated as compile for its body
+  // (eat skipped).
+  let has_code_formal = false;
+  for( let k = 1; k <= nparams; k++ ){
+    const nm = name_of( csp + k * ONE );
+    if( nm == tag( "code" ) || nm == tag( "class-name" ) ){ has_code_formal = true; break; }
+  }
+  if( run_de ){
+    try { console.error( "DIAG: primitive_parameters has_code_formal=" + has_code_formal + " nparams=" + nparams ); } catch(e){}
+  }
+  let ate = 0;
   let ii;
   for( ii = 1 ; ii <= nparams ; ii++ ){
-    // ToDo: optimize this
     name = name_of( csp + ii * ONE );
-    move_cell( pop(), csp + ii * ONE );
+    if( ! has_code_formal || TOS <= ACTOR_data_stack ){
+      break;
+    }
+    const data_for_eat = pop();
+    if( run_de ){
+      try { console.error( "DIAG: primitive_parameters EATING for param ii=" + ii + " name=" + tag_as_text(name) + " data=" + C(data_for_eat) + " TOSnow=" + C(TOS) ); } catch(e){}
+    }
+    move_cell( data_for_eat, csp + ii * ONE );
     set_name( csp + ii * ONE, name );
+    ate++;
   }
-  // Schedule call to the parameters remover
-  defer( tag_forget_parameters, forget_parameters_definition );
+  if( has_code_formal && ate > 0 ){
+    defer( tag_forget_parameters, forget_parameters_definition );
+  }
+  if( run_de ){
+    try { console.error( "DIAG: primitive_parameters after eat ate=" + ate + " CSP=" + C(CSP) + " name=" + tag_as_text(name_of(CSP)) + " TOS=" + C(TOS) ); } catch(e){}
+  }
 }
 primitive( "parameters", primitive_parameters );
 
@@ -17803,13 +18172,11 @@ function push() : Cell {
 
 
 function pop() : Cell {
+  if( run_de && TOS <= ACTOR_data_stack ){
+    try { console.error( "DIAG: pop() under or at base, TOS=" + C(TOS) + " CSP=" + C(CSP) + " cspname=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
+  }
   de&&mand( TOS > ACTOR_data_stack );
   return TOS--;
-  // de&&mand( ONE == 1 );
-  // If ONE is two, ie words_per_cell is 2, then it should be:
-  // const x = TOS;
-  // TOS -= ONE;
-  // return x;
 }
 
 
@@ -18297,10 +18664,35 @@ function run(){
 
   if( step_de && ( n != 0 ) ) debugger;
 
-        // Special "next" code, 0x0000, is a jump to the return address
+        // Special "next" code, 0x0000, is a jump to the return address.
+        // On normal end-of-word we must also drain any pending forget-*
+        // defer frames (with-params, it, locals, control) that were pushed
+        // above the return frame for the scope, exactly like explicit
+        // "return"/"return-if"/"return-unless" do. Otherwise param cells
+        // stay on CSP, TOS adjustments from run-with-* are not compensated,
+        // and later pops (e.g. pop_block for if/then in class makers or
+        // it-methods) underflow or see garbage -> assert or FATAL.
         if( i == 0x0000 ){
+          if( type_of( CSP ) == type_verb ){
+            const n = name_of( CSP );
+            if( n == tag_forget_it ){
+              primitive_forget_it();
+              continue;
+            }else if( n == tag_forget_locals ){
+              primitive_forget_locals();
+              continue;
+            }else if( n == tag_forget_parameters ){
+              primitive_forget_parameters();
+              continue;
+            }else if( n == tag( "forget-control" ) ){
+              primitive_forget_control();
+              continue;
+            }
+            // else: normal return frame (verb), fall through to pop it
+          }
           if( check_de ){
-            if( type_of( CSP ) == type_ip ){
+            const t = type_of( CSP );
+            if( t == type_ip || t == type_verb ){
               if( run_de ){
                 bug( S()
                   + "run, return to " + C( IP )
@@ -18426,6 +18818,15 @@ function run(){
               );
               debugger;
               // CSP = old_csp;
+            }
+            if( run_de ){
+              try {
+                const cspname = name_of( CSP );
+                const cspname_txt = tag_as_text( cspname );
+                if( cspname === the_tag_for_dynamic_area_size || cspname_txt === "_dynsz" ){
+                  console.error( "DIAG: BAD _dynsz on CSP after primitive verb_id=" + tag_as_text( verb_id ) + " CSP=" + C(CSP) + " name=" + cspname_txt + " old_csp=" + C(old_csp) + " at old_ip=" + C(old_ip) );
+                }
+              } catch(e){ console.error("DIAG: run_de _dynsz check err " + e); }
             }
             if( IP && IP != old_ip ){
               const code = name_of( old_ip - ONE );
@@ -19099,18 +19500,46 @@ let scope_close_definition = 0;
 // = definition_of( tag_scope_close );
 
 function primitive_scope(){
+  if( run_de ){
+    try {
+      console.error( "DIAG: primitive_scope entry CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) );
+    } catch(e){ console.error("DIAG: scope entry err"); }
+  }
   // Install sentinel
+  const old_csp = CSP;
   CSP += ONE;
+  if( run_de ){
+    try {
+      console.error( "DIAG: primitive_scope after +sentinel old=" + C(old_csp) + " CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) );
+    } catch(e){ console.error("DIAG: scope after sentinel err"); }
+  }
   set( CSP, type_tag, tag_scope_open, 0 );
   // Schedule scope close cleaner
   defer( tag_scope_close, scope_close_definition );
+  if( run_de ){
+    try {
+      console.error( "DIAG: primitive_scope after defer CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) );
+    } catch(e){ console.error("DIAG: scope after defer err"); }
+  }
 }
 primitive( "scope", primitive_scope );
 
 
 function primitive_scope_close(){
+  if( run_de ){
+    try { console.error( "DIAG: primitive_scope_close entry CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) + " TOS=" + C(TOS) ); } catch(e){}
+  }
   // Clear all values in control stack, down to scope open sentinel
   while( true ){
+    if( run_de ){
+      try {
+        const nm = name_of( CSP );
+        const nmt = tag_as_text( nm );
+        if( nm === the_tag_for_dynamic_area_size || nmt === "_dynsz" || CSP <= ACTOR_control_stack ){
+          console.error( "DIAG: primitive_scope_close while CSP=" + C(CSP) + " name=" + nmt + " (may be _dynsz or low)" );
+        }
+      } catch(e){}
+    }
     const info = info_of( CSP );
     if( unpack_name( info ) === tag_scope_open ){
       break;
@@ -19127,6 +19556,9 @@ function primitive_scope_close(){
   check_de&&mand_tag( CSP );
   raw_drop_control();
   pop_ip();
+  if( run_de ){
+    try { console.error( "DIAG: primitive_scope_close after CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
+  }
 }
 primitive( "scope-close", primitive_scope_close );
 
@@ -19336,16 +19768,31 @@ primitive( "attach", primitive_attach );
  */
 
 function primitive_as_block(){
+  if( run_de ){
+    try { console.error( "DIAG: primitive_as_block entry TOS=" + C(TOS) + " CSP=" + C(CSP) + " (used by define-verb)" ); } catch(e){}
+  }
 
   // Get the runnable value
   const runnable = pop();
   const type = type_of( runnable );
 
-  // Done if already a good loking dynamic block
+  // Done if already a good looking dynamic block: consume the input arg (already
+  // popped into 'runnable'), produce the result block ref on stack, and clear
+  // the consumed input cell so we don't leave DIRTY cells above final TOS
+  // (the source of the "stack not restored in correct shape after define-verb /
+  // as-block activation" that was causing later pop_tag / type 0/4 / bad eq
+  // during class maker "make.global" etc., and requiring adhoc pop-4 in super
+  // and underflow tolerants).
   if( type_of( runnable ) == type_reference
   &&  area_tag( value_of( runnable ) ) == tag_block
   ){
-    push();
+    const ref_area = value_of( runnable );
+    const result_slot = push();
+    set( result_slot, type_reference, tag_block, ref_area );
+    clear( runnable );  // clear the arg cell we popped (now below the result)
+    if( run_de ){
+      try { console.error( "DIAG: primitive_as_block block-case after, TOS=" + C(TOS) + " CSP=" + C(CSP) ); } catch(e){}
+    }
     return;
   }
   // If this is a verb or a primitive, make a block with a call to it
@@ -19373,6 +19820,9 @@ function primitive_as_block(){
   }
   // Push the resulting block object
   set( push(), type_reference, tag_block, block_area );
+  if( run_de ){
+    try { console.error( "DIAG: primitive_as_block other-case after, TOS=" + C(TOS) + " CSP=" + C(CSP) ); } catch(e){}
+  }
 
 }
 primitive( "as-block", primitive_as_block );
@@ -19921,7 +20371,13 @@ primitive( "input", primitive_inox_input );
  */
 
 function primitive_exit(){
-  const code = pop_integer();
+  // tolerant for CLI end-of-script (stack may have leftovers like >locals): default 0
+  let code = 0;
+  /**/ try {
+  /**/   code = pop_integer();
+  /**/ } catch( e ){
+  /**/   if( TOS ) { try { drop(); } catch(ee){} }
+  /**/ }
   /**/ if( typeof process !== "undefined" && process.exit ){ process.exit( code ); }
   //c/ exit( (int) code );
 }
@@ -19977,7 +20433,11 @@ primitive( "read-all", primitive_read_all );
  */
 
 function primitive_arg_count(){
-  /**/ push_integer( ( typeof process !== "undefined" && process.argv ) ? process.argv.length - 2 : 0 );
+  /**/ {
+  /**/   const args = ( typeof globalThis !== "undefined" && globalThis.inox_script_args ) ? globalThis.inox_script_args
+  /**/              : ( ( typeof process !== "undefined" && process.argv ) ? process.argv.slice( 2 ) : [] );
+  /**/   push_integer( args.length );
+  /**/ }
   //c/ push_integer( 0 );
 }
 primitive( "arg-count", primitive_arg_count );
@@ -19985,12 +20445,385 @@ primitive( "arg-count", primitive_arg_count );
 function primitive_arg(){
   const n = pop_integer();
   /**/ {
-  /**/   const args = ( typeof process !== "undefined" && process.argv ) ? process.argv.slice( 2 ) : [];
+  /**/   const args = ( typeof globalThis !== "undefined" && globalThis.inox_script_args ) ? globalThis.inox_script_args
+  /**/              : ( ( typeof process !== "undefined" && process.argv ) ? process.argv.slice( 2 ) : [] );
   /**/   push_text( ( n >= 0 && n < args.length ) ? args[ n ] : "" );
   /**/ }
   //c/ push_text( "" );
 }
 primitive( "arg", primitive_arg );
+
+
+/*
+ *  stack.new - create a new empty (extensible) stack object.
+ *  Old-school collection for the minimal CLI (use instead of arrays/lists from l9).
+ *  Then use stack.push, stack.pop, stack.length, stack.fetch, stack.clear etc.
+ */
+function primitive_stack_new(){
+  const area = stack_preallocate( 16 );
+  push_reference( area );
+  set_tos_name( tag_stack );
+}
+primitive( "stack.new", primitive_stack_new );
+primitive( "make.stack", primitive_stack_new );
+
+
+/*
+ *  stack.put - put value at index in a stack object (for arrays).
+ *  usage: val idx stk stack.put
+ */
+function primitive_stack_put(){
+  // usage: val idx stk stack.put
+  let target = pop_reference();  // stk
+  if( type_of( target ) == type_reference ){
+    target = reference_of( target );
+  }
+  const index = pop_integer();   // idx
+  const value_cell = pop();      // val
+  stack_put( target, index, value_cell );
+}
+primitive( "stack.put", primitive_stack_put );
+
+
+/*
+ *  map.new - create a new empty map object.
+ *  For "maps" (keyed by tag/name, value cells) in minimal CLI old-school stdlib.
+ *  Use with map.! map.?@ map.length etc.
+ */
+function primitive_map_new(){
+  // Mirror extensible stack style, but for map.
+  // Header ref to data area; data first cell holds length as integer.
+  const data = allocate_area( tag_map, 1 * size_of_cell );
+  set( data, type_integer, 0, 0 );  // length = 0
+  const header = allocate_area( tag_map, 1 * size_of_cell );
+  set( header, type_reference, tag_map, data );
+  push_reference( header );
+  set_tos_name( tag_map );
+}
+primitive( "map.new", primitive_map_new );
+primitive( "make.map", primitive_map_new );
+
+
+/*
+ *  read-file ( path -- text|void )  sync read whole file as text, or void on error.
+ *  For usable CLI stdlib (old school file I/O).
+ */
+function primitive_read_file(){
+  const p = cell_as_text( pop() );
+  /**/ try {
+  /**/   const data = fs.readFileSync( p, "utf8" );
+  /**/   push_text( data );
+  /**/ } catch( e ){
+  /**/   push(); // void
+  /**/ }
+  //c/ // TODO: C++ fopen + read, push text or void on fail. Use LeanString or equiv.
+  //c/ push();
+}
+primitive( "read-file", primitive_read_file );
+
+
+/*
+ *  write-file ( text path -- bool )  sync write, return true on success.
+ */
+function primitive_write_file(){
+  const path_cell = pop();
+  const data = cell_as_text( pop() );
+  const p = cell_as_text( path_cell );
+  /**/ try {
+  /**/   fs.writeFileSync( p, data );
+  /**/   push_boolean( true );
+  /**/ } catch( e ){
+  /**/   push_boolean( false );
+  /**/ }
+  //c/ // TODO: C++ fopen wb + fwrite, return bool.
+  //c/ push_boolean( false );
+}
+primitive( "write-file", primitive_write_file );
+
+
+/*
+ *  append-file ( text path -- bool )
+ */
+function primitive_append_file(){
+  const path_cell = pop();
+  const data = cell_as_text( pop() );
+  const p = cell_as_text( path_cell );
+  /**/ try {
+  /**/   fs.appendFileSync( p, data );
+  /**/   push_boolean( true );
+  /**/ } catch( e ){
+  /**/   push_boolean( false );
+  /**/ }
+  //c/ push_boolean( false );
+}
+primitive( "append-file", primitive_append_file );
+
+
+/*
+ *  file-exists? ( path -- bool )
+ */
+function primitive_file_exists(){
+  const p = cell_as_text( pop() );
+  /**/ {
+  /**/   const ok = fs.existsSync( p );
+  /**/   push_boolean( ok );
+  /**/ }
+  //c/ push_boolean( false );
+}
+primitive( "file-exists?", primitive_file_exists );
+
+
+/*
+ *  getenv ( name -- value )  value is "" if not set.
+ */
+function primitive_getenv(){
+  const name = cell_as_text( pop() );
+  /**/ {
+  /**/   const v = ( typeof process !== "undefined" && process.env ) ? ( process.env[ name ] || "" ) : "";
+  /**/   push_text( v );
+  /**/ }
+  //c/ push_text( "" );
+}
+primitive( "getenv", primitive_getenv );
+
+
+/*
+ *  cwd ( -- path-text )
+ */
+function primitive_cwd(){
+  /**/ {
+  /**/   const p = ( typeof process !== "undefined" && process.cwd ) ? process.cwd() : ".";
+  /**/   push_text( p );
+  /**/ }
+  //c/ push_text( "." );
+}
+primitive( "cwd", primitive_cwd );
+
+
+/* ----------------------------------------------------------------------------
+ *  js.* — bridge to the underlying Javascript VM (the big advantage of the
+ *  "Inox for scripts" / CLI layer).
+ *
+ *  Being implemented on top of a real JS VM (Node today, browser tomorrow,
+ *  and eventually other hosts) is not something to hide. It is a feature:
+ *  it makes Inox scripts *easy to extend* for project-specific needs without
+ *  having to modify the Inox core or write C++.
+ *
+ *  The js.* words give .nox code (the "obvious scripting" layer) direct access
+ *  to the surrounding JS ecosystem (npm packages via require, globals, eval
+ *  escape hatch, property access and calls on JS objects).
+ *
+ *  From the *host* JS side the extension API is:
+ *    const I = inox();
+ *    I.primitive( "my-word", myImpl );   // add new Inox verbs from JS
+ *    I.fun.*                               // low-level VM access for FFI writers
+ *    I.evaluate( src ); I.processor( ... )
+ *    (plus the whole TS runtime is open).
+ *
+ *  See research/ or docs/ for the full "Inox on JS is an advantage" story.
+ *  The same primitives should later have //c/ implementations or shims.
+ */
+
+function js_value_to_inox( v : any ){
+  if( v === null || typeof v === "undefined" ){
+    push(); // the freshly pushed cell is void
+    return;
+  }
+  const t = typeof v;
+  if( t === "string" ){ push_text( v ); return; }
+  if( t === "number" ){
+    // For now integers; floats can be added with proper float cells
+    if( Number.isInteger( v ) ){ push_integer( v | 0 ); }
+    else { push_integer( Math.trunc( v ) ); }  // degrade
+    return;
+  }
+  if( t === "boolean" ){ push_boolean( !! v ); return; }
+  // objects, functions, arrays, modules etc. → proxy (the escape hatch)
+  const area = make_proxy( v );
+  push_proxy( area );
+}
+
+function inox_cell_to_js( c : Cell ) : any {
+  if( is_a_void( c ) ) return undefined;
+  if( is_a_text( c ) ) return cell_as_text( c );
+  if( is_an_integer( c ) ) return get_integer( c );
+  if( is_a_boolean( c ) ) return get_boolean( c ) !== 0;
+  if( is_a_proxy( c ) ){
+    const area = value_of( c );
+    return proxied_object_by_id( area );
+  }
+  // For maps/refs we could recurse to plain object, but start conservative
+  if( is_a_reference( c ) ) return "<inox-reference>";
+  return "<inox-cell>";
+}
+
+/*
+ *  js.eval ( source-text -- result )
+ *  Powerful escape hatch. Evaluate JS source in (almost) global scope.
+ *  Use for quick extensions, one-off calculations, or calling into
+ *  libraries that are not worth a dedicated primitive.
+ */
+function primitive_js_eval(){
+  const src = cell_as_text( pop() );
+  /**/ try {
+  /**/   // indirect eval → global scope
+  /**/   const result = (0, eval)( src );
+  /**/   js_value_to_inox( result );
+  /**/ } catch( e ){
+  /**/   js_value_to_inox( "js-eval-error: " + String( e ) );
+  /**/ }
+  //c/ push(); // void on error
+}
+primitive( "js.eval", primitive_js_eval );
+
+/*
+ *  js.require ( module-name-text -- proxy )
+ *  Node CommonJS require (via createRequire for ESM compatibility).
+ *  Returns a proxied JS object (the module). Use js.get / js.call on it.
+ */
+function primitive_js_require(){
+  const modname = cell_as_text( pop() );
+  /**/ try {
+  /**/   const m = js_node_require( modname );
+  /**/   const area = make_proxy( m );
+  /**/   push_proxy( area );
+  /**/ } catch( e ){
+  /**/   push(); // void on error (the pushed cell starts as void)
+  /**/ }
+  //c/ push(); // void on error
+}
+primitive( "js.require", primitive_js_require );
+
+/*
+ *  js.global ( -- proxy )
+ *  The global object (globalThis in modern, global in older node).
+ */
+function primitive_js_global(){
+  /**/ const g = ( typeof globalThis !== "undefined" ) ? globalThis
+  /**/              : ( typeof global !== "undefined" ) ? global : {};
+  /**/ const area = make_proxy( g );
+  /**/ push_proxy( area );
+  //c/ push(); // void on error
+}
+primitive( "js.global", primitive_js_global );
+
+/*
+ *  js.get ( obj key -- val )
+ *  Read property from a JS object (usually a proxy from js.require/js.global
+ *  or from a previous js.get / js.eval).
+ */
+function primitive_js_get(){
+  const key_cell = pop();
+  const obj_cell = pop();
+  const key = cell_as_text( key_cell );
+  const obj = is_a_proxy( obj_cell ) ? proxied_object_by_id( value_of( obj_cell ) )
+                                     : inox_cell_to_js( obj_cell );
+  const val = ( obj != null ) ? obj[ key ] : undefined;
+  js_value_to_inox( val );
+}
+primitive( "js.get", primitive_js_get );
+
+/*
+ *  js.set ( obj key val -- )
+ *  Write property. Order chosen to be similar to other "receiver last" patterns
+ *  in the scripting layer (val key obj set-field etc.).
+ */
+function primitive_js_set(){
+  const val_cell = pop();
+  const key_cell = pop();
+  const obj_cell = pop();
+  const key = cell_as_text( key_cell );
+  const val = inox_cell_to_js( val_cell );
+  const obj = is_a_proxy( obj_cell ) ? proxied_object_by_id( value_of( obj_cell ) )
+                                     : inox_cell_to_js( obj_cell );
+  if( obj != null ){ obj[ key ] = val; }
+}
+primitive( "js.set", primitive_js_set );
+
+/*
+ *  js.call ( argN ... arg1 fn arity -- result )
+ *  Call a JS function (or method obtained via js.get).
+ *  Args are pushed in left-to-right order, then the function (proxy or value),
+ *  then the integer arity. Result is pushed (or error info on failure).
+ *
+ *  Example:
+ *    "path" js.require >p
+ *    "a" "b"  $p "join" js.get   2 js.call   out "\n" out
+ */
+function primitive_js_call(){
+  const arity = pop_integer();
+  const fn_cell = pop();
+  let fn : any = is_a_proxy( fn_cell ) ? proxied_object_by_id( value_of( fn_cell ) )
+                                        : inox_cell_to_js( fn_cell );
+
+  const js_args : any[] = [];
+  for( let i = 0; i < arity; i++ ){
+    // stack has ... arg0 arg1 ... argN-1   (top was arity, now top is argN-1)
+    // unshift to restore original order
+    js_args.unshift( inox_cell_to_js( pop() ) );
+  }
+
+  let result : any;
+  try {
+    if( typeof fn === "function" ){
+      result = fn.apply( undefined, js_args );
+    } else {
+      result = undefined;
+    }
+  } catch( e ){
+    result = { "js-call-error": String( e ) };
+  }
+  js_value_to_inox( result );
+}
+primitive( "js.call", primitive_js_call );
+
+/*
+ *  js.new ( ctor arg1 ... argN arity -- instance )
+ *  new ctor( arg1, ..., argN )
+ */
+function primitive_js_new(){
+  const arity = pop_integer();
+  const ctor_cell = pop();
+  let ctor : any = is_a_proxy( ctor_cell ) ? proxied_object_by_id( value_of( ctor_cell ) )
+                                            : inox_cell_to_js( ctor_cell );
+
+  const js_args : any[] = [];
+  for( let i = 0; i < arity; i++ ){
+    js_args.unshift( inox_cell_to_js( pop() ) );
+  }
+
+  let result : any;
+  try {
+    if( typeof ctor === "function" ){
+      result = new ( ctor.bind.apply( ctor, [null].concat( js_args ) ) );
+      // or: result = new ctor( ...js_args ); but spread may be ok
+    } else {
+      result = undefined;
+    }
+  } catch( e ){
+    result = { "js-new-error": String( e ) };
+  }
+  js_value_to_inox( result );
+}
+primitive( "js.new", primitive_js_new );
+
+/*
+ *  js.to-text ( val -- text )
+ *  Best effort stringification (JSON for objects when possible).
+ */
+function primitive_js_to_text(){
+  const c = TOS;  // peek
+  let s : string;
+  if( is_a_proxy( c ) ){
+    const o = proxied_object_by_id( value_of( c ) );
+    try { s = JSON.stringify( o ); } catch { s = String( o ); }
+  } else {
+    s = cell_as_text( c );  // fallback, may be the printed form
+  }
+  clear_top();
+  push_text( s );
+}
+primitive( "js.to-text", primitive_js_to_text );
 
 
 /*
@@ -24509,7 +25342,11 @@ function eval_file( name : TxtC ){
   debug_info_file   = tag( name );
 
   /*ts{*/
-    const source_code = fs.readFileSync( "lib/" + name, "utf8" );
+    let file_to_read = name;
+    if( ! name.includes( '/' ) && ! name.includes( '\\' ) && ! name.startsWith( 'lib' ) ){
+      file_to_read = "lib/" + name;
+    }
+    const source_code = fs.readFileSync( file_to_read , "utf8" );
     current_eval_content = source_code;
     I.processor( "{}", "{}", source_code );
   /*}*/
@@ -24557,28 +25394,56 @@ function bootstrap(){
   /**/ try{
   eval_file( "bootstrap.nox" );
   eval_file( "forth.nox" );
-  // CLI / minimal-core mode, opt-in via INOX_TEST=1: load the core (bootstrap
-  // + forth) plus stdlib.nox (Smalltalk/Ruby-style conveniences composed from
-  // core primitives), then stop — skipping the l9.nox OO layer, which does not
-  // bootstrap yet. The program to run, if any, is NOT evaluated here — the
-  // entry point below (see run_program() and the `import.meta.url` block) runs
-  // it synchronously to completion and then exits, so the async REPL never
-  // starts and never seizes stdin. This is the synchronous, C-stdlib-like CLI
-  // flavour of Inox.
-  /**/ if( typeof process !== "undefined" && process.env && process.env.INOX_TEST === "1" ){
+  // Minimal core (the usable CLI path): by default (cli_minimal_core) we stop
+  // after forth.nox and do NOT load l9.nox (the OO/class/actor layer from l8,
+  // still buggy). This is the synchronous C-stdlib-like CLI flavour of Inox.
+  // Scripts run via run_program() get a clean sync eval + exit, no REPL stdin
+  // seizure. Set INOX_WITH_L9=1 before starting to also load l9 + stdlib (for
+  // developers iterating on the l9 layer).
+  // This default is the "scripting" version (obvious for coding Agents per the
+  // two-versions idea). cli-stdlib.nox adds the collections + update ergonomics
+  // + agent memory/branch/turn/obsolete surface. The l9 path is the non-obvious
+  // "system programming" layer.
+  /**/ if( cli_minimal_core ){
   //c/ if( false ){
-    // NOTE: stdlib.nox is NOT loaded here — it is built on top of l9.nox
-    // (array[] via make.extensible-object, operator-methods) and currently
-    // also references verbs missing from the minimal core (<, >, =0, <0…), so
-    // loading it without l9 corrupts the parser. Load it once those gaps are
-    // filled (see eval_file below for the full-stack path).
+    // Rich old-school CLI stdlib (no OO, uses stack.* text.* file.* naming
+    // for poor man's namespacing / type-based scoping of verbs like length/push).
+    // Pure core only (bootstrap + forth + new low-level primitives like stack.new,
+    // read-file etc). This makes the CLI usable for "old school" scripts.
+    // See docs/two-versions-scripting-vs-system.md for the agent-obvious vs
+    // complex-system split.
+    eval_file( "cli-stdlib.nox" );
     return;
   /**/ }
   //c/ }
-  eval_file( "l9.nox" );
+  /**/ let l9_to_load = (typeof process !== "undefined" && process.env && process.env.INOX_L9_FILE) || "l9.nox";
+  /**/ if( ! l9_to_load.includes('/') && ! l9_to_load.includes('\\') ){
+  /**/   l9_to_load = "lib/" + l9_to_load;
+  /**/ }
+  // The historical stack shape / restoration debugging tools (stack_de,
+  // verbose_stack_de for DIRTY cell checks "cells that were at the top of the
+  // stack were correctly cleared" after verb activation + excess pop logs in
+  // dump_stacks, run_de to trigger the post-primitive CSP delta check with
+  // "??? small CSP, excess calls" / "big CSP, excess returns" + old_ip/fun name,
+  // and the stack-effect-checker / stack-effect-neutral{ / stack-effect{ from
+  // smoke.nox) are the way to diagnose imbalances at the *source* (a verb
+  // activation like parameters / run-with-parameters / define-verb / as-block /
+  // maker{ / it-method{ / class{ / make{ / with ... that does not restore
+  // CSP/TOS or leaves uncleared cells) rather than adhoc post-facto fixes like
+  // pop-4-items in run-super-method or extra while-drains on every 0x0000/return.
+  // To use: set stack_de=verbose_stack_de=run_de=true before the l9 load (or
+  // via env INOX_STACK_DEBUG), run the minimal-hierarchy repro or full l9;
+  // the last dump before crash will name the bad verb/old_ip.
+  // (We do not enable by default as it is very verbose on every step.)
+  /**/ if( typeof process !== "undefined" && process.env && (process.env.INOX_STACK_DEBUG === "1" || process.env.INOX_STACK_DE === "1") ){
+  /**/   stack_de = true;
+  /**/   verbose_stack_de = true;
+  /**/   run_de = true;
+  /**/ }
+  /**/ eval_file( l9_to_load );
   // stdlib.nox: synthesized Smalltalk/Ruby-style conveniences (even?,
   // succ, min, factorial, etc.) composed from existing primitives. See
-  // the file header for the design rule.
+  // the file header for the design rule. Only in full (WITH_L9) mode.
   eval_file( "stdlib.nox" );
   // Smoke test loading is opt-in (set INOX_SMOKE=1) — smoke.nox contains
   // many tests that exercise verbs not yet defined, and surfaces test
@@ -24620,6 +25485,11 @@ static void init_globals(){
   scope_close_definition       = definition_of( tag_scope_close );
   run_definition               = definition_of( tag_run );
   run_super_method_definition  = definition_of( tag_run_super_method );
+
+  // Delayed free debug verbs (nestable, for allocator bug hunting around l9 etc.)
+  primitive( "debug-delay-frees", primitive_debug_delay_frees );
+  primitive( "debug-flush-frees", primitive_debug_flush_frees );
+
   bootstrap();
 
   time_started = now();
@@ -24744,25 +25614,103 @@ function run_program( path : string ){
 
 
 // When run directly (not imported), either run a program (synchronous CLI) or
-// start the interactive REPL.
+// start the interactive REPL. This is the main entry for the first usable
+// "CLI version" of Inox (minimal core, no l9 OO).
 if( process.argv[ 1 ] && import.meta.url === pathToFileURL( process.argv[ 1 ] ).href ){
 
-  // An explicit non-flag argument is a script path to run. Otherwise, the
-  // INOX_TEST=1 harness runs the lib/test.nox scratch program. With neither,
-  // there is no program to run, so start the REPL.
-  // NOTE: a program only loads the minimal core (bootstrap + forth) when
-  // INOX_TEST=1; without it, bootstrap also loads l9.nox, which does not yet
-  // bootstrap — so run CLI programs as `INOX_TEST=1 node builds/inox.js prog.nox`
-  // until the l9 OO layer is fixed.
-  const cli_arg = ( process.argv[ 2 ] && ! process.argv[ 2 ].startsWith( "-" ) )
-    ? process.argv[ 2 ] : "";
-  const program_path = cli_arg
-    ? cli_arg
+  const argv = process.argv.slice( 2 );
+
+  if( argv.includes( "--help" ) || argv.includes( "-h" ) ){
+    // Use stderr so that piping a run stays clean.
+    console.error( `inox (minimal CLI mode)
+
+Usage:
+  node builds/inox.js [options] [file.nox]
+  node builds/inox.js -e 'code here'
+  node builds/inox.js                 # minimal REPL (forth-level core)
+
+  file.nox           Run script to completion (sync), then exit(0) or the
+                     code passed to the 'exit' verb. stdout for program I/O.
+  -e, --eval CODE    Evaluate CODE then exit. Like a one-liner.
+  --help, -h         This message.
+  --version          Print version.
+
+Environment (for l9 developers):
+  INOX_WITH_L9=1     Boot full stack including l9.nox + stdlib (currently
+                     crashes; use to work on the OO layer).
+  INOX_L9_FILE=foo.nox  With WITH_L9: load custom file instead of l9.nox
+                        (for selective testing / bypass of full l9, e.g.
+                        a minimal .nox with only prereqs + the class{
+                        blocks for hierarchy building debug).
+  INOX_TEST=1        Legacy: force minimal + if no file run lib/test.nox .
+
+The CLI uses only bootstrap.nox + forth.nox (no classes, no l9, sync
+C-stdlib-like: read-line/read-all, arg/arg-count, exit, sync inox-out via
+writeSync so output is not lost). Postfix/concatenative style works today;
+some call syntax like out( x ) may require words from l9 or stdlib.
+See examples/hello.nox and examples/factorial.nox (use postfix if needed).
+` );
+    process.exit( 0 );
+  }
+
+  if( argv.includes( "--version" ) || argv.includes( "-v" ) ){
+    console.log( "inox v0.4.0 (minimal CLI; l9 OO layer is WIP — see INOX_WITH_L9)" );
+    process.exit( 0 );
+  }
+
+  // Parse -e / --eval and first non-flag file arg.
+  let eval_code = "";
+  let file_arg = "";
+  for( let i = 0; i < argv.length; i++ ){
+    const a = argv[ i ];
+    if( a === "-e" || a === "--eval" ){
+      eval_code = ( i + 1 < argv.length ) ? argv[ i + 1 ] : "";
+      i++;
+      continue;
+    }
+    if( !a.startsWith( "-" ) && !file_arg && !eval_code ){
+      file_arg = a;
+    }
+  }
+
+  // Set sanitized script args for the arg / arg-count primitives (so they see
+  // only the args intended for the Inox program, not the node/inox launcher
+  // or the -e code itself). Do this before running any user code so that
+  // primitives inside processor see the right view.
+  /**/ if( typeof globalThis !== "undefined" ){
+  /**/   if( file_arg ){
+  /**/     const full = process.argv;
+  /**/     const idx = full.lastIndexOf( file_arg );
+  /**/     globalThis.inox_script_args = ( idx >= 0 ) ? full.slice( idx + 1 ) : [];
+  /**/   } else if( eval_code ){
+  /**/     const full = process.argv;
+  /**/     let start = full.indexOf( "-e" ); if( start < 0 ) start = full.indexOf( "--eval" );
+  /**/     if( start >= 0 ) start += 2; else start = 2;
+  /**/     globalThis.inox_script_args = full.slice( start );
+  /**/   } else {
+  /**/     globalThis.inox_script_args = [];
+  /**/   }
+  /**/ }
+
+  if( eval_code ){
+    current_eval_file    = tag( "-e" );
+    debug_info_file      = current_eval_file;
+    current_eval_content = eval_code;
+    I.processor( "{}", "{}", eval_code );
+    process.exit( 0 );
+  }
+
+  // If a file was given, run it (minimal core was already selected early if
+  // any non-flag arg). If no file but INOX_TEST=1 (legacy), default to the
+  // scratch test.nox so `INOX_TEST=1 node builds/inox.js` still works.
+  const program_path = file_arg
+    ? file_arg
     : ( ( process.env && process.env.INOX_TEST === "1" ) ? "lib/test.nox" : "" );
 
   if( program_path ){
-    // Libraries are already loaded (bootstrap ran at module init). Run the
-    // program to completion, then exit. No REPL, no stdin seizure.
+    // Libraries (minimal or full) already loaded at module init.
+    // Run to completion synchronously; the script can call `exit N`.
+    // If it falls off the end we exit 0 here.
     run_program( program_path );
     process.exit( 0 );
   }

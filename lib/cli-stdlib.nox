@@ -1,0 +1,88 @@
+~| cli-stdlib.nox
+ |  Basic old-school additions for minimal CLI (richer than bare forth).
+ |  Focus on namespaced verbs and some composed.
+ |~
+
+~~ integers simple
+to even? duplicate 2 % 0 =.
+to odd?  duplicate 2 % 0 <>.
+to succ 1 +.
+to pred 1 -.
+to min over over > then{ swap } drop.
+to max over over < then{ swap } drop.
+to negate 0 swap -.
+to abs duplicate <0 then{ negate }.
+
+~~ text
+to text.empty? text.length 0 =.
+to text.not-empty? text.length 0 <>.
+to text.contains? swap text.find void? not.
+to text.lowercase text.low.
+to text.uppercase text.up.
+
+~~ stack (already have stack.* primitives, add thin + helpers)
+to stack.empty? stack.length 0 =.
+to stack.some? stack.length 0 <>.
+to stack.peek stack.top.
+
+~~ file
+to file.exists? file-exists?.
+to file.read read-file.
+to file.write write-file.
+
+~~ --- Arrays (old school, via stack objects) ---
+to array.new   stack.new.
+to array.length stack.length.
+to array.get   stack.fetch.
+to array.put   stack.put.
+to array.push  stack.push.
+to array.pop   stack.pop.
+to array.peek  stack.top.
+
+~~ --- Maps and records (over core primitives) ---
+to map.put   map.!.
+to map.get   map.?@.
+to map.at    map.get.
+
+to map.set  >m >v >k  $v $k $m map.put.
+
+to record.new  map.new.
+
+~~ field access
+to get-field  map.?@.
+to set-field  map.!.
+
+~~ --- Script UPDATE ergonomics (decent modern script language level) ---
+to set!       set-field.
+to map-set!   map.!.
+to array-set! array.put.
+
+to with-field  >val >field >obj  $obj $val $field swap set-field $obj.
+
+to inc-field!  >field >obj  $obj $field get-field 1 + $field $obj set!.
+to dec-field!  >field >obj  $obj $field get-field 1 - $field $obj set!.
+
+to set-field:  >obj >field >val  $val $field $obj set!.
+
+~~ --- Obvious agent scripting surface ---
+to recall     map.get.
+to remember   map.!.
+to update!    map.!.
+
+to fork-memory  map.new.
+
+to with-update  >val >key >mem
+  $mem fork-memory >b
+  $val $key $b remember
+  $b.
+
+to obsolete  /obsolete swap remember.
+
+~~ --- js.* bridge to the Javascript host (the extensibility advantage) ---
+~~ Being on JS is a feature for "Inox for scripts".
+~~ "path" js.require  ... "join" js.get  N js.call
+~~ "expr" js.eval   js.global "process" js.get   etc.
+~~ Full story: research/js-interop-api-for-scripting-layer.md
+~~ and examples/js-bridge-demo.nox
+
+"cli-stdlib.nox (basic old-school) loaded" out

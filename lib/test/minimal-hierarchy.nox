@@ -1,0 +1,399 @@
+~| minimal-hierarchy.nox
+ |  MINIMAL REPRO for the l9 class hierarchy building bug.
+ |
+ |  See comments in lib/l9.nox near the end for full instructions.
+ |
+ |  Run with:
+ |    INOX_WITH_L9=1 INOX_L9_FILE=lib/test/minimal-hierarchy.nox \
+ |      node --enable-source-maps builds/inox.js
+ |
+ |  After return unwind fix (for it-method/class{ defer frames), "kudos! next bug" was
+ |  run-super non-int + "Invalid boolean 19369..." + underflow in if/pop_block inside
+ |  with-param bodies + bad eq 2/4 0/4 + DIRTY + "CSP top name=global:is:" + alloc rec +
+ |  IP0 + "??? CSP".
+ |  Used the stack debug tools (INOX_STACK_DEBUG=1, DIRTY checks in dump, run_de CSP delta
+ |  in run() with its exception list including scope*/parameters/define-verb/global:is:/with*,
+ |  stack-effect-checker) per "look for that code" + "unbalance at the source should be fixed
+ |  and not corrected after the facts" to find: as_block already-block bare pop+push left
+ |  DIRTY after define-verb; parameters/run_with always eat+defer even at def time of "with
+ |  ... parameters" inside maker{/it-method{/class{ (stole from outer TOS during compile of
+ |  body); maker calls had 4 args vs 3 formals; global: left markers; missing dotted at parse.
+ |  Fixed at source (search_replace in lib/inox.ts): as_block now push+clear; parameters eat
+ |  +defer only if enough cells (has_code_formal for top meta with "code"/"class-name"); maker
+ |  count synced to 3; pop-4 removed from run-super (back to hard FATAL); early "to make.global
+ |  drop; to classes _; to scope drop;" + [] stubs before use (no global: pollution, no missing
+ |  at parse); return/0x0000 drains kept (designed for CSP defers per run() list + needed for
+ |  original it-method return bug).
+ |  Repro now used for "ok, next?": even short load (prereqs with to class{ / it-method{ /
+ |  maker{ / make.metaclass with > / with+parameters + scope inserts at def time for >headers)
+ |  hit "Assert failure at IP=... name=scope CSP=... name=_dynsz" + 0 :data-stack + garbage
+ |  bool during def of "to make.task >fork? >spawn? >parent" stub (line ~283, the > causes
+ |  scope/make.local at def time).
+ |  Root: injection in primitive_parameters (for special /class{ syntax that pushes only
+ |  actuals tag+block without with+formals) had loose "TOS block && below tag" condition;
+ |  during def time of the meta words themselves (or nearby to's), a payload block + tag
+ |  (name/formal) can be on data when their "parameters" (from "with ... parameters" in to
+ |  header) runs -> false inject -> extra with+formals -> wrong nparams + extra defer at
+ |  def time (forget left on CSP) + eat steal -> data underflow to base / into area headers
+ |  (_dynsz size cells become visible at TOS/CSP) -> later scope from > in stub defs sees
+ |  _dynsz on CSP -> assert in de check; also 0:data sentinels, bad pops as bool.
+ |  Fix (source, this step): added scan "has_with_already deeper?" before inject; only inject
+ |  if no with sentinel already on data (true special bypass call has none yet; normal with-decl
+ |  at def/call time or def of meta has with pushed by to-parser or body "with" code).
+ |  Also cleaned repro (dupe text, single early debug-delay-frees before first complex to,
+ |  flush at very end after the bottom stub).
+ |  Still under delay + INOX_STACK_DEBUG + L9_FILE for the load of prereqs.
+ |  Current public WIP state: the short repro reaches "make.task stub (bottom)"
+ |  but the latest smoke run timed out before the finished marker. Next after this:
+ |  diagnose that post-stub/debug-flush/unwind path before progressively re-enabling
+ |  (uncomment or paste from .bak) the initialize-classes call
+ |  and/or semaphore/task/promise class{ + full makers (with parent/ fork?/ spawn?/ params
+ |  + make{ list[] :subtasks ... } + it-method{ with result/ parameter >ip "make.task( it, ..)"
+ |  + super + attach + contain? + l9-next-id etc) inside the delay wrapper; run with stack
+ |  debug; any new DIRTY/??? CSP at specific name (e.g. make.global, scope-close, actor setup,
+ |  update-all-classes) or FATAL at name=... CSP top=... or bad eq context or alloc rec ->
+ |  use the debug output + grep for the verb + mand_eq calls + stack-effect to find the
+ |  remaining source unbalance (e.g. global: still used somewhere, scope-close not walking
+ |  _dynsz markers, real make.global impl needed that doesn't rely on global: form, l9-root
+ |  mutators, collection allocs once [] stubs removed, source order for super/thing); fix at
+ |  source; update this header + l9.nox bottom comments; re-tsc + re-verify. Bisect by
+ |  commenting class blocks or the initialize call.
+ |  This is the non-obvious "system programming" layer (l9 metaclasses, it-methods, makers,
+ |  with-param on CSP, super, attach, traceable? later via COP); contrast to the "obvious for
+ |  Agents" scripting layer (cli-stdlib, maps/arrays/boxes, poor-man ns, no OO).
+ |~
+
+
+~~ PREREQS (essential extracted from l9.nox top to support class{ , it-method{,
+~~ maker{ , update-classes, etc.)
+
+to with-debug-info     debug-info/enable/log
+to without-debug-info  debug-info/disable/log
+
+~~ Early stub for make.global (used by class-attribute and makers in the
+~~ semaphore/task/promise class payloads during the repro build). Using "to"
+~~ syntax so the parser registers the dotted name "make.global" as a single verb
+~~ (like "map.contain?"). Must be before any "to repro..." or payload parse
+~~ that references it in "make.global( ... )".
+to make.global  drop ;
+
+~~ Stubs for "classes" (used in class{ for "classes.get( thing/ )" etc in
+~~ update / superclass named verb) and "classes.get" without using the
+~~ "global: ... is: " form (which leaves "global:is:" marker on CSP, seen as
+~~ top during makers and causing type/eq in define-verb / make.global / local).
+to classes      _ ;
+to classes.get  drop ;
+
+~~ Stub for scope-close (and scope) to avoid assert during scope-close with
+~~ _dynsz on CSP (alloc sentinel/marker left by some with or make or eval or
+~~ debug-delay or global: or the short body itself); the marker on CSP during
+~~ scope-close leads to the mand/assert in the close or after.
+to scope-close  drop ;
+to scope        drop ;
+
+to text.join$  >pattern
+  "" >result
+  loop{
+    $pattern .find( /$ ) >index
+    break-unless( $index something? )
+    $pattern .cut( $index ) >prefix
+    $result .join( $prefix ) >result!
+    $pattern .but( $index + 1 ) >pattern!
+    $pattern .find( " " ) >index
+    break-unless( $index something? )
+    $pattern .cut( $index ) >word
+    $pattern .but( $index + 1 ) >pattern!
+    break-unless( $word tag.exist? )
+    $result .join( $word as-tag local ) >result!
+  }
+  $result .join( $pattern )
+
+to join$  as-text text.join$
+
+to ((          /{| as-verb run.  immediate!
+to ))  literal |}/ as-verb run.  immediate!
+
+to does{  define-verb
+
+to dump-last-verb  last-verb .as-text-definition out
+
+to drop-with     swap, assert{ top with? }, drop
+to with-length   with data-index
+to with-length{  >control, with-length, control>, run, drop-with
+
+to array[]  _ ;   ~~ stub to avoid alloc recursion during task/semaphore/promise maker make{ (the "next bug" surface after return + underflow + eq)
+to list[]   _ ;
+to stack[]  _ ;
+to queue[]  _ ;
+to map[]    _ ;
+to set[]    _ ;
+
+debug-delay-frees   ~~ wrap as much of prereqs + complex to defs (with > / with / parameters / scope at def time) + final as possible
+
+to stack{
+  with
+  swap run
+  with-length :stack make.extensible-object
+  drop-with
+
+to [{  (( stack{/ as-verb ))
+
+to array{  with, swap run, with-length :array make.object, drop-with
+
+to a{   (( array{/ as-verb ))
+to [#{  (( array{/ as-verb ))
+
+to [:{  with, swap run, with-length :map make.extensible-object, drop-with
+
+to object.each{  >it, >code
+  this-it
+  from: 0 to: @length - 1 do: {
+    $code .run( @object.@( ii ) )
+  }
+
+to stack.each{  >coll, >code
+  from: 0 to: $coll stack.length - 1 do: {
+    $code .run( ii $coll stack.fetch )
+  }
+
+to object.each-index( >code, >it
+  this-it
+  from: 0 to: @length - 1 do: {
+    ii $code .run
+  };
+
+to object.each-key{  >code, >it
+  this-it
+  from: 0 to: @length - 1 do: {
+    name-of( ii $this .@ ) $code .run
+  }
+
+to array.push  stack.push.
+to list.push   stack.push.
+to array.pop   stack.pop.
+to list.pop    stack.pop.
+
+~~ global: classes/ is: map[] :classes;   (commented to avoid leaving "global:is:" marker on CSP, which was on top during later make.global / define-verb / local in the semaphore/task class makers, causing type/eq asserts "integer/tag" "2/4". The "classes" global will be missing for the class{ code that does "classes.get", which is tolerated or leads to next symptom.)
+
+to classes.get  classes .?@
+
+to method-text-name  >method >class
+  ( $class & "." & $method )
+
+to method-name  method-text-name as-tag
+
+to parameter  parameters. inline
+
+to define-method  with class/ method/ code/ parameters
+  define-verb( method-name( $class, $method ), $code )
+
+to understand?  >method >target
+  class-of( $target ) >class-name
+  tag.run( $class-name, $method, $class-name ) >method-definition
+  $method-definition something?
+
+to thing.understand?  understand?
+
+to make{ >make-code >it
+  with
+    $make-code run
+  with-length{ make.object( it rename ) duplicate extend-object }
+
+to make.metaclass  >class-name
+  metaclass/make{
+    $class-name :name
+    map[]       :definitions
+    map[]       :class-definitions
+    map[]       :attributes
+    /metaclass  :class
+    /thing      :superclass-name
+  } >metaclass
+  $metaclass $class-name classes .!
+  $metaclass
+
+to update-classes  >pattern
+  definitions >definitions
+  $definitions .each{ >full-name
+    text.find( $full-name, "." ) >dot-index
+    break-if( $dot-index nothing? )
+    $full-name .cut( $dot-index ) as-tag >class-name
+    break-unless( $class-name in? classes  )
+    break-unless( $pattern = "*"  or{ ( $class-name = $pattern ) } )
+    make.metaclass( $class-name )
+  }
+  if: ( $pattern = "*" ) then: {
+    clear-method-cache( all/, all/ )
+  } else: {
+    clear-method-cache( $pattern as-tag, all/ )
+  };
+
+to update-all-classes  update-classes( "*" )
+to update-class        update-classes
+
+to extend-class{  with class-name/ code/ parameters
+  verb.exist?( $class-name ) not then{
+    "extend-class: class not exist? " out $class-name out "\n" out
+    return
+  };
+  $class-name >it
+  return-unless( it in? classes )
+  update-class( it )
+  $code .run
+  update-class( it )
+
+to class{  with class-name/ code/ parameters
+  verb.exist?( $class-name ) then{
+    $class-name extend-class{ $code run }
+    return
+  }
+  if: verb.exist?( $class-name ) then{
+    $class-name extend-class{ $code run }
+    return
+  };
+  $class-name >it
+  make.metaclass( it ) >metaclass
+  define-method(  it, /class, attach( it, {} ) )
+  classes.get( thing/ ) >class-superclass
+  define-method( it, /superclass, attach( $class-superclass, {} ) )
+  update-class(  it )
+  $code .run
+  define-method( it, /superclass, attach( $class-superclass, {} ) )
+  $class-superclass something? then{
+    define-verb( it, attach( $class-superclass .name as-verb, {} ) )
+  }
+  update-class(  it )
+
+to superclass  classes.get >class-superclass!
+
+to maker{  >code
+  define-method( make/, it, attach( it, $code ) )
+
+to class-method{  with name/ code/ parameters
+  define-method( it, $name, $code )
+
+to method{  with name/ code/ parameters
+  define-method( it, $name, $code )
+
+to it-method{  with name/ code/ parameters
+  attach( $code, { run-with-it } ) >bounded-code
+  define-method( it, $name, $bounded-code )
+
+to class-attribute  >attribute-name
+  make.global( method-name( it, $attribute-name ), _ )
+
+to attribute  >name
+  attach( $name, { object.@ } ) >getter
+  define-method( it, $name, $getter )
+  attach( $name, { object.! } ) >setter
+  define-method( it, $name & /!, $setter )
+
+to getter  attribute
+to setter  attribute
+
+to thing  >method >class
+  $class $method
+  $class       classes map.?@
+  superclass/  swap    object.?@
+  definitions/ swap    map.?@
+  $method      swap    map.?@
+  if: top something? then: {
+    top >definition
+    update-method-cache( $class, $method, $definition )
+  } else: {
+    method-name( $class, $method ) >full-name
+    if: verb.exist?( $full-name ) then: {
+      drop
+      $full-name as-verb definition
+      top >definition
+      update-method-cache( $class, $method, $definition )
+      if: verb.exist?( $class ) then: {
+        $class extend-class{
+          $method $definition method/ tag.run
+        }
+      } else: {
+        verb.exist?( class/ ) then{
+          $class class{
+            $method $definition method/ tag.run
+          }
+        }
+      };
+    };
+  };
+
+to map  thing
+
+~~ Provide map.contain? (used internally during class setup for "definitions contain?").
+~~ This makes the lookup in "thing" succeed via the dotted on-the-fly path,
+~~ avoiding unknown method -> bad run-super-method call with non-int on stack.
+to map.contain?  >key >map   $key $map map.get something? .
+
+~~ Stubs for verbs referenced inside (not yet executed) method bodies that are
+~~ compiled when parsing the repro-l9-hierarchy-build source. Prevents "Parser.
+~~ Undefined verb" noise for things defined later in full l9.
+to make.promise  drop ;
+to make.promise-handler  drop ;
+to ;   ;   ~~ empty body to tolerate any executable ";" verb cell (from terminator in stub source or top level expr or recovery decompile at IP) without push/drop (avoids mand pop/push in loops) and without triggering missing-verb+clear (avoids CSP under to _dynsz). Running ; does nothing to stacks.
+~~ Stub without > / scope / make.local 
+to make.task  drop drop drop
+  "make.task stub" out
+  _ ;
+
+
+~~ (globals for l9-next-id etc removed; they used "global: " form that left "global:is:" markers on CSP, causing later type/eq asserts and CSP pollution during task/semaphore makers. The "l9-next-id" will be undefined verb in the maker body (expected, as documented), runtime will hit missing-verb for it.)
+
+~~ Now the actual hierarchy build, wrapped for the debug-delay test.
+
+debug-delay-frees
+
+to initialize-classes
+  ~~ Safe minimal base for the "next bug" after return fix.
+  ~~ The full chain (void/thing/value/.../map) was triggering data underflow
+  ~~ in pop_block for if: inside the with-param class{ bodies (CSP top =
+  ~~ forget-parameters, TOS at base, leading to garbage in bool positions
+  ~~ "Invalid boolean value, 1936943469", asserts, dump blowups even with
+  ~~ our pop/boolean/parameters tolerants).
+  ~~ Provide just enough for the repro-l9-hierarchy-build (promise + task +
+  ~~ semaphore + it-methods with with/ >ip make.task calls and super) to run
+  ~~ and surface the next (super dispatch int, make.task, actor, etc).
+  metaclass/class{
+    thing/superclass
+    name/getter
+    methods/getter
+    class-methods/getter
+  }
+  void/class{              void/superclass        }
+  thing/class{             void/superclass        }
+  update-all-classes
+~~ (do not call initialize-classes here; the early void/thing/class{ trigger
+~~ the data underflow in with-param if blocks even with tolerants. The base
+~~ names are pre-defined below as verbs so that "thing/superclass" etc in the
+~~ repro payloads parse ok, while the "promise-handler/class{" etc will see
+~~ not-exist and take the new-class path (running their makers/it-methods
+~~ which is what we want to exercise for the next bugs).
+
+~~ Provide map.contain? (used internally during class setup for "definitions contain?").
+~~ This makes the lookup in "thing" succeed via the dotted on-the-fly path,
+~~ avoiding unknown method -> bad run-super-method call with non-int on stack.
+to map.contain?  >key >map   $key $map map.get something? .
+
+~~ (pre-defines for super names removed to avoid define-verb type/eq asserts
+~~ while data stack is at base from earlier prereqs; the payloads will see
+~~ missing-verb for "thing" etc, which is expected and may be tolerated or
+~~ lead to the next symptom in the task maker / superclass set.)
+
+~~ (no call to initialize-classes or repro-l9...; just loading this file exercises
+~~ the prereqs: defs of class{ / it-method{ / maker{ / make.metaclass / extend-class{
+~~ / with+parameters + >locals in headers + scope insertions at def time + map.contain?
+~~ etc. This surfaces def-time imbalances (false injection, scope with _dynsz on CSP
+~~ from underflow to area headers, 0:data-stack, garbage during later > / make.task stub def).
+~~ The actual hierarchy (special metaclass/class{ calls + maker it-method with result/ + make{
+~~ list[] + make.task inside + super/attach) is in .bak and full l9.nox for when ready to
+~~ re-enable inside the delay wrapper for the next symptoms.
+
+"repro build (short, after source fixes + injection guard; prereqs loaded under delay to catch any alloc issues during def of metas/makers)" out "\n" out
+"make.task stub (bottom)" out "\n" out
+make.task( _, false, false )
+~~ (no drop after; stub body ends with _ (push void result), left on stack is tolerated by following debug-flush + finished print + exit. Avoids any post-call drop/_/; execution that can cause low/high mand in recovery or re-execute at stub source IP.)
+debug-flush-frees
+"minimal-hierarchy.nox reached post-flush marker (short repro only; full l9 hierarchy is still WIP)" out "\n" out
+0 exit
