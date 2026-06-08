@@ -3,9 +3,11 @@ title: "Inox Tutorial Generation Guidelines"
 subtitle: "How to generate beginner-facing Inox tutorials without importing classical assignment semantics"
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+date: "2026-06-02"
+license: "MIT (code) · CC BY-SA 4.0 (text)"
 status: "working-note"
 version: "0.1"
-license: "MIT (code) · CC BY-SA 4.0 (text)"
+corpus_role: "source"
 canonical_url: "https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-tutorial-generation-guidelines.md"
 ---
 

@@ -3,9 +3,11 @@ title: "Basic Inox Tutorial"
 subtitle: "A stack-first introduction to literals, verbs, named values, and updates"
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-status: "working-tutorial"
-version: "0.1"
+date: "2026-06-02"
 license: "MIT (code) · CC BY-SA 4.0 (text)"
+status: "working-note"
+version: "0.1"
+corpus_role: "source"
 canonical_url: "https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-tutorial-basic.md"
 ---
 

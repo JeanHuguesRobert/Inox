@@ -3,9 +3,11 @@ title: "Inox Naming and the Absence of Assignment"
 subtitle: "Named stack cells, local values, data values, and why `=` is not assignment"
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
+date: "2026-06-02"
+license: "MIT (code) · CC BY-SA 4.0 (text)"
 status: "working-note"
 version: "0.1"
-license: "MIT (code) · CC BY-SA 4.0 (text)"
+corpus_role: "source"
 canonical_url: "https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-naming-and-assignment.md"
 ---
 
