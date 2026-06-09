@@ -25,15 +25,15 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 ## Registered Repositories
 
 <!-- BEGIN_AUTO: registered_repos -->
-| Repository | research/index.md | Branch | Last commit |
+| Repository | research/index.md | Branch | Policy |
 |---|---|---|---|
-| cogentia | ✅ | main | 2026-06-08 |
-| FractaVolta | ✅ | main | 2026-06-08 |
-| marenostrum | ✅ | main | 2026-06-08 |
-| barons-Mariani | ✅ | main | 2026-06-08 |
-| inseme | ✅ | main | 2026-06-08 |
-| Inox | ✅ | master | 2026-06-08 |
-| JeanHuguesRobert | ✅ | main | 2026-06-08 |
+| cogentia | yes | main | all |
+| FractaVolta | yes | main | all |
+| marenostrum | yes | main | all |
+| barons-Mariani | yes | main | all |
+| inseme | yes | main | research |
+| Inox | yes | master | all |
+| JeanHuguesRobert | yes | main | all |
 <!-- END_AUTO: registered_repos -->
 
 ---
@@ -43,62 +43,55 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 <!-- BEGIN_AUTO: graph -->
 ```mermaid
 graph LR
-  cogentia["📄 cogentia"]
-  FractaVolta["📄 FractaVolta"]
-  marenostrum["📄 marenostrum"]
-  barons-Mariani["📄 barons-Mariani"]
-  inseme["📄 inseme"]
-  Inox["📄 Inox"]
-  JeanHuguesRobert["📄 JeanHuguesRobert"]
-  cogentia --> marenostrum
-  cogentia --> JeanHuguesRobert
-  cogentia --> barons-Mariani
-  cogentia --> FractaVolta
-  cogentia --> inseme
-  cogentia --> Inox
-  FractaVolta --> marenostrum
-  FractaVolta --> JeanHuguesRobert
-  FractaVolta --> barons-Mariani
-  FractaVolta --> cogentia
-  FractaVolta --> inseme
-  FractaVolta --> Inox
-  marenostrum --> barons-Mariani
-  marenostrum --> JeanHuguesRobert
-  marenostrum --> FractaVolta
-  marenostrum --> cogentia
-  marenostrum --> inseme
-  marenostrum --> Inox
-  barons-Mariani --> marenostrum
-  barons-Mariani --> JeanHuguesRobert
-  barons-Mariani --> FractaVolta
-  barons-Mariani --> cogentia
-  barons-Mariani --> inseme
-  barons-Mariani --> Inox
-  inseme --> cogentia
-  inseme --> JeanHuguesRobert
-  inseme --> marenostrum
-  inseme --> FractaVolta
-  inseme --> barons-Mariani
-  inseme --> Inox
-  Inox --> marenostrum
-  Inox --> JeanHuguesRobert
-  Inox --> FractaVolta
-  Inox --> cogentia
-  Inox --> barons-Mariani
-  Inox --> inseme
-  JeanHuguesRobert --> cogentia
-  JeanHuguesRobert --> marenostrum
-  JeanHuguesRobert --> FractaVolta
-  JeanHuguesRobert --> barons-Mariani
-  JeanHuguesRobert --> inseme
-  JeanHuguesRobert --> Inox
-  click cogentia "https://github.com/JeanHuguesRobert/cogentia/blob/main/research/index.md" "Open research/index.md"
-  click FractaVolta "https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md" "Open research/index.md"
-  click marenostrum "https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md" "Open research/index.md"
-  click barons-Mariani "https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md" "Open research/index.md"
-  click inseme "https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md" "Open research/index.md"
-  click Inox "https://github.com/JeanHuguesRobert/Inox/blob/main/research/index.md" "Open research/index.md"
-  click JeanHuguesRobert "https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/index.md" "Open research/index.md"
+  r_cogentia["cogentia"]
+  r_fractavolta["FractaVolta"]
+  r_marenostrum["marenostrum"]
+  r_barons_mariani["barons-Mariani"]
+  r_inseme["inseme"]
+  r_inox["Inox"]
+  r_jeanhuguesrobert["JeanHuguesRobert"]
+  r_jeanhuguesrobert -->|195| r_barons_mariani
+  r_jeanhuguesrobert -->|135| r_cogentia
+  r_cogentia -->|102| r_barons_mariani
+  r_jeanhuguesrobert -->|63| r_marenostrum
+  r_jeanhuguesrobert -->|62| r_fractavolta
+  r_jeanhuguesrobert -->|60| r_inseme
+  r_jeanhuguesrobert -->|55| r_inox
+  r_fractavolta -->|32| r_cogentia
+  r_fractavolta -->|31| r_marenostrum
+  r_cogentia -->|21| r_inseme
+  r_barons_mariani -->|20| r_cogentia
+  r_cogentia -->|20| r_marenostrum
+  r_fractavolta -->|18| r_barons_mariani
+  r_inseme -->|14| r_cogentia
+  r_barons_mariani -->|12| r_marenostrum
+  r_fractavolta -->|12| r_inseme
+  r_marenostrum -->|12| r_fractavolta
+  r_inox -->|11| r_barons_mariani
+  r_inox -->|11| r_cogentia
+  r_marenostrum -->|10| r_barons_mariani
+  r_inox -->|9| r_fractavolta
+  r_marenostrum -->|9| r_cogentia
+  r_inox -->|7| r_marenostrum
+  r_inox -->|7| r_inseme
+  r_inseme -->|7| r_inox
+  r_cogentia -->|6| r_fractavolta
+  r_barons_mariani -->|5| r_fractavolta
+  r_barons_mariani -->|4| r_inox
+  r_fractavolta -->|4| r_inox
+  r_cogentia -->|3| r_jeanhuguesrobert
+  r_inseme -->|3| r_barons_mariani
+  r_inseme -->|3| r_jeanhuguesrobert
+  r_barons_mariani -->|2| r_jeanhuguesrobert
+  r_barons_mariani -->|2| r_inseme
+  r_cogentia -->|2| r_inox
+  r_inseme -->|2| r_marenostrum
+  r_inseme -->|2| r_fractavolta
+  r_marenostrum -->|2| r_inseme
+  r_marenostrum -->|2| r_inox
+  r_fractavolta -->|1| r_jeanhuguesrobert
+  r_inox -->|1| r_jeanhuguesrobert
+  r_marenostrum -->|1| r_jeanhuguesrobert
 ```
 <!-- END_AUTO: graph -->
 
@@ -135,7 +128,7 @@ graph LR
 |---|---|---|---|
 | [Concatenative language](./concepts.md#concatenative-language) | Global | Canonical | language paradigm |
 | [Stack VM](./concepts.md#stack-vm) | Global | Operational | runtime architecture |
-| [Control/data plane separation](./concepts.md#controldata-plane-separation) | Global | Canonical | architectural principle |
+| [Control/data plane separation](./concepts.md#control-data-plane-separation) | Global | Canonical | architectural principle |
 | [Named values](./concepts.md#named-values) | Global | Defined | language primitive |
 | [Reactive sets](./concepts.md#reactive-sets) | Global | Seed | distributed primitive |
 | [Actors](./concepts.md#actors) | Global | Working | concurrency model |
@@ -174,6 +167,12 @@ graph LR
 - Reactive-set primitives as the basis for a distributed dataflow Fractanet runtime
 - Native Packet Attractors for routing without fixed addresses
 - Pressure strategies (`best-effort`, `ttl`, `bounded`, `demand`, `durable`) as runtime policies
+- [Concept Index — Inox](concepts.md)
+- [Corpus Status — Inox](corpus-status.md)
+- [The Inox Programming Language — Specification](inox-spec.md)
+- [Library packets — when the library is a specification, not code](library_packets.md)
+- [Reactive Sets in Inox — Native Implementation Path](reactive_sets_inox_cop_implementation.md)
+- [Test du critère Rossignol — Inox](test_critere_rossignol_inox.md)
 <!-- END_AUTO: possibilities -->
 
 ---
