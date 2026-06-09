@@ -16,6 +16,22 @@ last_stamped_at: 2026-06-01
 
 "Le style, c'est l'homme" - Buffon, 1753.
 
+## Orientation
+
+Status: sovereign technical source document in progress.
+
+Function in the corpus: define Inox as the concatenative language and runtime substrate for distributed, edge-oriented, non-centralized computation.
+
+Read before: [Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md), [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md), and [FractaVolta / PGN](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/PGN.md).
+
+Read after: [Inox naming and assignment](inox-naming-and-assignment.md), Inox tutorials, and future Fractanet runtime notes.
+
+Depends on: stack-machine design, strict control/data plane separation, named values, actors, reactive sets, and the anti-capture architecture shared across the corpus.
+
+Continuation: keep the specification aligned with the executable implementation while preserving the language-level role of Inox in the broader corpus.
+
+Last consolidation: 2026-06-09 — orientation block added during corpus digestion.
+
 
 Iɴᴏx is a concatenative script language. It is designed to operate in the context of edge computing, with the Internet of Things (IoT), in Machine Learning (ML) times.
 
