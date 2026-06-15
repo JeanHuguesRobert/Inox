@@ -25,15 +25,17 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 ## Registered Repositories
 
 <!-- BEGIN_AUTO: registered_repos -->
-| Repository | research/index.md | Branch | Policy |
-|---|---|---|---|
-| cogentia | yes | main | all |
-| FractaVolta | yes | main | all |
-| marenostrum | yes | main | all |
-| barons-Mariani | yes | main | all |
-| inseme | yes | main | research |
-| Inox | yes | master | all |
-| JeanHuguesRobert | yes | main | all |
+| Repository | research/index.md | Branch | Policy | Visibility | Public presence |
+|---|---|---|---|---|---|
+| cogentia | yes | main | all | public | full |
+| FractaVolta | yes | main | all | public | full |
+| marenostrum | yes | main | all | public | full |
+| barons-Mariani | yes | main | all | public | full |
+| inseme | yes | main | research | public | full |
+| Inox | yes | master | all | public | full |
+| registre-mariani | yes | main | all | private | stub |
+| ubikia | yes | main | all | public | full |
+| JeanHuguesRobert | yes | main | all | public | full |
 <!-- END_AUTO: registered_repos -->
 
 ---
@@ -49,38 +51,41 @@ graph LR
   r_barons_mariani["barons-Mariani"]
   r_inseme["inseme"]
   r_inox["Inox"]
+  r_registre_mariani["registre-mariani"]
+  r_ubikia["ubikia"]
   r_jeanhuguesrobert["JeanHuguesRobert"]
-  r_jeanhuguesrobert -->|149| r_barons_mariani
-  r_cogentia -->|104| r_barons_mariani
-  r_jeanhuguesrobert -->|91| r_cogentia
-  r_jeanhuguesrobert -->|40| r_marenostrum
-  r_jeanhuguesrobert -->|34| r_fractavolta
-  r_fractavolta -->|33| r_marenostrum
-  r_jeanhuguesrobert -->|33| r_inox
-  r_fractavolta -->|32| r_cogentia
-  r_barons_mariani -->|29| r_cogentia
-  r_cogentia -->|21| r_inseme
-  r_cogentia -->|20| r_marenostrum
+  r_jeanhuguesrobert -->|143| r_barons_mariani
+  r_cogentia -->|101| r_barons_mariani
+  r_jeanhuguesrobert -->|99| r_cogentia
+  r_jeanhuguesrobert -->|43| r_marenostrum
+  r_fractavolta -->|40| r_cogentia
+  r_fractavolta -->|37| r_marenostrum
+  r_jeanhuguesrobert -->|36| r_fractavolta
+  r_jeanhuguesrobert -->|30| r_inox
+  r_barons_mariani -->|27| r_cogentia
+  r_cogentia -->|22| r_inseme
+  r_cogentia -->|19| r_marenostrum
+  r_fractavolta -->|18| r_inseme
   r_fractavolta -->|18| r_barons_mariani
-  r_jeanhuguesrobert -->|17| r_inseme
+  r_jeanhuguesrobert -->|16| r_inseme
   r_inseme -->|14| r_cogentia
-  r_barons_mariani -->|13| r_marenostrum
-  r_marenostrum -->|13| r_fractavolta
-  r_fractavolta -->|12| r_inseme
-  r_marenostrum -->|12| r_barons_mariani
+  r_marenostrum -->|12| r_fractavolta
+  r_marenostrum -->|12| r_cogentia
+  r_barons_mariani -->|11| r_marenostrum
   r_inox -->|11| r_barons_mariani
   r_inox -->|11| r_cogentia
+  r_marenostrum -->|11| r_barons_mariani
   r_inox -->|10| r_fractavolta
-  r_marenostrum -->|10| r_cogentia
+  r_fractavolta -->|8| r_inox
   r_inox -->|8| r_marenostrum
   r_inox -->|7| r_inseme
   r_inseme -->|7| r_inox
+  r_jeanhuguesrobert -->|7| r_ubikia
   r_barons_mariani -->|6| r_fractavolta
-  r_cogentia -->|6| r_fractavolta
-  r_cogentia -->|5| r_jeanhuguesrobert
+  r_cogentia -->|5| r_fractavolta
   r_barons_mariani -->|4| r_inox
   r_barons_mariani -->|4| r_jeanhuguesrobert
-  r_fractavolta -->|4| r_inox
+  r_cogentia -->|4| r_jeanhuguesrobert
   r_inseme -->|3| r_barons_mariani
   r_inseme -->|3| r_jeanhuguesrobert
   r_barons_mariani -->|2| r_inseme
@@ -113,8 +118,10 @@ graph LR
 | [Inox Naming and the Absence of Assignment](inox-naming-and-assignment.md) *(working note v0.1)* | this repo | 2026-06-02 |
 | [Inox Tutorial Generation Guidelines](inox-tutorial-generation-guidelines.md) *(working note v0.1)* | this repo | 2026-06-02 |
 | [Learning Inox — A tutorial for AI agents (and humans in a hurry)](learning-inox.md) *(working-paper tutorial — sections marked ⚠️ need author review)* | this repo | 2026-05-22 |
+| [Library packets — when the library is a specification, not code](library_packets.md) *(working hypothesis — LLM-generation as defensive heterogeneity against supply-chain attacks and as a substrate-specific packet pattern)* | this repo | 2026-05-23 |
 | [Inox naming conventions and design influences](naming-conventions.md) *(working notes)* | this repo | 2026-05-22 |
 | [Inox token-efficiency for LLMs — open hypothesis](llm_token_efficiency.md) *(working hypothesis — does concatenative composition + named values + multi-dialect dispatch align Inox with autoregressive code generation? Living note accumulating evidence over time)* | this repo | 2026-05-23 |
+| [AGENTS.md — Inox agent mandate](../AGENTS.md) *(local operational mandate for AI agents working in this repository)* | this repo | 2026-06-13 |
 | [Corpus Status](corpus-status.md) *(living view — auto-refreshed by `cogentia.js corpus-status`)* | this repo | refreshable |
 | [Concept Index](concepts.md) *(typed concept registry — mapped by `cogentia.js concepts`)* | this repo | refreshable |
 <!-- END_AUTO: published -->
@@ -167,12 +174,15 @@ graph LR
 - Reactive-set primitives as the basis for a distributed dataflow Fractanet runtime
 - Native Packet Attractors for routing without fixed addresses
 - Pressure strategies (`best-effort`, `ttl`, `bounded`, `demand`, `durable`) as runtime policies
-- [Concept Index — Inox](concepts.md)
+- [Research Index — barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md)
+- [Research Index — Cogentia](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/index.md)
+- [Research Index — FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md)
 - [Corpus Status — Inox](corpus-status.md)
-- [The Inox Programming Language — Specification](inox-spec.md)
-- [Library packets — when the library is a specification, not code](library_packets.md)
 - [Reactive Sets in Inox — Native Implementation Path](reactive_sets_inox_cop_implementation.md)
-- [Test du critère Rossignol — Inox](test_critere_rossignol_inox.md)
+- [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
+- [Research Index — Jean Hugues Noël Robert (Profile / Entry Point)](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/index.md)
+- [Research Index — MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md)
 <!-- END_AUTO: possibilities -->
 
 ---
@@ -185,10 +195,6 @@ graph LR
 ### Backlinks
 
 *These documents link to this file:*
-- [Concept Index — Inox](concepts.md)
-- [Corpus Status — Inox](corpus-status.md)
 - [Research Index — Inox](index.md)
-- [The Inox Programming Language — Specification](inox-spec.md)
-- [Test du critère Rossignol — Inox](test_critere_rossignol_inox.md)
-
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->
