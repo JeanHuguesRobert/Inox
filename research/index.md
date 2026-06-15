@@ -39,8 +39,10 @@ This repository instantiates the **language and runtime substrate layer** of the
 | [Inox Naming and the Absence of Assignment](inox-naming-and-assignment.md) *(working note v0.1)* | this repo | 2026-06-02 |
 | [Inox Tutorial Generation Guidelines](inox-tutorial-generation-guidelines.md) *(working note v0.1)* | this repo | 2026-06-02 |
 | [Learning Inox — A tutorial for AI agents (and humans in a hurry)](learning-inox.md) *(working-paper tutorial — sections marked ⚠️ need author review)* | this repo | 2026-05-22 |
+| [Library packets — when the library is a specification, not code](library_packets.md) *(working hypothesis — LLM-generation as defensive heterogeneity against supply-chain attacks and as a substrate-specific packet pattern)* | this repo | 2026-05-23 |
 | [Inox naming conventions and design influences](naming-conventions.md) *(working notes)* | this repo | 2026-05-22 |
 | [Inox token-efficiency for LLMs — open hypothesis](llm_token_efficiency.md) *(working hypothesis — does concatenative composition + named values + multi-dialect dispatch align Inox with autoregressive code generation? Living note accumulating evidence over time)* | this repo | 2026-05-23 |
+| [AGENTS.md — Inox agent mandate](../AGENTS.md) *(local operational mandate for AI agents working in this repository)* | this repo | 2026-06-13 |
 | [Corpus Status](corpus-status.md) *(living view — auto-refreshed by `cogentia.js corpus-status`)* | this repo | refreshable |
 | [Concept Index](concepts.md) *(typed concept registry — mapped by `cogentia.js concepts`)* | this repo | refreshable |
 
@@ -94,11 +96,12 @@ This repository instantiates the **language and runtime substrate layer** of the
 ### Backlinks
 
 *These documents link to this file:*
-- [Concept Index — Inox](concepts.md)
+- [Research Index — barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md)
+- [Research Index — Cogentia](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/index.md)
+- [Research Index — FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md)
 - [Corpus Status — Inox](corpus-status.md)
-- [The Inox Programming Language — Specification](inox-spec.md)
-- [Library packets — when the library is a specification, not code](library_packets.md)
 - [Reactive Sets in Inox — Native Implementation Path](reactive_sets_inox_cop_implementation.md)
-- [Test du critère Rossignol — Inox](test_critere_rossignol_inox.md)
-
+- [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
+- [Research Index — Jean Hugues Noël Robert (Profile / Entry Point)](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/index.md)
+- [Research Index — MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md)
 <!-- END_AUTO: backlinks -->
