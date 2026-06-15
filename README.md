@@ -15,7 +15,7 @@ Started in June 2021. The reference implementation is in TypeScript. Production-
 
 ## Inox in the corpus
 
-Inox is the **language and runtime substrate** of a six-repository corpus that operationalises the [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) AI Safety anti-capture proposal.
+Inox is the **language and runtime substrate** of a multi-repository public corpus that operationalises the [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) AI Safety anti-capture proposal.
 
 | Repository | Role |
 |---|---|
@@ -25,6 +25,7 @@ Inox is the **language and runtime substrate** of a six-repository corpus that o
 | [inseme](https://github.com/JeanHuguesRobert/inseme) | Platform — COP runtime, briques, Kudocracy.Survey, Inseme Agora, Ophélia AI mediator, Atlas of Biodiversity. |
 | [barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani) | Political and institutional framework. Plan 2038, *Discours de la seconde méthode*. |
 | **Inox** | **Language and runtime substrate. Concatenative stack VM, strict control/data plane separation, designed for nodes of the future *Fractanet*. JavaScript today, WASM and C/C++ next, ESP32 bare-metal eventually.** |
+| [Ubikia](https://github.com/JeanHuguesRobert/ubikia) | Editorial derivation and publication layer. Source-first derived products, personas, platform packages, and publication ledger. |
 
 Inox is **not yet** the runtime running the other repos. JavaScript and TypeScript do that work today. The vocation is to replace JS progressively, starting at the edge — small, autonomous, traceable nodes that coordinate without a capturable centre. That is the same architectural question the corpus asks at five other scales: at the network level via [Patent US7606221B2](https://patents.google.com/patent/US7606221B2/en), at the territory level via [VIGILIA](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/vigilia.md), at the individual level via [Cogentia](https://github.com/JeanHuguesRobert/cogentia), at the governance level via [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md), and at the energy level via [the Energy Packet Network](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/UNCONSCIOUS_GRID.md).
 
