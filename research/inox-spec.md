@@ -1606,6 +1606,7 @@ This is a list of the primitives that are currently implemented in the Iɴᴏx c
 ### Backlinks
 
 *These documents link to this file:*
+- [Rendre capable — noyau doctrinal provisoire](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/noyau_doctrinal_rendre_capable.md)
 - [Research Index — barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md)
 - [Research Index — Cogentia](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/index.md)
 - For researchers
