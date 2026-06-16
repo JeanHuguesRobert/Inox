@@ -352,8 +352,7 @@ That is not classical assignment.
 ### Backlinks
 
 *These documents link to this file:*
-- [Corpus Status — Inox](corpus-status.md)
-- [Research Index — Inox](index.md)
 - [Inox Documentation Index](inox-docs-index.md)
-
+- [Research Index — Inox](index.md)
+- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

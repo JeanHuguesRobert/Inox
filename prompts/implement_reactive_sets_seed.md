@@ -294,5 +294,4 @@ After implementation, report:
 
 *These documents link to this file:*
 - [Research Index — Inox](../research/index.md)
-
 <!-- END_AUTO: backlinks -->

@@ -170,8 +170,5 @@ Working name for the FractaVolta network — the distributed mesh of autonomous 
 ### Backlinks
 
 *These documents link to this file:*
-- [Corpus Status — Inox](corpus-status.md)
 - [Research Index — Inox](index.md)
-- [The Inox Programming Language — Specification](inox-spec.md)
-
 <!-- END_AUTO: backlinks -->
