@@ -1,3 +1,4 @@
+~~ #2026: This file was added in 2026.
 ~| minimal-hierarchy.nox
  |  MINIMAL REPRO for the l9 class hierarchy building bug.
  |
@@ -231,37 +232,35 @@ to update-all-classes  update-classes( "*" )
 to update-class        update-classes
 
 to extend-class{  with class-name/ code/ parameters
-  verb.exist?( $class-name ) not then{
+  if: verb.exist?( $class-name ) then: {
+    $class-name >it
+    _ >class-superclass
+    if: ( it in? classes ) then: {
+      update-class( it )
+      $code .run
+      update-class( it )
+    };
+  } else: {
     "extend-class: class not exist? " out $class-name out "\n" out
-    return
   };
-  $class-name >it
-  return-unless( it in? classes )
-  update-class( it )
-  $code .run
-  update-class( it )
 
 to class{  with class-name/ code/ parameters
-  verb.exist?( $class-name ) then{
+  if: verb.exist?( $class-name ) then: {
     $class-name extend-class{ $code run }
-    return
-  }
-  if: verb.exist?( $class-name ) then{
-    $class-name extend-class{ $code run }
-    return
+  } else: {
+    $class-name >it
+    make.metaclass( it ) >metaclass
+    define-method(  it, /class, attach( it, {} ) )
+    classes.get( thing/ ) >class-superclass
+    define-method( it, /superclass, attach( $class-superclass, {} ) )
+    update-class(  it )
+    $code .run
+    define-method( it, /superclass, attach( $class-superclass, {} ) )
+    if: $class-superclass something? then: {
+      define-verb( it, attach( $class-superclass .name as-verb, {} ) )
+    };
+    update-class(  it )
   };
-  $class-name >it
-  make.metaclass( it ) >metaclass
-  define-method(  it, /class, attach( it, {} ) )
-  classes.get( thing/ ) >class-superclass
-  define-method( it, /superclass, attach( $class-superclass, {} ) )
-  update-class(  it )
-  $code .run
-  define-method( it, /superclass, attach( $class-superclass, {} ) )
-  $class-superclass something? then{
-    define-verb( it, attach( $class-superclass .name as-verb, {} ) )
-  }
-  update-class(  it )
 
 to superclass  classes.get >class-superclass!
 
@@ -325,14 +324,15 @@ to map  thing
 ~~ Provide map.contain? (used internally during class setup for "definitions contain?").
 ~~ This makes the lookup in "thing" succeed via the dotted on-the-fly path,
 ~~ avoiding unknown method -> bad run-super-method call with non-int on stack.
-to map.contain?  >key >map   $key $map map.get something? .
+to map.contain?  >map >key   $key $map map.get something? .
 
 ~~ Stubs for verbs referenced inside (not yet executed) method bodies that are
 ~~ compiled when parsing the repro-l9-hierarchy-build source. Prevents "Parser.
 ~~ Undefined verb" noise for things defined later in full l9.
 to make.promise  drop ;
 to make.promise-handler  drop ;
-to ;   ;   ~~ empty body to tolerate any executable ";" verb cell (from terminator in stub source or top level expr or recovery decompile at IP) without push/drop (avoids mand pop/push in loops) and without triggering missing-verb+clear (avoids CSP under to _dynsz). Running ; does nothing to stacks.
+to ;  .
+  ~~ empty body to tolerate any executable ";" verb cell (from terminator in stub source or top level expr or recovery decompile at IP) without push/drop (avoids mand pop/push in loops) and without triggering missing-verb+clear (avoids CSP under to _dynsz). Running ; does nothing to stacks.
 ~~ Stub without > / scope / make.local 
 to make.task  drop drop drop
   "make.task stub" out
@@ -374,7 +374,7 @@ to initialize-classes
 ~~ Provide map.contain? (used internally during class setup for "definitions contain?").
 ~~ This makes the lookup in "thing" succeed via the dotted on-the-fly path,
 ~~ avoiding unknown method -> bad run-super-method call with non-int on stack.
-to map.contain?  >key >map   $key $map map.get something? .
+to map.contain?  >map >key   $key $map map.get something? .
 
 ~~ (pre-defines for super names removed to avoid define-verb type/eq asserts
 ~~ while data stack is at base from earlier prereqs; the payloads will see

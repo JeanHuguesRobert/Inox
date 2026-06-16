@@ -100,7 +100,8 @@ to test/test-output
 test-output/test
 
 
-to point.make  make-object( 0 :x, 0 :y, 3 :point )
+~~ #2026: Old code was: to point.make  make-object( 0 :x, 0 :y, 3 :point )
+to point.make  make.object( 0 :x, 0 :y, 3 :point )
 
 to test/point
   point.make
@@ -112,7 +113,8 @@ to test/point
 point/test
 
 
-to point.out  method: { out( "( x:" & it .x> & ", y:" & it .y> & " )" ) };.
+~~ #2026: Old code was: to point.out  method: { out( "( x:" & it .x> & ", y:" & it .y> & " )" ) };.
+to point.out  >{ out( "( x:" & it .x> & ", y:" & it .y> & " )" ) } .
 
 to test/method-call
   point.make

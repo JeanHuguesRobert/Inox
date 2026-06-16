@@ -16,6 +16,7 @@ to immediate!  immediate
 ~~ Some synonyms, shorter than the original name
 to forget              forget-control
 to clear               clear-data
+~~ #2026: dup was added in 2026
 to dup                 duplicate           ~~ Forth homage, see research/naming-conventions.md
 
 to basic-out           inox-out
@@ -28,6 +29,7 @@ to toDo                ToDo  ~~ Literate mode friendly, it becomes ToDo
 to do             .run().        inline
 to if:then:       if.            inline
 to if:then:else:  if-else.       inline
+~~ #2026: then:else: was added in 2026
 to then:else:     if-else.       inline
 to if:do:         if:then:.      inline
 to unless:then:   not if:do:.    inline

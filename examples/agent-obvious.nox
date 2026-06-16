@@ -1,3 +1,4 @@
+~~ #2026: This file was added in 2026.
 ~| agent-obvious.nox
  |  Demonstration of the "obvious" scripting surface for coding Agents.
  |  Per the two-versions idea: this layer (cli-stdlib + core) should feel natural

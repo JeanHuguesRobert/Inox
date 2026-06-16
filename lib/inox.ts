@@ -483,6 +483,9 @@ static milliseconds now( void ){
  *  Assertion macros
  */
 
+// #2026: Old code was:
+// /**/ import { strict as assert } from 'assert';
+// import { parse } from 'path';
 /**/ import { strict as assert } from 'node:assert';
 /**/ import { parse } from 'node:path';
 /**/ import fs from 'node:fs';
@@ -1773,6 +1776,7 @@ static bool trace_const_c_str( const char* msg ){
 
 /**/ let bootstrapping         = true;
 //c/ static bool bootstrapping = true;
+// #2026: This was added in 2026:
 //c/ // delayed free debug (nestable, for allocator diagnostics)
 //c/ static int debug_delayed_free_depth = 0;
 //c/ #define DEBUG_MAX_DELAYED_FREES 4096
@@ -1808,9 +1812,14 @@ function mand( b : boolean ) : boolean {
   mand_reenter_level++;
   if( mand_reenter_level > 1 ){
     mand_reenter_level--;
+// #2026: Old code was:
+//     bug( "Assert failure" );
     bug( "Assert failure (reenter)" );
     return true;
   }
+// #2026: Old code was:
+//   bug( "Assert failure" );
+//   breakpoint();
   bug( "Assert failure at IP=" + C( IP ) + " name=" + tag_as_text( name_of( IP - ONE || 0 ) ) + " CSP=" + C( CSP ) + " name=" + tag_as_text( name_of( CSP ) ) );
   // do not call breakpoint/trace_context/dump here (can blow string len on corrupt stacks during l9 class setup with underflows)
   // just the simple info + let the assert throw with TS stack
@@ -1859,6 +1868,8 @@ function mand2( b : boolean, m : string ) : boolean {
  *  When compiled using AssemblyScript some changes will be required.
  */
 
+// #2026: Old code was:
+// /**/ de&&bug( "Inox is starting." );
 /**/ if( de && typeof process !== "undefined" ){ process.stderr.write( "Inox is starting.\n" ); }
 
 // Early decision for the "first usable CLI" path (synchronous script runner,
@@ -3863,6 +3874,7 @@ function mand_eq( a : i32, b : i32 ) : boolean {
       trace( S()+ "bad eq " + N( a ) + " / " + tag_as_text( b ) );
     }
   }
+// #2026: This was added in 2026:
   if( ( a == 14 && b == 7 ) || ( a == 7 && b == 14 ) || ( a == 2 && b == 4 ) || ( a == 4 && b == 2 ) ){
     bug( "mand_eq bad " + N(a) + "/" + N(b) + " context: IP=" + C( IP ) + " name=" + tag_as_text( name_of( IP - ONE || 0 ) ) + " CSP top=" + C( CSP ) + " name=" + tag_as_text( name_of( CSP ) ) );
     bug( "data TOS=" + N( TOS ) + " near: " + C( TOS ) + " " + C( TOS - ONE ) );
@@ -4723,6 +4735,7 @@ let area_stat_freed_small_bytes       = 0;
 let area_stat_allocated_small_areas   = 0;
 let area_stat_freed_small_areas       = 0;
 
+// #2026: This was added in 2026:
 // Debug support for delayed area frees. Used to rule out bugs in the
 // custom allocator / free list / refcount logic by deferring actual
 // area_free operations across a region of code (nestable).
@@ -5245,6 +5258,7 @@ function area_free( area : Area ){
   alloc_de&&mand( area_is_busy( area ) );
   const old_count = area_ref_count( area );
 
+// #2026: This was added in 2026:
   // Eternal/saturated areas are never decremented nor freed
   if( old_count >= area_eternal_ref_count ){
     return;
@@ -5256,6 +5270,7 @@ function area_free( area : Area ){
     return;
   }
 
+// #2026: This was added in 2026:
   // Debug: delay the physical reclaim of the area (put on free lists etc.)
   // This lets us rule out use-after-free / double-free / allocator reuse bugs
   // by keeping the memory content alive (and not linked into free lists)
@@ -5365,6 +5380,7 @@ function area_free( area : Area ){
 }
 
 
+// #2026: This was added in 2026:
 /*
  *  Debug helpers for delayed area frees (nestable counter + queue).
  *  These are to help diagnose whether a bug is in the custom area allocator
@@ -5452,13 +5468,17 @@ function area_lock( area : Area ){
 
   alloc_de&&mand( area_is_busy( area ) );
 
+// #2026: Old code was:
+//   // Increment reference counter
   // Increment reference counter, saturating into the "eternal" state
   const old_count = area_ref_count( area );
+// #2026: This was added in 2026:
   // Already eternal/saturated: incref is a no-op
   if( old_count >= area_eternal_ref_count ){
     return;
   }
   const new_count = old_count + 1;
+// #2026: This was added in 2026:
   // Saturate instead of overflowing: the area becomes eternal forever
   if( new_count >= area_eternal_ref_count ){
     area_set_ref_count( area, area_eternal_ref_count );
@@ -6833,6 +6853,8 @@ function stack_extend( stk : Area, len : Length ){
   }
   const old_stack = value_of( stk );
   const new_stack = stack_resize( old_stack, new_capacity );
+// #2026: Old code was:
+//   stack_free( old_stack );
   // stack_resize already calls stack_free(stk) internally; freeing here too
   // would be a double-free, asserting on area_is_busy in area_free.
   set_value( stk, new_stack );
@@ -7640,6 +7662,18 @@ function find_definition_by_name( n : TxtC ) : Cell {
 
 
 function definition_of( id : Index  ) : Cell {
+// #2026: Old code was:
+// // Given a verb, as a tag, return the address of its definition
+//   const def = find_definition( id );
+//   if( def != get_definition( id ) ){
+//     if( tag_is_valid( id ) ){
+//       const auto_ = tag_as_text( id );
+//       debugger;
+//     }else{
+//       debugger;
+//     }
+//     get_definition( id );
+//     find_definition( id );
 // Given a verb, as a tag, return the address of its definition.
 // For DEFINED verbs, find_definition and get_definition must agree —
 // that's the consistency invariant of the symbol table. For UNDEFINED
@@ -7652,6 +7686,8 @@ function definition_of( id : Index  ) : Cell {
   if( get_def != 0 ){
     de&&mand_eq( def, get_def );
   }
+// #2026: Old code had:
+//   de&&mand_eq( def, get_definition( id ) );
   return def;
 }
 
@@ -8338,6 +8374,7 @@ function pop_block() : Cell {
 
 function pop_tag() : Tag {
 // Pop a tag from the stack
+// #2026: This was added in 2026:
   if( run_de && TOS <= ACTOR_data_stack ){
     try { console.error( "DIAG: pop_tag() under or at base, TOS=" + C(TOS) + " CSP=" + C(CSP) + " cspname=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
   }
@@ -8410,6 +8447,9 @@ function eat_ip( c : Cell ) : Cell {
 
 
 function pop_ip(){
+// #2026: Old code was:
+// // Pop IP from the control stack
+//   IP = eat_ip( CSP );
 // Pop IP from the control stack. Accept both type_ip (some user call frames
 // in de path) and type_verb (frames pushed by call()/defer() helpers for
 // internal run-with-*, run-with-it, etc). The value always holds the return
@@ -8423,6 +8463,7 @@ function pop_ip(){
 
 function drop(){
 // Drop the top of the data stack
+// #2026: This was added in 2026:
   if( run_de && TOS <= ACTOR_data_stack ){
     try { console.error( "DIAG: drop() under or at base before pop, TOS=" + C(TOS) + " CSP=" + C(CSP) + " cspname=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
   }
@@ -8432,6 +8473,7 @@ function drop(){
 
 function raw_drop(){
 // Drop the top of the data stack, assuming it is not a reference
+// #2026: This was added in 2026:
   if( run_de && TOS <= ACTOR_data_stack ){
     try { console.error( "DIAG: raw_drop() under or at base before pop, TOS=" + C(TOS) + " CSP=" + C(CSP) + " cspname=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
   }
@@ -8440,6 +8482,7 @@ function raw_drop(){
 
 
 function drop_control(){
+// #2026: This was added in 2026:
   if( run_de && CSP <= ACTOR_control_stack ){
     try { console.error( "DIAG: drop_control() CSP low/under, CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) + " TOS=" + C(TOS) ); } catch(e){}
   }
@@ -8461,6 +8504,7 @@ function drop_control(){
 
 
 function raw_drop_control(){
+// #2026: This was added in 2026:
   if( run_de && CSP <= ACTOR_control_stack ){
     try { console.error( "DIAG: raw_drop_control() CSP low/under, CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
   }
@@ -8923,6 +8967,8 @@ function build_targets(){
 // Build the C++ and AssemblyScript targets
 
   // Starting from this very file itself
+// #2026: Old code was:
+//   const source = require( "fs" ).readFileSync( "lib/inox.ts", "utf8" );
   const source = fs.readFileSync( "lib/inox.ts", "utf8" );
 
   // In C++, primitive declarations are postponed
@@ -9223,6 +9269,8 @@ function build_targets(){
   );
 
   // Done, write the C++ source code
+// #2026: Old code was:
+//   require( "fs" ).writeFileSync( "builds/inox.cpp", c_source, "utf8" );
   fs.writeFileSync( "builds/inox.cpp", c_source, "utf8" );
 
   const lines_of_code = len - ( comment_lines + blank_lines );
@@ -9260,6 +9308,8 @@ function build_targets(){
   }
 
   // Done, write the AssemblyScript source code
+// #2026: Old code was:
+//   require( "fs" ).writeFileSync( "builds/inox.as.ts", as_source, "utf8" );
   fs.writeFileSync( "builds/inox.as.ts", as_source, "utf8" );
 
   // Build the html help file that lists all primitives
@@ -9292,6 +9342,8 @@ function build_targets(){
   + "</html>\n";
 
   // Done, write the html source code
+// #2026: Old code was:
+//   require( "fs" ).writeFileSync( "builds/inox.html", html_source, "utf8" );
   fs.writeFileSync( "builds/inox.html", html_source, "utf8" );
 
   // Build the Markdown help file that lists all primitives
@@ -9316,6 +9368,8 @@ function build_targets(){
   md_source += NL;
 
   // Done, write the Markdown source code
+// #2026: Old code was:
+//   require( "fs" ).writeFileSync( "builds/inox.md", md_source, "utf8" );
   fs.writeFileSync( "builds/inox.md", md_source, "utf8" );
 
   // ToDo: build the Java version!
@@ -9451,10 +9505,14 @@ primitive( "a-primitive?", primitive_is_a_primitive );
 function primitive_return(){
 // primitive "return" is jump to return address. Eqv R> IP!
   // ToDo: this should be primitive 0
+// #2026: Old code had:
+//   debugger;
   run_de&&bug( S()
     + "primitive, return to IP " + C( value_of( CSP ) )
     + " from " + C( name_of( CSP ) ) + "/" + tag_as_text( name_of( CSP ) )
   );
+// #2026: Old code was:
+//   debugger;
   // Unwind any pending with/it/params/control frames (pushed by run-with-*
   // or make_local_it) before the final pop_ip. Direct pop would eat a local
   // cell (type != verb/ip) instead of the return frame, leading to
@@ -9518,6 +9576,7 @@ primitive( "return", primitive_return );
 
 function primitive_return_if(){
   if( pop_boolean() ){
+// #2026: This was added in 2026:
     // see primitive_return for explanation of the unwind
     while( type_of( CSP ) == type_verb ){
       const n = name_of( CSP );
@@ -9549,6 +9608,7 @@ primitive( "return-if", primitive_return_if );
 
 function primitive_return_unless(){
   if( ! pop_boolean() ){
+// #2026: This was added in 2026:
     // see primitive_return for explanation of the unwind
     while( type_of( CSP ) == type_verb ){
       const n = name_of( CSP );
@@ -9571,6 +9631,8 @@ function primitive_return_unless(){
     pop_ip();
   }
 }
+// #2026: Old code was:
+// primitive( "return-unless", primitive_return_if );
 primitive( "return-unless", primitive_return_unless );
 
 
@@ -10280,6 +10342,7 @@ primitive( "control-depth", primitive_control_depth );
 const tag_clear_control = tag( "clear-control" );
 
 function primitive_clear_control(){
+// #2026: This was added in 2026:
   if( run_de ){
     try { console.error( "DIAG: primitive_clear_control entry CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) + " TOS=" + C(TOS) ); } catch(e){}
   }
@@ -10294,6 +10357,7 @@ function primitive_clear_control(){
   }
   CSP = ACTOR_control_stack;
   set( CSP, type_ip, tag_clear_control, return_ip );
+// #2026: This was added in 2026:
   if( run_de ){
     try { console.error( "DIAG: primitive_clear_control after CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
   }
@@ -10849,6 +10913,7 @@ function cell_looks_safe( c : Cell ) : boolean {
         + "Invalid boolean value, " + N( v )
         + " at " + C( c )
       );
+// #2026: This was added in 2026:
       if( run_de || verbose_stack_de ){
         try { console.error( "DIAG: Invalid boolean value, " + N( v ) + " at " + C( c ) + " CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) + " TOS=" + C(TOS) ); } catch(e){}
       }
@@ -11706,6 +11771,7 @@ function dump_stacks() : Text {
     + ", excess pop " + N( ( csp - return_base ) / ONE );
     // ToDo: fatal error?
     some_dirty = true;
+// #2026: This was added in 2026:
     if( run_de || verbose_stack_de ){
       try { console.error( "DIAG: control underflow in dump_stacks, CSP=" + C(csp) + " base=" + C(return_base) + " name=" + tag_as_text( name_of(csp) ) ); } catch(e){}
     }
@@ -11738,6 +11804,7 @@ function dump_stacks() : Text {
     + ", excess pop " + N( ( top - base ) / ONE );
     // base = ptr + 5 * ONE;
     some_dirty = true;
+// #2026: This was added in 2026:
     if( run_de || verbose_stack_de ){
       try { console.error( "DIAG: 0 :data-stack underflow detected in dump_stacks, TOS=" + N(top) + " base=" + C(base) + " CSP=" + C(CSP) + " cspname=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
     }
@@ -13482,6 +13549,8 @@ function checked_int_is_less_than(){
 function checked_int_is_less_or_equal(){
   const p2 = checked_int_second_parameter();
   const p1 = checked_int_first_parameter();
+// #2026: Old code was:
+//   if( value_of( p1 ) <= value_of( p2 ) ){
   if( p1 <= p2 ){
     set_top_boolean( tag_boolean, 1 );
   }else{
@@ -13869,6 +13938,7 @@ function primitive_float_as_text(){
   const auto_ = pop_float();
   push_text( float_as_text( auto_ ) );
 }
+// #2026: This was added in 2026:
 primitive( "float.as-text", primitive_float_as_text );
 
 
@@ -14128,8 +14198,11 @@ primitive( "float.truncate", primitive_float_truncate );
 
 function primitive_text_join(){
 // Text concatenation, t2 t1 -- t3
-  const auto_t1 = pop_as_text();
+// #2026: Old code had:
+//   const auto_t1 = pop_as_text();
   const auto_t2 = pop_as_text();
+// #2026: This was added in 2026:
+  const auto_t1 = pop_as_text();
   push_text( auto_t1 + auto_t2 );
 }
 primitive( "text.join", primitive_text_join );
@@ -14770,9 +14843,16 @@ primitive( "primitive.from", primitive_primitive_from );
 
 
 /* -----------------------------------------------------------------------------
+// #2026: Old code was:
+//  *  Constants and variables
  *  Constants and named stack cells
  *  a constant is just a verb that pushes a literal onto the data stack.
  *  a global variable is two words, xxx and xxx!, to get/set the value.
+// #2026: Old code was:
+//  *  a control variable is a transient cell in the control stack.
+//  *  a data variable is a transient cell in the data stack.
+//  *  Read and write access to variables is possible directly or by address.
+//  *  Local and data variables use dynanic scopes, ie the variables are
  *  a local named value is a transient named cell in the control stack.
  *  a data named value is a transient named cell in the data stack.
  *  Read and update access to named cells is possible directly or by address.
@@ -14794,6 +14874,8 @@ primitive( "peek", primitive_peek );
 
 
 /*
+// #2026: Old code was:
+//  *  poke - set the value of a cell, using a cell's address
  *  poke - update the value of a cell, using a cell's address
  *  This is very low level, it is the Forth ! word (store).
  */
@@ -14861,6 +14943,7 @@ primitive( "make.constant", primitive_make_constant );
  */
 
 function primitive_define_verb(){
+// #2026: This was added in 2026:
   if( run_de ){
     try { console.error( "DIAG: primitive_define_verb entry TOS=" + C(TOS) + " CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
   }
@@ -14870,10 +14953,12 @@ function primitive_define_verb(){
   const def  = value_of( top );
   const len  = area_length( def );
   define_verb( name, def, len );
+// #2026: This was added in 2026:
   // A verb definition lives as long as the dictionary, ie forever; pin its
   // area so reference counting can never free it (and the values it captured).
   area_make_eternal( def );
   clear_top();
+// #2026: This was added in 2026:
   if( run_de ){
     try { console.error( "DIAG: primitive_define_verb after TOS=" + C(TOS) + " CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
   }
@@ -14932,6 +15017,8 @@ primitive( "tag.to-verb", primitive_tag_to_verb );
 
 
 /*
+// #2026: Old code was:
+//  *  make.global - create a global variable and verbs to get/set it
  *  make.global - create a global variable and verbs to get/update it
  *  Getter is named like the variable, setter is named like the variable with
  *  a "!" suffix.
@@ -14992,10 +15079,13 @@ primitive( "make.global", primitive_make_global );
 
 
 /*
+// #2026: Old code was:
+//  *  make.local - create a local variable in the control stack
  *  make.local - consume a value and create a local named cell in the control stack
  */
 
 function primitive_make_local(){
+// #2026: This was added in 2026:
   if( run_de ){
     try {
       console.error( "DIAG: primitive_make_local entry TOS=" + C(TOS) + " CSP=" + C(CSP) + " cspname=" + tag_as_text( name_of(CSP) ) + " data_low=" + (TOS <= ACTOR_data_stack) );
@@ -15004,6 +15094,7 @@ function primitive_make_local(){
   const n = pop_tag();
   // the return value on the top of the control stack must be preserved
   const old_csp = CSP;
+// #2026: This was added in 2026:
   if( run_de ){
     try {
       console.error( "DIAG: primitive_make_local after pop_tag n=" + tag_as_text(n) + " TOS=" + C(TOS) + " CSP=" + C(CSP) + " cspname=" + tag_as_text( name_of(CSP) ) );
@@ -15011,6 +15102,8 @@ function primitive_make_local(){
   }
   CSP += ONE;
   move_cell( old_csp, CSP );
+// #2026: Old code was:
+//   move_cell( pop(), old_csp );
   const data_pop = pop();
   if( run_de ){
     try {
@@ -15019,6 +15112,7 @@ function primitive_make_local(){
   }
   move_cell( data_pop, old_csp );
   set_name( old_csp, n );
+// #2026: This was added in 2026:
   if( run_de ){
     try {
       console.error( "DIAG: primitive_make_local after, CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) + " TOS=" + C(TOS) );
@@ -15090,6 +15184,8 @@ function primitive_forget_parameters(){
     limit = ACTOR_control_stack;
   }
 
+// #2026: Old code was:
+//   while( is_with( CSP ) ){
   // Drop parameter cells until we reach the /with sentinel, then drop the
   // sentinel below. The previous `while( is_with(CSP) )` never entered the
   // body for a typical parameter frame and left the stack misaligned for pop_ip.
@@ -15204,6 +15300,14 @@ function primitive_run_with_parameters(){
     copy_count++;
   }
 
+// #2026: Old code was:
+//   // Skip actual arguments and formal parameters in data stack
+//   TOS = TOS - ( ( count * 2 ) - 1 ) * ONE;
+// 
+//   CSP = actual_argument_cell - ONE;
+// 
+//   // Schedule call to the parameters remover
+//   defer( tag_forget_parameters, forget_parameters_definition );
   // Skip actual arguments and formal parameters in data stack.
   // Guard to avoid underflow/TOS below base at def/compile time of it-method{
   // / maker{ / class{ etc (similar to parameters primitive fix above; at def
@@ -15226,11 +15330,14 @@ primitive( "run-with-parameters", primitive_run_with_parameters );
 
 
 /*
+// #2026: Old code was:
+//  *  parameters - create local variables for the parameters of a verb
  *  parameters - create local named cells for the parameters of a verb
  */
 
 function primitive_parameters(){
   const top = TOS;
+// #2026: This was added in 2026:
   // Injection for call time to 2-param meta words (class{ / it-method{ / extend-class{ )
   // when the special /class{ /it-method{ syntax pushed only the actuals (name/class-name + code block)
   // but not the with + formals that the parameters while expects at call time.
@@ -15291,6 +15398,7 @@ function primitive_parameters(){
   const csp = CSP;
   let name;
   let nparams = 0;
+// #2026: This was added in 2026:
   if( run_de ){
     try { console.error( "DIAG: primitive_parameters about to push /with to CSP, TOS=" + C(TOS) + " CSP=" + C(CSP) ); } catch(e){}
   }
@@ -15300,6 +15408,7 @@ function primitive_parameters(){
       raw_drop();
       break;
     }
+// #2026: This was added in 2026:
     if( TOS <= ACTOR_data_stack ){
       break;  // tolerant
     }
@@ -15308,6 +15417,8 @@ function primitive_parameters(){
     set( CSP, type_void, name, 0 );
     nparams++;
   }
+// #2026: Old code was:
+//   // Now eat values from the data stack to initialize the parameters
   if( run_de ){
     try { console.error( "DIAG: primitive_parameters after while nparams=" + nparams + " CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) + " TOS=" + C(TOS) ); } catch(e){}
   }
@@ -15340,7 +15451,11 @@ function primitive_parameters(){
   let ate = 0;
   let ii;
   for( ii = 1 ; ii <= nparams ; ii++ ){
+// #2026: Old code had:
+//     // ToDo: optimize this
     name = name_of( csp + ii * ONE );
+// #2026: Old code was:
+//     move_cell( pop(), csp + ii * ONE );
     if( ! has_code_formal || TOS <= ACTOR_data_stack ){
       break;
     }
@@ -15350,6 +15465,7 @@ function primitive_parameters(){
     }
     move_cell( data_for_eat, csp + ii * ONE );
     set_name( csp + ii * ONE, name );
+// #2026: This was added in 2026:
     ate++;
   }
   if( has_code_formal && ate > 0 ){
@@ -15358,11 +15474,16 @@ function primitive_parameters(){
   if( run_de ){
     try { console.error( "DIAG: primitive_parameters after eat ate=" + ate + " CSP=" + C(CSP) + " name=" + tag_as_text(name_of(CSP)) + " TOS=" + C(TOS) ); } catch(e){}
   }
+// #2026: Old code had:
+//   // Schedule call to the parameters remover
+//   defer( tag_forget_parameters, forget_parameters_definition );
 }
 primitive( "parameters", primitive_parameters );
 
 
 /*
+// #2026: Old code was:
+//  *  local - copy a control variable to the data stack
  *  local - copy a local named cell from the control stack to the data stack
  */
 
@@ -15436,6 +15557,8 @@ primitive( "cached-local", primitive_cached_local );
 
 
 /*
+// #2026: Old code was:
+//  *  set-local - assign a value to a local variable
  *  local! - update an existing local named cell from the data stack
  */
 
@@ -15459,6 +15582,8 @@ primitive( "local!", primitive_set_local );
 
 
 /*
+// #2026: Old code was:
+//  *  data - lookup for a named value in the data stack and copy it to the top
  *  data - look up a named cell in the data stack and copy it to the top
  */
 
@@ -15484,6 +15609,8 @@ primitive( "data", primitive_data );
 
 
 /*
+// #2026: Old code was:
+//  *  set-data - change the value of an existing data variable
  *  data! - update an existing named cell in the data stack
  */
 
@@ -15574,8 +15701,14 @@ static Cell cell_lookup(
 
 
 /*
+// #2026: Old code was:
+//  *  lookup - find a variable in a memory area.
  *  lookup - find a named cell in a memory area.
  *  The memory area is defined by a start and end pointer.
+// #2026: Old code was:
+//  *  The variable is defined by a tag.
+//  *  The nth variable is found.
+//  *  The result is an integer pointer to the variable, or 0 if not found.
  *  The named cell is identified by a tag.
  *  The nth matching named cell is found.
  *  The result is an integer pointer to the named cell, or 0 if not found.
@@ -15595,6 +15728,8 @@ primitive( "lookup", primitive_lookup );
 
 
 /*
+// #2026: Old code was:
+//  *  data-index - find the position of a data variable in the data stack
  *  data-index - find the position of a named cell in the data stack
  */
 
@@ -15619,6 +15754,8 @@ primitive( "data-index", primitive_data_index );
 
 
 /*
+// #2026: Old code was:
+//  *  upper-local - non local access to a local variable
  *  upper-local - non-local access to a local named cell
  *  ToDo: should be previous-local, it is actually lower in the stack
  */
@@ -15639,6 +15776,8 @@ primitive( "upper-local", primitive_upper_local );
 
 
 /*
+// #2026: Old code was:
+//  *  upper-data - non local access to a data variable
  *  upper-data - non-local access to a data-stack named cell
  */
 
@@ -15656,6 +15795,8 @@ primitive( "upper-data", primitive_upper_data );
 
 
 /*
+// #2026: Old code was:
+//  *  set-upper-local - set a local variable in the nth upper frame
  *  upper-local! - update a local named cell in the nth upper frame
  */
 
@@ -15674,6 +15815,8 @@ primitive( "upper-local!", primitive_set_upper_local );
 
 
 /*
+// #2026: Old code was:
+//  *  set-upper-data - set a data variable in the nth upper frame
  *  upper-data! - update a data-stack named cell in the nth upper frame
  */
 
@@ -16128,7 +16271,8 @@ operator_primitive( "object.contain?", primitive_object_contains );
  */
 
 function primitive_is_in(){
-  primitive_swap();
+// #2026: Old code had:
+//   primitive_swap();
   push_tag( tag_contains );
   primitive_run_method();
 }
@@ -16152,12 +16296,25 @@ function dereference_top(){
 function primitive_object_set(){
 // Set the value of an instance variable, aka attribute, of an object
 
-  let ptr = dereference_top();
-  const name_cell  = TOS - ONE;
+// #2026: Old code was:
+//   let ptr = dereference_top();
+//   const name_cell  = TOS - ONE;
+  const name_cell  = TOS;
+  const obj_cell   = TOS - ONE;
   const value_cell = TOS - 2 * ONE;
   check_de&&mand_tag( name_cell );
   const n = value_of( name_cell );
   reset( name_cell );
+
+// #2026: This was added in 2026:
+  const target = reference_of( obj_cell );
+  let ptr = 0;
+  if( type_of( target ) == type_reference ){
+    check_de&&mand_eq( area_length( target ), 1 );
+    ptr = value_of( target );
+  } else {
+    ptr = target;
+  }
 
   let limit = 0;
   if( check_de ){
@@ -16628,6 +16785,8 @@ primitive( "queue.length", primitive_queue_length );
 
 
 /*
+// #2026: Old code was:
+//  *  queue.pull - extract the oldest element from the queue
  *  queue.pull - extract the oldest (first-in) element from the queue (FIFO dequeue)
  *  Stack effect: ( queue -- value )
  *  Removes element at index 1 (the oldest), shifts remaining elements down,
@@ -16641,23 +16800,35 @@ function primitive_queue_pull(){
   clear_top();
   pop();
   const queue_length = value_of( queue );
+// #2026: Old code was:
+//   if( queue_length + 1 >= to_cell( area_size( queue ) ) ){
+//     FATAL( "queue.pull, queue overflow" );
   if( queue_length == 0 ){
     FATAL( "queue.pull, empty queue" );
     return;
   }
+// #2026: Old code was:
+//   // Make room for new element
   // Move out the oldest element (at index 1) to the data stack
   move_cell( queue + ONE, push() );
   // Shift remaining elements left (down in index)
   let ii;
+// #2026: Old code was:
+//   for( ii = queue_length ; ii > 0 ; ii-- ){
+//     move_cell( queue + ii * ONE, queue + ( ii + 1 ) * ONE );
   for( ii = 1 ; ii < queue_length ; ii++ ){
     move_cell( queue + ( ii + 1 ) * ONE, queue + ii * ONE );
   }
+// #2026: Old code was:
+//   // Push new element
+//   move_cell( pop(), queue + ONE );
   // Clear the now-empty slot at the end
   reset( queue + queue_length * ONE );
   // Decrement queue length
   set_value( queue, queue_length - 1 );
 }
 primitive( "queue.pull", primitive_queue_pull );
+// #2026: This was added in 2026:
 primitive( "queue.dequeue", primitive_queue_pull );  // idiomatic alias
 
 
@@ -16953,6 +17124,7 @@ primitive( "map.get", primitive_map_get );
  */
 
 function primitive_map_nice_get(){
+// #2026: This was added in 2026:
   // Contract: ( key map -- value | void ). All bail paths must leave a void
   // cell on the stack where the result would have gone, not an empty stack
   // (a missing result later trips primitive_make_local with an empty data
@@ -16961,6 +17133,10 @@ function primitive_map_nice_get(){
   // crash during initial bootstrap when /thing isn't registered yet).
   const map_cell = TOS;
   if( ! is_a_reference( map_cell ) ){
+// #2026: Old code was:
+//     reset( map_cell );
+//     pop();
+//     drop();
     drop();         // drop the (non-reference) map
     clear_top();    // turn the key cell into void
     return;
@@ -16974,6 +17150,8 @@ function primitive_map_nice_get(){
   // First cell is the length of the map
   if( ! is_an_integer( map ) ){
     drop();
+// #2026: Old code was:
+//     drop();
     clear_top();
     return;
   }
@@ -16981,6 +17159,8 @@ function primitive_map_nice_get(){
   const key_cell = TOS - ONE;
   if( ! is_a_tag( key_cell ) ){
     drop();
+// #2026: Old code was:
+//     drop();
     clear_top();
     return;
   }
@@ -16995,6 +17175,8 @@ function primitive_map_nice_get(){
   }
   if( ii > map_length ){
     drop();
+// #2026: Old code was:
+//     drop();
     clear_top();
     return;
   }
@@ -18172,11 +18354,18 @@ function push() : Cell {
 
 
 function pop() : Cell {
+// #2026: This was added in 2026:
   if( run_de && TOS <= ACTOR_data_stack ){
     try { console.error( "DIAG: pop() under or at base, TOS=" + C(TOS) + " CSP=" + C(CSP) + " cspname=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
   }
   de&&mand( TOS > ACTOR_data_stack );
   return TOS--;
+// #2026: Old code had:
+//   // de&&mand( ONE == 1 );
+//   // If ONE is two, ie words_per_cell is 2, then it should be:
+//   // const x = TOS;
+//   // TOS -= ONE;
+//   // return x;
 }
 
 
@@ -18664,6 +18853,8 @@ function run(){
 
   if( step_de && ( n != 0 ) ) debugger;
 
+// #2026: Old code was:
+//         // Special "next" code, 0x0000, is a jump to the return address
         // Special "next" code, 0x0000, is a jump to the return address.
         // On normal end-of-word we must also drain any pending forget-*
         // defer frames (with-params, it, locals, control) that were pushed
@@ -18673,6 +18864,7 @@ function run(){
         // and later pops (e.g. pop_block for if/then in class makers or
         // it-methods) underflow or see garbage -> assert or FATAL.
         if( i == 0x0000 ){
+// #2026: This was added in 2026:
           if( type_of( CSP ) == type_verb ){
             const n = name_of( CSP );
             if( n == tag_forget_it ){
@@ -18691,6 +18883,8 @@ function run(){
             // else: normal return frame (verb), fall through to pop it
           }
           if( check_de ){
+// #2026: Old code was:
+//             if( type_of( CSP ) == type_ip ){
             const t = type_of( CSP );
             if( t == type_ip || t == type_verb ){
               if( run_de ){
@@ -18717,6 +18911,7 @@ function run(){
             // Push return address into control stack, named to help debugging
             defer( unpack_name( i ), IP + ONE );
           }
+// #2026: This was added in 2026:
           // Late-binding lookup: if the cell was emitted at compile time
           // before the target verb's definition existed (forward reference,
           // notably self-recursion inside `to xxx ... .`), the value field
@@ -18727,6 +18922,8 @@ function run(){
             next_ip = definition_of( unpack_name( i ) );
           }
           // ToDo: set type to Act?
+// #2026: Old code was:
+//           IP = value_of( IP );
           IP = next_ip;
           // bug( text_of_verb_definition( unpack_name( verb ) ) );
           continue;
@@ -18819,6 +19016,7 @@ function run(){
               debugger;
               // CSP = old_csp;
             }
+// #2026: This was added in 2026:
             if( run_de ){
               try {
                 const cspname = name_of( CSP );
@@ -19416,6 +19614,7 @@ function primitive_definitions(){
         ndef++;
       }
     }
+// #2026: This was added in 2026:
     ii++;
   }
   // Allocate a stack object to hold all the definitions
@@ -19434,6 +19633,7 @@ function primitive_definitions(){
         stack_push( list, the_tmp_cell );
       }
     }
+// #2026: This was added in 2026:
     ii++;
   }
   // Return the list
@@ -19500,14 +19700,17 @@ let scope_close_definition = 0;
 // = definition_of( tag_scope_close );
 
 function primitive_scope(){
+// #2026: This was added in 2026:
   if( run_de ){
     try {
       console.error( "DIAG: primitive_scope entry CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) );
     } catch(e){ console.error("DIAG: scope entry err"); }
   }
   // Install sentinel
+// #2026: This was added in 2026:
   const old_csp = CSP;
   CSP += ONE;
+// #2026: This was added in 2026:
   if( run_de ){
     try {
       console.error( "DIAG: primitive_scope after +sentinel old=" + C(old_csp) + " CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) );
@@ -19516,6 +19719,7 @@ function primitive_scope(){
   set( CSP, type_tag, tag_scope_open, 0 );
   // Schedule scope close cleaner
   defer( tag_scope_close, scope_close_definition );
+// #2026: This was added in 2026:
   if( run_de ){
     try {
       console.error( "DIAG: primitive_scope after defer CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) );
@@ -19526,11 +19730,13 @@ primitive( "scope", primitive_scope );
 
 
 function primitive_scope_close(){
+// #2026: This was added in 2026:
   if( run_de ){
     try { console.error( "DIAG: primitive_scope_close entry CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) + " TOS=" + C(TOS) ); } catch(e){}
   }
   // Clear all values in control stack, down to scope open sentinel
   while( true ){
+// #2026: This was added in 2026:
     if( run_de ){
       try {
         const nm = name_of( CSP );
@@ -19556,6 +19762,7 @@ function primitive_scope_close(){
   check_de&&mand_tag( CSP );
   raw_drop_control();
   pop_ip();
+// #2026: This was added in 2026:
   if( run_de ){
     try { console.error( "DIAG: primitive_scope_close after CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
   }
@@ -19768,6 +19975,7 @@ primitive( "attach", primitive_attach );
  */
 
 function primitive_as_block(){
+// #2026: This was added in 2026:
   if( run_de ){
     try { console.error( "DIAG: primitive_as_block entry TOS=" + C(TOS) + " CSP=" + C(CSP) + " (used by define-verb)" ); } catch(e){}
   }
@@ -19776,6 +19984,8 @@ function primitive_as_block(){
   const runnable = pop();
   const type = type_of( runnable );
 
+// #2026: Old code was:
+//   // Done if already a good loking dynamic block
   // Done if already a good looking dynamic block: consume the input arg (already
   // popped into 'runnable'), produce the result block ref on stack, and clear
   // the consumed input cell so we don't leave DIRTY cells above final TOS
@@ -19786,6 +19996,8 @@ function primitive_as_block(){
   if( type_of( runnable ) == type_reference
   &&  area_tag( value_of( runnable ) ) == tag_block
   ){
+// #2026: Old code was:
+//     push();
     const ref_area = value_of( runnable );
     const result_slot = push();
     set( result_slot, type_reference, tag_block, ref_area );
@@ -19820,6 +20032,7 @@ function primitive_as_block(){
   }
   // Push the resulting block object
   set( push(), type_reference, tag_block, block_area );
+// #2026: This was added in 2026:
   if( run_de ){
     try { console.error( "DIAG: primitive_as_block other-case after, TOS=" + C(TOS) + " CSP=" + C(CSP) ); } catch(e){}
   }
@@ -20101,6 +20314,7 @@ let toker_line_no = 0;
 // This is activated after a "to" to get the verb name.
 let toker_eager_mode = false;
 
+// #2026: This was added in 2026:
 // Set when a "," followed by a blank was just skipped. A comma is a readability
 // separator that also closes the current collection (an open infix operator),
 // so that e.g. `f( a, x & y, b )` applies & to x and y before the next argument.
@@ -20366,6 +20580,7 @@ function primitive_inox_input(){
 primitive( "input", primitive_inox_input );
 
 
+// #2026: This was added in 2026:
 /*
  *  exit - stop the process; the exit code is the integer on the data stack.
  */
@@ -21646,6 +21861,7 @@ function process_comment_state(){
     // Prolog style, %
     }else if( teq( toker_ch, "%" ) ){
       set_style( "prolog" );
+// #2026: This was added in 2026:
 
     // No recognized comment introducer: there is no leading dialect-selecting
     // comment. Default to the inox dialect and reprocess this character as
@@ -21826,6 +22042,9 @@ function process_word_state(){
   // Get some next characters, some lookahead helps sometimes
   refill_next( toker_next_index );
 
+// #2026: Old code was:
+//   // Comma is ignored when followed by space, it is there for readability only
+//   if( teq( toker_ch, "," ) && teq( toker_next_1, " " ) ){
   // A comma followed by a blank (space, tab, CR or LF) is a readability
   // separator that also closes the current collection (an open infix operator);
   // see toker_post_comma, consumed in the eval loop. A comma that is NOT
@@ -23195,6 +23414,12 @@ function add_machine_code( code : Tag ){
 
   de&&mand( eval_is_compiling() );
 
+// #2026: Old code was:
+//   // Inline code definition if it is very short or if verb requires it
+//   const def = definition_of( code );
+// 
+//   // The last code is always a return, hence the - 1
+//   const def_len = definition_length( def ) - 1;
   // Use get_definition (not definition_of) so an undefined verb returns 0
   // instead of triggering definition_of's mand_eq assert. This is the path
   // taken when compiling a forward reference (e.g. self-recursion inside
@@ -23203,6 +23428,9 @@ function add_machine_code( code : Tag ){
 
   add_debug_info();
 
+// #2026: Old code was:
+//   // ToDo: don't inline the definition of "future" verbs, ie forward declared
+//   // ToDo: process "late binding" verbs, ie verbs whose definition is not known
   // Forward reference (self-recursion or any verb being defined right now):
   // def is 0 because the definition is not registered yet. Emit a non-inline
   // verb-call cell with value=0; the run loop falls back to looking up the
@@ -23216,14 +23444,27 @@ function add_machine_code( code : Tag ){
     set( the_tmp_cell, type_verb, code, 0 );
     stack_push( parse_codes, the_tmp_cell );
 
+// #2026: Old code was:
+//   // Either inline the associated definition or add a code to reference it
+//   if( def_len <= 1 || is_inline_verb( code ) ){
   }else{
 
+// #2026: Old code was:
+//     // ToDo: inlining a constant is not a good idea when it is actually
+//     // a global variable..., see the hack avoiding this in primitive_constant()
+//     stack_push_copies( parse_codes, def, def_len );
     // The last code is always a return, hence the - 1
     const def_len = definition_length( def ) - 1;
 
+// #2026: Old code was:
+//   }else{
     // Either inline the associated definition or add a code to reference it
     if( def_len <= 1 || is_inline_verb( code ) ){
 
+// #2026: Old code was:
+//     // Add a code to reference the definition
+//     set( the_tmp_cell, type_verb, code, def );
+//     stack_push( parse_codes, the_tmp_cell );
       // ToDo: inlining a constant is not a good idea when it is actually
       // a global variable..., see the hack avoiding this in primitive_constant()
       stack_push_copies( parse_codes, def, def_len );
@@ -23867,6 +24108,7 @@ function primitive_eval(){
     is_int          = false;
     is_operator     = false;
 
+// #2026: This was added in 2026:
     // A "," followed by a blank closed the previous token's collection: apply
     // any pending infix operator now, before the next argument is parsed.
     if( toker_post_comma ){
@@ -24020,7 +24262,10 @@ function primitive_eval(){
         + source_location( parse_line_no, parse_column_no )
       );
       debugger;
+// #2026: Old code had:
+//       break;
       done = true;
+// #2026: This was added in 2026:
       break;
     }
 
@@ -24064,6 +24309,8 @@ function primitive_eval(){
 
     // OK. It's a word token
 
+// #2026: Old code was:
+//     if( verb_exists( token_text ) ){
     // [Recursive verb] Self-reference inside a verb definition.
     //
     // When parsing the body of `to NAME ... NAME ... .`, the inner NAME
@@ -24175,6 +24422,8 @@ function primitive_eval(){
     // If existing verb, handle operators
     if( verb_id != 0 ){
 
+// #2026: Old code was:
+//       is_operator = ! is_forth && !! is_operator_verb( verb_id );
       // Skip the operator-verb flag lookup for self-recursive references —
       // the verb is being defined right now, so its flags aren't readable
       // yet (is_operator_verb -> definition_of would assert), and a verb
@@ -24319,7 +24568,11 @@ function primitive_eval(){
       // if xxx{
       }else{
         if( eval_is_compiling() ){
+// #2026: Old code had:
+//           eval_block_begin( token_text );
 
+// #2026: Old code was:
+//           // If .xxx{
           // If .xxx{, save the target into the control stack BEFORE entering
           // the block, so the save is emitted in the enclosing code stream and
           // not inside the block itself (as the .xxx( path does). Otherwise the
@@ -24330,6 +24583,7 @@ function primitive_eval(){
             eval_do_machine_code( tag_to_control );
           }
 
+// #2026: This was added in 2026:
           eval_block_begin( token_text );
 
           parse_de&&bug( S()+ "Eval. Block call:" + parse_name );
@@ -24597,11 +24851,14 @@ primitive( "trace", primitive_trace );
 
 /*
  *  inox-out - output text to the default output stream
+// #2026: This was added in 2026:
  *  Writes TOS as text to stdout. No prefix, no auto-newline — the caller
  *  decides. `trace` is the verb to use for prefixed debug output.
  */
 
 function primitive_inox_out(){
+// #2026: Old code was:
+//   primitive_trace();
   const auto_ = cell_as_text( TOS );
   if( trace_capture_enabled ){
     trace_capture_buffer += auto_;
@@ -25342,6 +25599,8 @@ function eval_file( name : TxtC ){
   debug_info_file   = tag( name );
 
   /*ts{*/
+// #2026: Old code was:
+//     const source_code = require( "fs" ).readFileSync( "lib/" + name, "utf8" );
     let file_to_read = name;
     if( ! name.includes( '/' ) && ! name.includes( '\\' ) && ! name.startsWith( 'lib' ) ){
       file_to_read = "lib/" + name;
@@ -25394,6 +25653,9 @@ function bootstrap(){
   /**/ try{
   eval_file( "bootstrap.nox" );
   eval_file( "forth.nox" );
+// #2026: Old code was:
+//   eval_file( "l9.nox" );
+//   if( de ){
   // Minimal core (the usable CLI path): by default (cli_minimal_core) we stop
   // after forth.nox and do NOT load l9.nox (the OO/class/actor layer from l8,
   // still buggy). This is the synchronous C-stdlib-like CLI flavour of Inox.
@@ -25485,6 +25747,7 @@ static void init_globals(){
   scope_close_definition       = definition_of( tag_scope_close );
   run_definition               = definition_of( tag_run );
   run_super_method_definition  = definition_of( tag_run_super_method );
+// #2026: This was added in 2026:
 
   // Delayed free debug verbs (nestable, for allocator bug hunting around l9 etc.)
   primitive( "debug-delay-frees", primitive_debug_delay_frees );
@@ -25520,6 +25783,9 @@ static void init_globals(){
 
 function repl(){
 
+// #2026: Old code had:
+//   const repl = require( "node:repl" );
+// 
   // repl-out primitive
 
   function primitive_repl_dot(){
@@ -25548,6 +25814,8 @@ function repl(){
   // ToDo: fill some global ENV object
   // ToDo: push ENV object onto the data stack
   // ToDo: push command line arguments onto the data stack
+// #2026: Old code was:
+//   const loop = repl.start( {
   const loop = nodeRepl.start( {
     prompt: "ok ",
     eval: ( cmd, context, filename, callback ) => {
@@ -25586,6 +25854,9 @@ function repl(){
 } // repl()
 
 
+// #2026: Old code was:
+// // Start the REPL if this file is run directly
+// if( require && require.main === module ){
 // Export the inox object together with its repl
 inox.repl = repl;
 export { inox };
@@ -25717,6 +25988,12 @@ See examples/hello.nox and examples/factorial.nox (use postfix if needed).
 
   build_targets();
   repl();
+// #2026: Old code had:
+// 
+// // Or else export it together with the inox object
+// }else{
+//   inox.repl = repl;
+//   exports.inox = inox;
 }
 
 /*}*/

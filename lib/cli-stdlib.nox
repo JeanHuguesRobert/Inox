@@ -1,3 +1,4 @@
+~~ #2026: This file was added in 2026.
 ~| cli-stdlib.nox
  |  Basic old-school additions for minimal CLI (richer than bare forth).
  |  Focus on namespaced verbs and some composed.

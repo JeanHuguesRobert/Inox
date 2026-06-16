@@ -1,3 +1,4 @@
+~~ #2026: This file was added in 2026.
 ~| hello.nox - the smallest possible Inox program |~
 
 to greet "Hello from Inox!\n" out.

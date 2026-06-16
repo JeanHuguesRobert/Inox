@@ -11,6 +11,9 @@ The l8 kernel was a single-threaded, event-driven kernel. The github repository 
 
  |~
 
+~~ #2026: Old code had debug enabled here:
+~~ debug
+
 to with-debug-info     debug-info/enable/log
 to without-debug-info  debug-info/disable/log
 
@@ -51,6 +54,9 @@ to queue[]  make.extensible-object( (( 0 :queue )) )
 to map[]    make.extensible-object( (( 0 :map   )) )
 to set[]    make.extensible-object( (( 0 :set   )) )
 
+~~ #2026: Old code had:
+~~ . with-debug-info
+
 to stack{
   with
   swap run
@@ -66,12 +72,14 @@ to [#{  (( array{/ as-verb ))
 
 to [:{  with, swap run, with-length :map make.extensible-object, drop-with
 
+~~ #2026: Old code was: to object.each{  >code, >it
 to object.each{  >it, >code
   this-it
   from: 0 to: @length - 1 do: {
     $code .run( @object.@( ii ) )
   }
 
+~~ #2026: This entire stack.each{ definition was added in 2026
 ~~ Stack iteration with stack primitives (a stack has no @length object
 ~~ attribute). Defined directly so the very first update-classes can iterate
 ~~ the definitions stack before the class hierarchy is registered. `coll` is
@@ -94,11 +102,17 @@ to object.each-key{  >code, >it
     name-of( ii $this .@ ) $code .run
   }
 
-to array.push  stack.push.
-to list.push   stack.push.
-to array.pop   stack.pop.
-to list.pop    stack.pop.
+~~ #2026: Old code had dots attached to the end:
+~~ to array.push  stack.push
+~~ to list.push   stack.push
+~~ to array.pop   stack.pop
+~~ to list.pop    stack.pop
+to array.push  stack.push .
+to list.push   stack.push .
+to array.pop   stack.pop .
+to list.pop    stack.pop .
 
+~~ #2026: Old code was: . global: classes/ is: map[] :classes;
 global: classes/ is: map[] :classes;
 
 
@@ -109,6 +123,7 @@ to method-text-name  >method >class
 
 to method-name  method-text-name as-tag
 
+~~ #2026: parameter was added in 2026
 to parameter  parameters. inline
 
 to define-method  with class/ method/ code/ parameters
@@ -124,6 +139,7 @@ to thing.understand?  understand?
 to make{ >make-code >it
   with
     $make-code run
+  ~~ #2026: Old code was: with-length{ make.object( it rename ) }
   ~~ Objects are extensible by default (correctness first): methods/attributes
   ~~ can always be added later, e.g. thing's on-the-fly class extension. Build
   ~~ the populated object then extend it in place (extend-object consumes one
@@ -140,6 +156,7 @@ to make.metaclass  >class-name
     /metaclass  :class
     /thing      :superclass-name
   } >metaclass
+  ~~ #2026: Old code was: $metaclass $class-name classes debugger .!
   $metaclass $class-name classes .!
   $metaclass
 
@@ -162,41 +179,64 @@ to update-classes  >pattern
 to update-all-classes  update-classes( "*" )
 to update-class        update-classes
 
+~~ #2026: Old code was:
+~~ to extend-class{  with class-name/ code/ parameters
+~~   assert{ verb.exist?( $class-name ) }
+~~   $class-name >it
+~~   return-unless( it in? classes )
+~~   update-class( it )
+~~   $code .run
+~~   update-class( it )
 to extend-class{  with class-name/ code/ parameters
-  verb.exist?( $class-name ) not then{
+  if: verb.exist?( $class-name ) then: {
+    $class-name >it
+    _ >class-superclass
+    if: ( it in? classes ) then: {
+      update-class( it )
+      $code .run
+      update-class( it )
+    };
+  } else: {
     "extend-class: class not exist? " out $class-name out "\n" out
-    return
   };
-  $class-name >it
-  return-unless( it in? classes )
-  update-class( it )
-  $code .run
-  update-class( it )
 
+~~ #2026: Old code was:
+~~ to class{  with class-name/ code/ parameters
+~~   verb.exist?( $class-name ) then{
+~~     $class-name extend-class{ $code run }
+~~     return
+~~   }
+~~   assert{ verb.exist?( $class-name ) not }
+~~   $class-name >it
+~~   make.metaclass( it ) >metaclass
+~~   define-method(  it, /class, attach( it, {} ) )
+~~   classes.get( thing/ ) >class-superclass
+~~   define-method( it, /superclass, attach( $class-superclass, {} ) )
+~~   update-class(  it )
+~~   $code .run
+~~   define-method( it, /superclass, attach( $class-superclass, {} ) )
+~~   define-verb(   it, attach( $class-superclass .name as-verb, {} ) )
+~~   update-class(  it )
 to class{  with class-name/ code/ parameters
-  verb.exist?( $class-name ) then{
+  if: verb.exist?( $class-name ) then: {
     $class-name extend-class{ $code run }
-    return
-  }
-  if: verb.exist?( $class-name ) then{
-    $class-name extend-class{ $code run }
-    return
+  } else: {
+    $class-name >it
+    make.metaclass( it ) >metaclass
+    define-method(  it, /class, attach( it, {} ) )
+    classes.get( thing/ ) >class-superclass
+    define-method( it, /superclass, attach( $class-superclass, {} ) )
+    update-class(  it )
+    $code .run
+    define-method( it, /superclass, attach( $class-superclass, {} ) )
+    ~~ A root class defined before its superclass is registered (e.g. metaclass
+    ~~ before thing) has a void class-superclass; skip the superclass-named verb
+    ~~ then ( $class-superclass .name would dispatch .name on void ).
+    if: $class-superclass something? then: {
+      define-verb( it, attach( $class-superclass .name as-verb, {} ) )
+    };
+    update-class(  it )
   };
-  $class-name >it
-  make.metaclass( it ) >metaclass
-  define-method(  it, /class, attach( it, {} ) )
-  classes.get( thing/ ) >class-superclass
-  define-method( it, /superclass, attach( $class-superclass, {} ) )
-  update-class(  it )
-  $code .run
-  define-method( it, /superclass, attach( $class-superclass, {} ) )
-  ~~ A root class defined before its superclass is registered (e.g. metaclass
-  ~~ before thing) has a void class-superclass; skip the superclass-named verb
-  ~~ then ( $class-superclass .name would dispatch .name on void ).
-  $class-superclass something? then{
-    define-verb( it, attach( $class-superclass .name as-verb, {} ) )
-  }
-  update-class(  it )
 
 to superclass  classes.get >class-superclass!
 
@@ -268,7 +308,8 @@ to map  thing
 ~~ may do "definitions contain? foo" or similar on map instances), the "thing"
 ~~ lookup finds it via dotted name on-the-fly instead of falling to unknown
 ~~ method which triggers run-super-method with non-int on TOS (the FATAL).
-to map.contain?  >key >map   $key $map map.get something? .
+~~ #2026: map.contain? was added in 2026
+to map.contain?  >map >key   $key $map map.get something? .
 
 to initialize-classes
   metaclass/class{
@@ -307,6 +348,7 @@ initialize-classes
 global: l9-next-id/ is: 0;
 global: l9-root/    is: _;
 
+~~ #2026: make.task stub was added in 2026
 to make.task  >fork? >spawn? >parent
   "make.task stub (see task maker for real logic)" out
   make{
@@ -343,6 +385,7 @@ to initialize-l9
       } else: {
         make.promise @next-promise!
         ~~ ToDo: resolve/reject with the result of the on-resolve/on-reject
+      ~~ #2026: Old code had no semicolon here: };
       };
     }
   }
@@ -418,6 +461,7 @@ to initialize-l9
     thing/superclass
     queue/class-attribute
     current/class-method{ l9 }
+    ~~ #2026: Old code was: maker{  with parent/ fork?/ spawn?/ it/ parameters
     maker{  with parent/ fork?/ spawn?/ parameters
       ~~ (removed "it/" to match the 3 args passed by the fork/spawn it-method
       ~~ calls and the bottom make.task( _, false, false ); the "it" for
@@ -493,10 +537,13 @@ to initialize-l9
     csp/it-method{ @actor.csp }
     pause/it-method{  true  @paused?!, @schedule }
     resume/it-method{ false @paused?!, @schedule }
+    ~~ #2026: Old code had: await/it-method{  with condition/ parameters
     await/it-method{  with condition/ parameter
     }
+    ~~ #2026: Old code had: signal/it-method{  with result/ parameters
     signal/it-method{  with result/ parameter
     }
+    ~~ #2026: Old code had: raise/it-method{ with reason/ parameters
     raise/it-method{ with reason/ parameter
     }
     setup-stacks/it-method{  with data-stack/ control-stack/ parameters
@@ -515,18 +562,23 @@ to initialize-l9
       make.actor( $ip ) @actor!
       it
     }
+    ~~ #2026: Old code had: join/it-method{  with result/ parameters
     join/it-method{  with result/ parameter
     }
+    ~~ #2026: Old code had: exit/it-method{  with result/ parameters
     exit/it-method{  with result/ parameter
     }
+    ~~ #2026: Old code had: sleep/it-method{  with milliseconds/ parameters
     sleep/it-method{  with milliseconds/ parameter
     }
   }
 
+  ~~ #2026: Old code had a dot at the end: make.task( _, false, false ), drop.
   make.task( _, false, false ), drop
 
 initialize-l9
 
+~~ #2026: Selective testing explanation and diagnostics were added in 2026.
 ~~ Selective testing / bypassing full l9 for class hierarchy debug:
 ~~ The class hierarchy is built by the many `class{ ... }` and `update-all-classes`
 ~~ inside initialize-l9 (executed at load time of this file).
@@ -603,5 +655,6 @@ to test-l9
   l9 .cancel
   assert{ l9-root .canceled? }
   assert{ ( l9-root not .done? ) }
+~~ #2026: Old code was: test-l9
 ~~ test-l9 auto-invocation removed: the test currently FATALs because
 ~~ several l9 class methods are not implemented. Invoke manually.
