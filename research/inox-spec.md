@@ -1600,8 +1600,6 @@ This is a list of the primitives that are currently implemented in the Iɴᴏx c
 | _ | synonym for the-void, push the void, typed void, named void, valued 0 |
 | memory-visit | get a view of the memory |
 | source | evaluate the content of a file |
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

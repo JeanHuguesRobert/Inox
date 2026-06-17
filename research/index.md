@@ -90,8 +90,6 @@ This repository instantiates the **language and runtime substrate layer** of the
 
 *Priority established by first public commit. License: MIT (code) · CC BY-SA 4.0 (text).*
 *Fork to explore alternatives. Challenge via issues.*
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
@@ -101,6 +99,7 @@ This repository instantiates the **language and runtime substrate layer** of the
 - [Research Index — FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md)
 - [Corpus Status — Inox](corpus-status.md)
 - [Reactive Sets in Inox — Native Implementation Path](reactive_sets_inox_cop_implementation.md)
+- [The Iɴᴏx programming language](../README.md)
 - [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
 - [Research Index — Jean Hugues Noël Robert (Profile / Entry Point)](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/index.md)
 - [Research Index — MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md)

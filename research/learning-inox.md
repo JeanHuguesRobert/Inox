@@ -4,12 +4,15 @@ author: "Written collaboratively by an AI agent under jhrobert's review"
 canonical_source: "research/inox-spec.md"
 derived_by: agent
 derived_from: "research/inox-spec.md"
-status: working-paper — tutorial for AI agents (and humans in a hurry); sections marked ⚠️ need author review
-date: "2026-05-22"
+status: generated automatically — tutorial for AI agents (and humans in a hurry); sections marked ⚠️ need author review
+date: "2026-06-17"
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/learning-inox.md
 affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
 license: "CC BY-SA 4.0"
-last_stamped_at: 2026-06-01
+last_stamped_at: 2026-06-17
+generated_automatically: true
+derived_product_type: "tutorial"
+ai_assisted_by: "Codex"
 ---
 
 > **Status (2026-05-22 to 2026-05-23).** The 2023 OO bootstrap blocker
@@ -32,6 +35,8 @@ last_stamped_at: 2026-06-01
 > root of surprising failures. Verify before blaming the user code.
 
 # Learning Inox — a tutorial for AI agents
+
+> **Generated automatically.** This document is a derived tutorial generated from the Inox specification, the current runtime notes, and the local author review log. It is not the sovereign source document; when the implementation or specification changes, refresh this file from those sources instead of treating it as authoritative by itself.
 
 > This document is **not** the Inox specification. The canonical reference is [`inox-spec.md`](inox-spec.md). This tutorial exists so that an agent (or a fresh human reader) can become productive on the Inox codebase in one session, without having to read 1500+ lines of spec first. The audience is someone who already knows Forth-family or stack-based languages by reputation, but has not internalised Inox specifically.
 >
@@ -196,9 +201,9 @@ The runtime has a global flag `fast` (toggled by primitives `fast!`, `debug`, `n
 
 ---
 
-## Section 4 — The OO bootstrap (walkthrough of `lib/l9.nox`)
+## Section 4 — The OO bootstrap (historical walkthrough of `lib/l9.nox`)
 
-> ⚠️ This section is the heart of the tutorial *and* the heart of the open bug. Read with two attitudes simultaneously: (a) "this is what the code wants to do" and (b) "this is what the runtime is complaining about". The bug lives somewhere between these two.
+> ⚠️ This section is the heart of the tutorial's historical debugging record. The original crash is no longer treated as an open Inox-level bug: later review traced it primarily to runtime defects such as the `stack_extend` double-free. Read this section with two attitudes simultaneously: (a) "this is what the code wants to do" and (b) "this is how the investigation originally localized the failure before the runtime fixes were understood."
 
 ### 4.1 The loading order
 
@@ -250,10 +255,10 @@ What it does, line by line:
 1. Pop the class name (a tag) into local `class-name`.
 2. `metaclass/make{ ... }` is the concise tag-prefix form: it pushes the tag `/metaclass` then invokes the verb `make{` with the trailing block as its argument. `make{` is defined just above at line 116; its job is to open a `with` region on the data stack, run the block (which leaves named cells), then call `make.object` to seal them into a new object of class `/metaclass`.
 3. The block builds **six** named attributes: `name` (the class name tag), `definitions`, `class-definitions`, `attributes` (three fresh empty maps), `class` (the literal `/metaclass`), `superclass-name` (`/thing`). The `value :name` form here is a **runtime rename** — it does not create new memory, it relabels the cell already on TOS.
-4. Store that metaclass object in the global `classes` map, keyed by the class's name. ← *probable crash region.*
+4. Store that metaclass object in the global `classes` map, keyed by the class's name. This was once suspected as the crash region; the author review log now records that hypothesis as historical.
 5. Leave the new metaclass on the data stack as the return value.
 
-> ⚠️ Line 130 still contains an inline `debugger` call between the operands and the `.!` setter — that's a runtime breakpoint primitive. It's clearly a debug residue from a session in progress, not a stable construct. When the bug is fixed, this `debugger` should be removed. **It may be useful to keep it during the debug session: with `node --inspect-brk` it stops execution right before the crashing `.!`.**
+> ⚠️ Line 130 still contains an inline `debugger` call between the operands and the `.!` setter. Keep that fact visible when reading old traces, but do not infer from it that the original crash remains open.
 
 > ⚠️ The runtime stack trace shows `primitive_map_put` as the Inox-level entry, but doesn't tell us *which* `map_put` triggered the assert. Candidates: (a) one of the three `map[]` constructions inside the block (probably benign — they are fresh maps with no other references), (b) `make.object` packing the six cells into the metaclass's internal stack (more interesting — the metaclass object's value is itself a map-like structure that the runtime grows during construction), or (c) `classes .!` writing the result into the global map (most interesting — `classes` already exists from line 96 and may have a non-trivial state). Bisect to find out.
 
@@ -491,8 +496,6 @@ Lines below are for jhrobert to track corrections.
 - [ ] §5.1 — clarified earlier in conversation: `debugger` and
   `breakpoint` are **distinct** primitives at inox.ts:9401 and :11495,
   not interchangeable. The table here should be split (todo).
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

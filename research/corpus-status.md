@@ -23,7 +23,6 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 ---
 
 ## Registered Repositories
-
 <!-- BEGIN_AUTO: registered_repos -->
 | Repository | research/index.md | Branch | Policy | Visibility | Public presence |
 |---|---|---|---|---|---|
@@ -37,11 +36,9 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 | ubikia | yes | main | all | public | full |
 | JeanHuguesRobert | yes | main | all | public | full |
 <!-- END_AUTO: registered_repos -->
-
 ---
 
 ## Cross-Reference Graph
-
 <!-- BEGIN_AUTO: graph -->
 ```mermaid
 graph LR
@@ -56,9 +53,9 @@ graph LR
   r_jeanhuguesrobert["JeanHuguesRobert"]
   r_jeanhuguesrobert -->|155| r_barons_mariani
   r_jeanhuguesrobert -->|110| r_cogentia
-  r_cogentia -->|101| r_barons_mariani
+  r_cogentia -->|98| r_barons_mariani
   r_barons_mariani -->|62| r_cogentia
-  r_jeanhuguesrobert -->|45| r_marenostrum
+  r_jeanhuguesrobert -->|46| r_marenostrum
   r_fractavolta -->|41| r_cogentia
   r_fractavolta -->|37| r_marenostrum
   r_jeanhuguesrobert -->|36| r_fractavolta
@@ -72,10 +69,10 @@ graph LR
   r_barons_mariani -->|16| r_inseme
   r_inseme -->|15| r_cogentia
   r_marenostrum -->|13| r_cogentia
-  r_jeanhuguesrobert -->|12| r_inseme
   r_marenostrum -->|12| r_fractavolta
   r_inox -->|11| r_barons_mariani
   r_inox -->|11| r_cogentia
+  r_jeanhuguesrobert -->|11| r_inseme
   r_marenostrum -->|11| r_barons_mariani
   r_inox -->|10| r_fractavolta
   r_jeanhuguesrobert -->|9| r_ubikia
@@ -86,10 +83,10 @@ graph LR
   r_barons_mariani -->|5| r_inox
   r_barons_mariani -->|5| r_jeanhuguesrobert
   r_cogentia -->|5| r_fractavolta
+  r_barons_mariani -->|4| r_ubikia
   r_cogentia -->|4| r_jeanhuguesrobert
   r_inseme -->|3| r_barons_mariani
   r_inseme -->|3| r_jeanhuguesrobert
-  r_barons_mariani -->|2| r_ubikia
   r_cogentia -->|2| r_inox
   r_fractavolta -->|2| r_jeanhuguesrobert
   r_inox -->|2| r_jeanhuguesrobert
@@ -102,11 +99,9 @@ graph LR
   r_ubikia -->|1| r_cogentia
 ```
 <!-- END_AUTO: graph -->
-
 ---
 
 ## Published in this repo
-
 <!-- BEGIN_AUTO: published -->
 | Title | Location | Date |
 |---|---|---|
@@ -128,11 +123,9 @@ graph LR
 | [Corpus Status](corpus-status.md) *(living view — auto-refreshed by `cogentia.js corpus-status`)* | this repo | refreshable |
 | [Concept Index](concepts.md) *(typed concept registry — mapped by `cogentia.js concepts`)* | this repo | refreshable |
 <!-- END_AUTO: published -->
-
 ---
 
 ## Concept Status
-
 <!-- BEGIN_AUTO: concepts -->
 | Concept | Scope | Status | Type |
 |---|---|---|---|
@@ -145,7 +138,6 @@ graph LR
 | [Dialects](./concepts.md#dialects) | Global | Defined | language facility |
 | [Fractanet](./concepts.md#fractanet) | Global | Seed | distributed system |
 <!-- END_AUTO: concepts -->
-
 ---
 
 ## What Is Proved
@@ -169,7 +161,6 @@ graph LR
 ---
 
 ## What Remains Possible
-
 <!-- BEGIN_AUTO: possibilities -->
 - Bare-metal port to ESP32 and similar microcontrollers
 - Inox as the implementation language of a future `cop-core` (currently TypeScript)
@@ -182,21 +173,20 @@ graph LR
 - [Research Index — FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md)
 - [Corpus Status — Inox](corpus-status.md)
 - [Reactive Sets in Inox — Native Implementation Path](reactive_sets_inox_cop_implementation.md)
+- [The Iɴᴏx programming language](../README.md)
 - [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
 - [Research Index — Jean Hugues Noël Robert (Profile / Entry Point)](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/index.md)
 - [Research Index — MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md)
 <!-- END_AUTO: possibilities -->
-
 ---
 
 *Generated with `cogentia.js corpus-status` — [scripts/cogentia.js](https://github.com/JeanHuguesRobert/cogentia/blob/main/scripts/cogentia.js)*
 *Challenge via issues. Fork to explore alternatives.*
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
 *These documents link to this file:*
 - [Research Index — Inox](index.md)
+- [The Iɴᴏx programming language](../README.md)
 - [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

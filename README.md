@@ -33,6 +33,13 @@ The strict separation between **control plane** and **data plane** in Inox is th
 
 The corpus's **Rossignol criterion** — a dispositif is a valid procedural stabiliser iff it can produce a Rossignol, a *point d'attestation exposable hors-cadre* — is applied reflexively to Inox itself in [`research/test_critere_rossignol_inox.md`](research/test_critere_rossignol_inox.md) (v0.1 working note). The test reveals that a layered dispositif carries **multiple superposed Rossignols**, and shifts the relevant question from *does it have one?* to *which one is its highest living attestation?*
 
+## Quick Orientation
+
+- [`research/index.md`](research/index.md) — generated document catalog
+- [`research/corpus-status.md`](research/corpus-status.md) — generated status, backlinks, and navigation checks
+- [`research/inox-spec.md`](research/inox-spec.md) — language-design reference
+- [`examples/hello.nox`](examples/hello.nox) — smallest working entry point on the default CLI path
+
 ---
 
 ## What Inox is, in a few lines
@@ -45,7 +52,7 @@ The corpus's **Rossignol criterion** — a dispositif is a valid procedural stab
 - **Multiple dialects** — prefix, infix, postfix notation; predefined and custom dialects per style.
 - **Strict separation of control plane and data plane** — data stays on stacks longer; state machines are expressed natively.
 
-**Current status (2026)**: a first usable *CLI / synchronous* flavour exists and is the default. Run `node builds/inox.js examples/hello.nox` (or `node bin/inox.js ...` / `npx inox` after setup). It uses only the core (bootstrap.nox + forth.nox) — no l9 OO yet — with sync primitives for stdin/args/exit/out so scripts behave like small C/Forth tools. The l9 layer (classes, tasks, actors from the l8 lineage) is still under repair; set `INOX_WITH_L9=1` to exercise it (expect FATALS during bootstrap for now). See `bin/inox.js`, the bottom of `lib/inox.ts` (run_program + direct entry), and `lib/arg-test.nox` (historical) for details. Postfix style is reliable; some parenthesized call syntax lives in l9.
+**Current status (2026)**: a first usable *CLI / synchronous* flavour exists and is the default. Run `node builds/inox.js examples/hello.nox` (or `node bin/inox.js ...` / `npx inox` after setup). It uses only the core (bootstrap.nox + forth.nox) — no l9 OO yet — with sync primitives for stdin/args/exit/out so scripts behave like small C/Forth tools. The l9 layer (classes, tasks, actors from the l8 lineage) is still under repair; `INOX_WITH_L9=1` is now useful for targeted probes and short repros, but the full l9 bootstrap is not stable yet. See `bin/inox.js`, the bottom of `lib/inox.ts` (run_program + direct entry), and `lib/arg-test.nox` (historical) for details. Postfix style is reliable; some parenthesized call syntax lives in l9.
 
 The pattern is old (Forth, 1970). The application is new: building **uncapturable computational nodes** that descend gracefully from Node.js to bare metal as the underlying network matures.
 

@@ -163,8 +163,6 @@ unless models are trained heavily on Inox.
 ---
 
 *Add new entries here as observations accumulate.*
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

@@ -287,8 +287,6 @@ After implementation, report:
 3. tests run and result;
 4. known limitations;
 5. next continuation.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

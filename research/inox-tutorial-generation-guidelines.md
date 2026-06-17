@@ -346,8 +346,6 @@ An existing named value may be updated.
 
 That is not classical assignment.
 ```
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

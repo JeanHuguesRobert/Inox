@@ -116,8 +116,6 @@ This directly realises the "consider it an advantage" request.
 - System layer (l9 + COP): will have its own, richer, traceable, distributed "foreign" mechanisms (packets as the universal currency, l8-faces, etc.). The JS bridge is mostly a scripting-layer convenience.
 
 See also: `docs/two-versions-scripting-vs-system.md`, Inox#17, the cli-stdlib banner.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

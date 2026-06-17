@@ -76,8 +76,6 @@ Hence the two versions, as stated.
 See `cli-stdlib.nox` (top banner + the recall/remember/with-update/obsolete section) for the current "obvious" surface implementation.
 
 This document is the primary codification of the user's idea.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

@@ -315,8 +315,6 @@ Specification: named value, more precisely named stack cell.
 Implementation: named stack cell.
 No core assignment operator.
 ```
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

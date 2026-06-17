@@ -164,8 +164,6 @@ Working name for the FractaVolta network — the distributed mesh of autonomous 
 **Reference documents:**
 - `README.md`
 - [UNCONSCIOUS_GRID](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/UNCONSCIOUS_GRID.md)
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

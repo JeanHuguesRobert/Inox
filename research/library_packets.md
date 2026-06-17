@@ -245,8 +245,6 @@ workable on code, but it does show the underlying epistemology
 ---
 
 *Add new entries here as observations accumulate.*
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

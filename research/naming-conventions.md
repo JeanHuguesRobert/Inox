@@ -130,8 +130,6 @@ a tradition, the departure is the point. Where it preserves the tradition
 syntax and semantics, [`README.md`](../README.md) for the corpus-level
 position, and [`research/learning-inox.md`](learning-inox.md) for a
 short tutorial.
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

@@ -113,8 +113,6 @@ continuation:
     - "La self-hostance (étage 7) est-elle un Rossignol authentique, ou seulement une élégance technique sans valeur d'attestation supplémentaire ?"
     - "Quel est le rapport entre la 'frontière de Rossignol' et le concept d'`open research thread` (cf inox_open_research_threads — llm_token_efficiency, library_packets) ? Mêmes objets ?"
 ```
-
-
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 
