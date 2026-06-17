@@ -29,3 +29,9 @@ site
 
 # Scratch test file loaded by the INOX_TEST=1 harness in bootstrap()
 lib/test.nox
+
+# Local l9/debug scratch artefacts
+lib/l9.diff
+lib/l9.nox.baseline
+lib/test/*.bak
+lib/test/test_swap.nox
