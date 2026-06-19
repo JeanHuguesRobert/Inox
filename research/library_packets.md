@@ -8,6 +8,14 @@ date: "2026-05-23"
 license: "CC BY-SA 4.0"
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/library_packets.md
 last_stamped_at: 2026-06-01
+document_role: "source"
+document_kind: "spec"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "spec"
+classification_confidence: "medium"
 ---
 
 # Library packets — when the library is a specification, not code

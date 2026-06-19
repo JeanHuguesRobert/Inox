@@ -1,6 +1,14 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/AGENTS.md
 last_stamped_at: 2026-06-13
+document_role: "operational"
+document_kind: "agent-mandate"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "agent-mandate"
+classification_confidence: "strong"
 ---
 
 # AGENTS.md — Inox agent mandate

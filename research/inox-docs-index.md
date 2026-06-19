@@ -9,6 +9,14 @@ status: "working-note"
 version: "0.1"
 corpus_role: "index"
 canonical_url: "https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-docs-index.md"
+document_role: "index"
+document_kind: "navigation"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-index"
+classification_confidence: "medium"
 ---
 
 # Inox Documentation Index

@@ -8,6 +8,14 @@ status: "working-note"
 corpus_role: "source"
 summary: "API note for the JavaScript bridge in the default Inox scripting layer, treating the JS host as an explicit extension advantage."
 keywords: "Inox, JavaScript interop, scripting layer, js.require, js.eval, coding agents"
+document_role: "source"
+document_kind: "working-note"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "working-note"
+classification_confidence: "medium"
 ---
 
 # JS Interop API for the "Inox for scripts" layer

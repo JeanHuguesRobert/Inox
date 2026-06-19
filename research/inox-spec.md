@@ -9,6 +9,14 @@ version: "in-progress"
 license: "MIT (code) · CC BY-SA 4.0 (text)"
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-spec.md
 last_stamped_at: 2026-06-01
+document_role: "source"
+document_kind: "spec"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "spec"
+classification_confidence: "medium"
 ---
 
 # The Iɴᴏx programming language
@@ -22,7 +30,7 @@ Status: sovereign technical source document in progress.
 
 Function in the corpus: define Inox as the concatenative language and runtime substrate for distributed, edge-oriented, non-centralized computation.
 
-Read before: [Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md), [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md), and [FractaVolta / PGN](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/PGN.md).
+Read before: [Carte globale du Corpus](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/corpus-map.md), [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md), and [FractaVolta / PGN](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/PGN.md).
 
 Read after: [Inox naming and assignment](inox-naming-and-assignment.md), Inox tutorials, and future Fractanet runtime notes.
 
@@ -62,7 +70,7 @@ It is also the same idea as the autodiscover protocol in
 locating distributed infrastructure without a capturable server — asked at the network level.
 
 The *Democratic Humans in the Loop* paper
-([DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md))
+([DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md))
 formalises the governance layer of this architecture, introducing the
 Compute eXergy Unit (CXU) as a thermodynamically grounded unit of account for AI compute.
 Inox is the intended runtime substrate for the edge layer of that architecture.

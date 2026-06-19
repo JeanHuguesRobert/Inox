@@ -9,6 +9,14 @@ status: "working-note"
 version: "0.1"
 corpus_role: "source"
 canonical_url: "https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-naming-and-assignment.md"
+document_role: "source"
+document_kind: "working-note"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "working-note"
+classification_confidence: "medium"
 ---
 
 # Inox Naming and the Absence of Assignment

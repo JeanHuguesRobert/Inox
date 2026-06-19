@@ -8,6 +8,14 @@ status: "working-note"
 corpus_role: "source"
 keywords: "Inox, scripting, system programming, l9, COP, coding agents"
 summary: "Primary design note distinguishing the agent-obvious Inox scripting layer from the l9/COP system programming layer."
+document_role: "source"
+document_kind: "working-note"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "working-note"
+classification_confidence: "medium"
 ---
 # Inox: Two Versions — Scripting (Obvious for Agents) vs System Programming (l9 + COP)
 

@@ -10,6 +10,14 @@ license: CC BY-SA 4.0
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 date: 2026-05-21
 creator: Jean Hugues Noël Robert, baron Mariani
+document_role: "index"
+document_kind: "concept-index"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "concept-index"
+classification_confidence: "strong"
 ---
 
 # Concept Index — Inox
@@ -74,7 +82,7 @@ A virtual machine in which the primary data structure is one or more stacks, rat
 **Short definition:**
 The architectural separation of the *control plane* (what the machine is currently doing — call stack, instruction pointer, conditionals, loops) from the *data plane* (what it is operating on — values being manipulated, accumulated, transformed). In Inox, the control stack and the data stack are distinct; data can stay on the data stack long enough to express state machines natively, without needing external storage.
 
-This is the same pattern as the EPN's separation between routing protocol and operation, asked at the language level. See [UNCONSCIOUS_GRID §8](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/UNCONSCIOUS_GRID.md).
+This is the same pattern as the EPN's separation between routing protocol and operation, asked at the language level. See [UNCONSCIOUS_GRID §8](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/UNCONSCIOUS_GRID.md).
 
 **Parent concepts:**
 - Stack VM
@@ -163,7 +171,7 @@ Working name for the FractaVolta network — the distributed mesh of autonomous 
 
 **Reference documents:**
 - `README.md`
-- [UNCONSCIOUS_GRID](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/UNCONSCIOUS_GRID.md)
+- [UNCONSCIOUS_GRID](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/UNCONSCIOUS_GRID.md)
 <!-- BEGIN_AUTO: backlinks -->
 ### Backlinks
 

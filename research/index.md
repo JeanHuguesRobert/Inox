@@ -9,13 +9,21 @@ affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Co
 date: 2026-05-21
 creator: Jean Hugues Noël Robert, baron Mariani
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/index.md
+document_role: "index"
+document_kind: "research-index"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-index"
+classification_confidence: "strong"
 ---
 
 # Research Index — Inox
 
 ## Foundation
 
-This repository instantiates the **language and runtime substrate layer** of the [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) AI Safety anti-capture proposal — a concatenative stack VM with strict control/data plane separation, designed for the agents and nodes of the future *Fractanet* (the FractaVolta network).
+This repository instantiates the **language and runtime substrate layer** of the [DHITL](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md) AI Safety anti-capture proposal — a concatenative stack VM with strict control/data plane separation, designed for the agents and nodes of the future *Fractanet* (the FractaVolta network).
 
 ---
 
@@ -54,9 +62,9 @@ This repository instantiates the **language and runtime substrate layer** of the
 
 | Title | Location |
 |---|---|
-| [DHITL — Democratic Humans in the Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/DHITL.md) | marenostrum |
-| [The Unconscious Grid](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/UNCONSCIOUS_GRID.md) *(§8 names the cross-layer packetization pattern of which Inox is the language-level instance)* | FractaVolta |
-| [VIGILIA — Distributed avoidance, signalling, and territorial perception](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/vigilia.md) | barons-Mariani |
+| [DHITL — Democratic Humans in the Loop](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/DHITL.md) | marenostrum |
+| [The Unconscious Grid](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/UNCONSCIOUS_GRID.md) *(§8 names the cross-layer packetization pattern of which Inox is the language-level instance)* | FractaVolta |
+| [VIGILIA — Distributed avoidance, signalling, and territorial perception](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/vigilia.md) | barons-Mariani |
 | [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) | barons-Mariani |
 | [Cogentia Pipeline](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/pipeline.md) *(method note v0.4 — operational counterpart of the Discours; source-to-derived packet workflow used by the reactive sets artifacts)* | cogentia |
 | [Cognitive Packets](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cognitive_packets.md) *(envelope/payload pattern used by the reactive cognitive layer)* | cogentia |

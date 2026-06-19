@@ -8,6 +8,14 @@ status: "published"
 corpus_role: "source"
 keywords: "Inox, C.O.R.S.I.C.A., Institut Mariani, Fractanet, autonomie de capacité, séparation institutionnelle"
 summary: "Note de clarification institutionnelle sur les liens documentaires entre Inox, C.O.R.S.I.C.A. et l’Institut Mariani."
+document_role: "source"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "stable"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
 ---
 # Lien avec C.O.R.S.I.C.A. et l’Institut Mariani
 

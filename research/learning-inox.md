@@ -13,6 +13,14 @@ last_stamped_at: 2026-06-17
 generated_automatically: true
 derived_product_type: "tutorial"
 ai_assisted_by: "Codex"
+document_role: "derived"
+document_kind: "profile"
+visibility: "public"
+lifecycle_state: "generated"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "profile"
+classification_confidence: "medium"
 ---
 
 > **Status (2026-05-22 to 2026-05-23).** The 2023 OO bootstrap blocker

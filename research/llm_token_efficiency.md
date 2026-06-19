@@ -8,6 +8,14 @@ date: "2026-05-23"
 license: "CC BY-SA 4.0"
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/llm_token_efficiency.md
 last_stamped_at: 2026-06-01
+document_role: "source"
+document_kind: "research-paper"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "research-paper"
+classification_confidence: "medium"
 ---
 
 # Inox token-efficiency for LLMs — open hypothesis

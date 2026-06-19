@@ -22,6 +22,14 @@ tags:
   - fractanet
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/prompts/implement_reactive_sets_seed.md
 last_stamped_at: 2026-06-01
+document_role: "derived"
+document_kind: "prompt"
+visibility: "public"
+lifecycle_state: "active"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "prompt"
+classification_confidence: "strong"
 ---
 
 # Implement Inox Reactive Sets Seed

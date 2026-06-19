@@ -11,6 +11,14 @@ ai_assisted_by:
   - "Claude — articulation 2026-05-31"
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/test_critere_rossignol_inox.md
 last_stamped_at: 2026-06-01
+document_role: "source"
+document_kind: "working-note"
+visibility: "public"
+lifecycle_state: "working"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "working-note"
+classification_confidence: "medium"
 ---
 
 # Test du critère Rossignol — Inox
