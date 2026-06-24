@@ -34,6 +34,7 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 | Inox | yes | master | all | public | full |
 | registre-mariani | yes | main | all | private | stub |
 | ubikia | yes | main | all | public | full |
+| operium | no | main | all | public | full |
 | JeanHuguesRobert | yes | main | all | public | full |
 | privai | yes | main | all | public | full |
 | gouvernance | yes | main | all | public | full |
@@ -57,6 +58,7 @@ graph LR
   r_inox["Inox"]
   r_registre_mariani["registre-mariani"]
   r_ubikia["ubikia"]
+  r_operium["operium"]
   r_jeanhuguesrobert["JeanHuguesRobert"]
   r_privai["privai"]
   r_gouvernance["gouvernance"]
@@ -70,8 +72,8 @@ graph LR
   r_jeanhuguesrobert -->|90| r_cogentia
   r_barons_mariani -->|62| r_cogentia
   r_jeanhuguesrobert -->|44| r_fractavolta
-  r_jeanhuguesrobert -->|43| r_marenostrum
   r_fractavolta -->|41| r_cogentia
+  r_jeanhuguesrobert -->|41| r_marenostrum
   r_fractavolta -->|37| r_marenostrum
   r_jeanhuguesrobert -->|26| r_inseme
   r_barons_mariani -->|23| r_marenostrum
