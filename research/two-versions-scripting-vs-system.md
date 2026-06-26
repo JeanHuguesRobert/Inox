@@ -40,6 +40,7 @@ There are two intended "versions" / layers / audiences for Inox:
      - Classic explicit postfix, named values (`>x $x`), `!` for effects, `it` + `with` for context.
    - Relation to mainstream: higher expressiveness in composition, metaprogramming, explicit dataflow, low-ceremony CLI tools; lower (for now) in nested data ergonomics compared to Python dict+dataclass / Ruby hash+Struct / JS object / Lua table — addressed here via records + maps + with-style + the update words.
    - This layer is what we produce while Inox matures, and what transitional JS/COP bridges can consume.
+   - Budget visibility at this level should remain simple: estimated cost, remaining budget, degraded mode, ask/abort. The full CXU accounting machinery belongs below, in the system layer.
 
 2. **System programming layer** (l9 + COP + future dynamic objects/actors)
    - Opt-in: `INOX_WITH_L9=1` (or `INOX_FULL=1`).
@@ -52,6 +53,7 @@ There are two intended "versions" / layers / audiences for Inox:
      - Capitalization (lookupReusableArtifact / stabilizeTaskArtifacts), obsolescence by judgment (human or AI marking dead-ends), fork/join of cogitors.
      - Control/data plane separation, reactive sets, pressure, tasks as sagas, JobScheduler routing/retry, partial consistency as a feature for AI agents.
      - Full dynamic objects (metaclasses, `attribute`, `it-method{}`, `extend-class`, thing dispatch), actors.
+     - CXU-style runtime accounting: compute budgets, mandate-bound spending, replay-safe cost tracking, no double spend, no commit without trace, and anti-gaming rules ensuring that a large budget cannot buy cognitive legitimacy.
    - This is the "substrate for the agents". The complexity is earned; the scripting layer stays obvious precisely so agents don't have to think about all of it.
 
 Hence the two versions, as stated.
@@ -72,7 +74,7 @@ Hence the two versions, as stated.
 ## Migration / usage guidance
 
 - Write agent "code" (the logic that maintains beliefs, explores paths, capitalizes, judges) in the scripting layer first. It should feel direct. When the agent/script needs "one more thing" that isn't in core + cli-stdlib yet, it reaches out explicitly via the `js.*` bridge (`js.require "foo"`, `js.eval`, property get/call on the result, etc.). This is the intended advantage of the scripting layer running on JS.
-- When you need distribution, traceability, human+AI judgment in the loop, artifact retention sweeps, reactive dataflow, or full actor model — graduate the relevant pieces to the l9 + COP layer (or use the l8-face bridges from COP/inseme while Inox is stabilizing).
+- When you need distribution, traceability, human+AI judgment in the loop, artifact retention sweeps, reactive dataflow, full actor model, or CXU-like accounting of compute under mandate — graduate the relevant pieces to the l9 + COP layer (or use the l8-face bridges from COP/inseme while Inox is stabilizing).
 - Both layers are Inox (`.nox`). We avoid producing new portable JS/TS for the agent logic itself (per the overarching "move out of Javascript and move in to Inox" constraint), except for transitional COP/inseme "face" adapters and the deliberate, thin `js.*` escape hatch in the scripting layer.
 
 ## Philosophy notes
@@ -80,6 +82,7 @@ Hence the two versions, as stated.
 - **Occam**: two versions is the minimal cut that keeps the agent-facing surface obvious while allowing the full power of the system layer where needed. One single "obvious for everything" language would either hide the complex concepts (bad for system programming) or force agents to confront them constantly (bad for the rational exploration use case).
 - **Rossignol / traceability**: all of this is recorded (this doc, the cli-stdlib banner, Inox#17, research notes, git). The dispositif must be able to produce its own attestation.
 - **Carte et territoire**: the scripting layer is closer to Cogentigram (the model / the working memory the agent reasons on). The system layer deals with the full Cogentia (the territory, provenance, multiple projections, retention obligations, judgment over dead-ends).
+- **Budget is not legitimacy**: CXU-style accounting should make compute scarce, attributable and traceable; it must not let the richest actor buy the result of the cognitive game. Cost creates seriousness, not authority.
 
 See `cli-stdlib.nox` (top banner + the recall/remember/with-update/obsolete section) for the current "obvious" surface implementation.
 
