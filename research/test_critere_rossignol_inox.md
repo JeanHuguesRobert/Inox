@@ -128,6 +128,5 @@ continuation:
 - Barons Mariani
 - [Research Index — Inox](index.md)
 - [The Iɴᴏx programming language](../README.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 - Jean Hugues Noël Robert, baron Mariani
 <!-- END_AUTO: backlinks -->

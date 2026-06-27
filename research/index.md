@@ -105,7 +105,6 @@ This repository instantiates the **language and runtime substrate layer** of the
 - [Research Index — barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md)
 - [Research Index — Cogentia](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/index.md)
 - [Research Index — FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md)
-- [Corpus Status — Inox](corpus-status.md)
 - [Reactive Sets in Inox — Native Implementation Path](reactive_sets_inox_cop_implementation.md)
 - [The Iɴᴏx programming language](../README.md)
 - [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)

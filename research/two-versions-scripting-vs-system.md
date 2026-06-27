@@ -93,5 +93,4 @@ This document is the primary codification of the user's idea.
 *These documents link to this file:*
 - [Inox: Two Versions — Scripting (Obvious for Agents) vs System Programming (l9 + COP)](../docs/two-versions-scripting-vs-system.md)
 - [Research Index — Inox](index.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

@@ -331,5 +331,4 @@ No core assignment operator.
 - [Inox Tutorial Generation Guidelines](inox-tutorial-generation-guidelines.md)
 - [Research Index — Inox](index.md)
 - [The Inox Programming Language — Specification](inox-spec.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

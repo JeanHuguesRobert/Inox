@@ -144,5 +144,4 @@ short tutorial.
 *These documents link to this file:*
 - [Learning Inox — A tutorial for AI agents (and humans in a hurry)](learning-inox.md)
 - [Research Index — Inox](index.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

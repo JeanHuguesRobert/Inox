@@ -176,5 +176,4 @@ unless models are trained heavily on Inox.
 
 *These documents link to this file:*
 - [Research Index — Inox](index.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->

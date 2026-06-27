@@ -539,5 +539,4 @@ Do not implement:
 - COP Reactive Cognitive Extension
 - [Reactive Cognitive COP Extension](https://github.com/JeanHuguesRobert/inseme/blob/main/research/reactive_cognitive_cop_extension.md)
 - [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
-- [Documents - All Tracked Repos](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/documents.md)
 <!-- END_AUTO: backlinks -->
