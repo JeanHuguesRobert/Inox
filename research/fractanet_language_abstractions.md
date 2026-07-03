@@ -18,6 +18,7 @@ lifecycle_state: "working"
 source_or_derived: "source-document"
 human_validation_required: true
 related_documents:
+  - "inseme/research/packet_attractor_fractanet.md"
   - "Inox/research/inox-spec.md"
   - "Inox/research/two-versions-scripting-vs-system.md"
   - "Inox/research/js-interop-api-for-scripting-layer.md"
@@ -334,6 +335,9 @@ pub/sub = receive what is published on a channel
 reactive query = receive what matches a structured demand
 packet attractor = attract packets one is capable and legitimate to handle
 ```
+
+Canonical COP-side definition:
+[`inseme/research/packet_attractor_fractanet.md`](https://github.com/JeanHuguesRobert/inseme/blob/main/research/packet_attractor_fractanet.md).
 
 Reactive Sets should migrate toward native Inox runtime structures, while COP remains the trace and protocol boundary.
 

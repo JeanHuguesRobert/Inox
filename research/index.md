@@ -43,6 +43,7 @@ This repository instantiates the **language and runtime substrate layer** of the
 | [JS Interop API for the "Inox for scripts" layer](js-interop-api-for-scripting-layer.md) *(working API note — explicit bridge to the underlying JavaScript VM for scripting and agent extension)* | this repo | 2026-06-05 |
 | [Inox: Two Versions — Scripting vs System Programming](two-versions-scripting-vs-system.md) *(source design note — scripting layer obvious for agents; system layer for l9 + COP complexity)* | this repo | 2026-06-05 |
 | [Inox as the Fractanet Language — External Abstractions Absorption Map](fractanet_language_abstractions.md) *(working-note v0.1 — roadmap for absorbing OTP, actors, streams, MQTT, Python, shell and reactive-set abstractions into Inox dialects and native coverage)* | this repo | 2026-07-03 |
+| [Packet Attractor — Fractanet routing (canonical COP source)](https://github.com/JeanHuguesRobert/inseme/blob/main/research/packet_attractor_fractanet.md) *(referenced — `cop/packet-attractor`, intermittent capable nodes, distributed blackboard)* | inseme | 2026-07-03 |
 | [Inox remote serve — proto interpreter and retrieval fulfiller](inox-remote-serve.md) *(HTTP adapter: `/run`, `/retrieval/batch`; Cogentia Phase 4 proto)* | this repo | 2026-07-03 |
 | [Inox serve — remote execution benchmarks](inox-serve-benchmarks.md) *(cold/warm latency; `npm run bench:serve`)* | this repo | 2026-07-03 |
 | [Inox serve — session cognitive packets](inox-session-packets.md) *(inox.session.v1 loop; `POST /session/turn`)* | this repo | 2026-07-03 |
