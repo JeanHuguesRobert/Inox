@@ -69,6 +69,24 @@ The split keeps agent logic obvious while the full power (and complexity) is ava
 
 ---
 
+## Remote serve (proto interpreter)
+
+`bin/inox-serve.js` exposes a minimal HTTP adapter so weak nodes can subcontract execution:
+
+- `GET /health` — liveness
+- `POST /run` — run a `.nox` file or inline source
+- `POST /retrieval/batch` — Cogentia retrieval fulfiller (Supabase pgvector + OpenAI query embed)
+
+```bash
+INOX_SERVE_TOKEN=secret SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... OPENAI_API_KEY=... npm run serve
+npm run test:serve
+npm run test:retrieval
+```
+
+Operational detail: [`research/inox-remote-serve.md`](research/inox-remote-serve.md). Cogentia integration tracked in [cogentia#42](https://github.com/JeanHuguesRobert/cogentia/issues/42).
+
+---
+
 ## Implementation roadmap
 
 The reference implementation defines syntax and semantics. Production versions will be hand-coded per target.

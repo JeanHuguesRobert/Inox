@@ -1,0 +1,5 @@
+~~ retrieval-batch.nox mandate entry (use POST /retrieval/batch on inox-serve in production)
+~~ This file documents the fulfiller contract; async I/O runs in retrieval-batch.mjs.
+
+"retrieval-batch: use POST /retrieval/batch on inox-serve or retrieval-batch-cli.mjs" out "\n" out
+1 exit

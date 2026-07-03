@@ -1,0 +1,4 @@
+~~ remote-ping.nox health script for inox-serve POST /run
+
+"inox-remote-ping ok" out "\n" out
+0 exit

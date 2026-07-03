@@ -16,7 +16,10 @@
     "build": "tsc",
     "build:src": "tsc -p tsconfig.src.json",
     "run": "tsc && node --enable-source-maps builds/inox.js",
-    "replit": "tsc&& node builds/inox.js"
+    "replit": "tsc&& node builds/inox.js",
+    "serve": "node bin/inox-serve.js",
+    "test:serve": "node scripts/test-inox-serve.js",
+    "test:retrieval": "node scripts/test-retrieval-batch.js"
   },
   "repository": {
     "type": "git",
