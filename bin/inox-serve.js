@@ -3,34 +3,44 @@
  * inox-serve.js — minimal remote Inox interpreter (proto fulfiller)
  *
  *   GET  /health
- *   POST /run   { "source": "..." } | { "file": "...", "input": { ... } }
- *   POST /retrieval/batch   Cogentia retrieval contract (queries, corpus_key, mode, ...)
+ *   POST /run                      sidecar pool (default), worker, or process
+ *   POST /retrieval/batch          Cogentia retrieval contract
+ *   POST /continuation/fulfill     IoC resume for inox.continuation.v1
  *
  * Env:
  *   INOX_SERVE_HOST=127.0.0.1
  *   INOX_SERVE_PORT=8792
- *   INOX_SERVE_TOKEN=...        optional Bearer auth
+ *   INOX_SERVE_TOKEN=...           optional Bearer auth
  *   INOX_SERVE_TIMEOUT_MS=30000
- *
- * Bind defaults to loopback. Set a token before exposing beyond localhost.
+ *   INOX_SERVE_RUNTIME=sidecar|worker|process   default sidecar
+ *   INOX_SERVE_WORKERS=4           pool size (sidecar or worker)
  */
 import http from "node:http";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { createSidecarPool } from "../scripts/serve/sidecar-pool.mjs";
+import { createWorkerPool } from "../scripts/serve/worker-pool.mjs";
+import { fulfillContinuation } from "../scripts/serve/continuation.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const host = process.env.INOX_SERVE_HOST || "127.0.0.1";
 const port = Number(process.env.INOX_SERVE_PORT || 8792);
 const token = String(process.env.INOX_SERVE_TOKEN || "");
 const timeoutMs = Number(process.env.INOX_SERVE_TIMEOUT_MS || 30000);
+const runtimeName = String(process.env.INOX_SERVE_RUNTIME || "sidecar").toLowerCase();
+const runtime = ["sidecar", "worker", "process"].includes(runtimeName) ? runtimeName : "sidecar";
 const maxSourceBytes = 64 * 1024;
 const maxBodyBytes = 256 * 1024;
 const launcher = path.join(root, "bin", "inox.js");
 const retrievalModuleUrl = pathToFileURL(path.join(root, "scripts", "remote", "retrieval-batch.mjs")).href;
 const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 let packBatchFn = null;
+let resumePackBatchFn = null;
+const runPool = runtime === "sidecar"
+  ? createSidecarPool()
+  : (runtime === "worker" ? createWorkerPool() : null);
 
 const allowDirs = [
   path.join(root, "examples"),
@@ -50,7 +60,12 @@ const server = http.createServer(async (req, res) => {
         service: "inox-remote",
         version: pkg.version || "0.4.0",
         auth_required: Boolean(token),
-        routes: ["/health", "/run", "/retrieval/batch"],
+        runtime,
+        pool_size: runPool?.size || 0,
+        vm_reset_required_for_reuse: runtime === "worker",
+        vm_reset_issue: "https://github.com/JeanHuguesRobert/Inox/issues/23",
+        continuation_protocol: "inox.continuation.v1",
+        routes: ["/health", "/run", "/retrieval/batch", "/continuation/fulfill"],
       });
     }
 
@@ -65,10 +80,29 @@ const server = http.createServer(async (req, res) => {
       }
       const started = Date.now();
       const result = await retrievalBatch(payload);
-      return sendJson(res, result.ok ? 200 : 400, {
+      const status = result.status === "continuation_required" ? 202 : (result.ok ? 200 : 400);
+      return sendJson(res, status, {
         ...result,
         duration_ms: Date.now() - started,
         fulfiller: "retrieval-batch.mjs",
+      });
+    }
+
+    if (req.method === "POST" && req.url === "/continuation/fulfill") {
+      if (!authorized(req)) return sendJson(res, 401, { ok: false, error: "unauthorized" });
+      let payload;
+      try {
+        payload = JSON.parse(await readBody(req, maxBodyBytes) || "{}");
+      } catch (error) {
+        const status = error.message === "request_body_too_large" ? 413 : 400;
+        return sendJson(res, status, { ok: false, error: error.message });
+      }
+      const started = Date.now();
+      const result = await fulfillContinuationRequest(payload);
+      const status = result.ok ? 200 : (result.error === "continuation_incomplete" ? 409 : 400);
+      return sendJson(res, status, {
+        ...result,
+        duration_ms: Date.now() - started,
       });
     }
 
@@ -92,7 +126,12 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(port, host, () => {
-  console.error(`[inox-serve] listening on http://${host}:${port}`);
+  console.error(`[inox-serve] listening on http://${host}:${port} runtime=${runtime}`);
+});
+
+process.on("SIGTERM", async () => {
+  await runPool?.close();
+  server.close();
 });
 
 function authorized(req) {
@@ -115,27 +154,32 @@ async function runRequest(payload) {
     return { ok: false, error: "missing_request", message: "Provide source or file." };
   }
 
-  let args;
   let mode;
-  const childEnv = {};
-  if (input) {
-    childEnv.INOX_RUN_INPUT = JSON.stringify(input);
-  }
-
+  let resolvedFile;
   if (file) {
     const resolved = resolveAllowedFile(file);
     if (!resolved.ok) return resolved;
-    args = [launcher, resolved.path];
+    resolvedFile = resolved.path;
     mode = "file";
   } else {
     if (Buffer.byteLength(source, "utf8") > maxSourceBytes) {
       return { ok: false, error: "source_too_large", max_bytes: maxSourceBytes };
     }
-    args = [launcher, "-e", source];
     mode = "source";
   }
 
-  const ran = await runChild(args, timeoutMs, childEnv);
+  const ran = runPool
+    ? await runPool.run({
+      file: resolvedFile,
+      source: source || undefined,
+      input,
+    }, timeoutMs)
+    : await runChildProcess({
+      file: resolvedFile,
+      source: source || undefined,
+      input,
+    }, timeoutMs);
+
   const jsonLine = ran.stdout.split(/\r?\n/).map(line => line.trim()).filter(line => line.startsWith("{")).pop();
   let result_json;
   if (jsonLine) {
@@ -146,6 +190,7 @@ async function runRequest(payload) {
   return {
     ok: ran.exit_code === 0,
     mode,
+    runtime,
     file: file || undefined,
     result_json,
     stdout: ran.stdout,
@@ -168,11 +213,52 @@ function resolveAllowedFile(file) {
 }
 
 async function retrievalBatch(payload) {
+  await loadRetrievalModule();
+  return packBatchFn(payload, process.env);
+}
+
+async function fulfillContinuationRequest(payload) {
+  const continuationId = String(payload.continuation_id || "");
+  const fulfillments = Array.isArray(payload.fulfillments) ? payload.fulfillments : [];
+  const fulfilled = fulfillContinuation(continuationId, fulfillments);
+  if (!fulfilled.ok) return fulfilled;
+
+  const continuation = fulfilled.continuation;
+  const operation = continuation?.state?.operation;
+  if (operation === "retrieval.batch") {
+    await loadRetrievalModule();
+    const resumed = await resumePackBatchFn(continuation, fulfilled.resolved, process.env);
+    return {
+      ...resumed,
+      continuation_id: continuationId,
+      continuation_status: continuation.status,
+    };
+  }
+
+  return {
+    ok: true,
+    continuation_id: continuationId,
+    continuation_status: continuation.status,
+    resolved: fulfilled.resolved,
+    message: "Continuation fulfilled; no automatic resume handler for this operation.",
+  };
+}
+
+async function loadRetrievalModule() {
   if (!packBatchFn) {
     const mod = await import(retrievalModuleUrl);
     packBatchFn = mod.packBatch;
+    resumePackBatchFn = mod.resumePackBatch;
   }
-  return packBatchFn(payload, process.env);
+}
+
+async function runChildProcess(job, timeout) {
+  const args = job.file
+    ? [launcher, job.file]
+    : [launcher, "-e", job.source];
+  const childEnv = {};
+  if (job.input) childEnv.INOX_RUN_INPUT = JSON.stringify(job.input);
+  return runChild(args, timeout, childEnv);
 }
 
 function runChild(args, timeout, extraEnv = {}) {
@@ -205,6 +291,7 @@ function runChild(args, timeout, extraEnv = {}) {
         stderr,
         exit_code: timedOut ? 124 : (code ?? 1),
         timed_out: timedOut,
+        runtime: "process",
       });
     });
 
@@ -215,6 +302,7 @@ function runChild(args, timeout, extraEnv = {}) {
         stderr: `${stderr}\n${error.message}`.trim(),
         exit_code: 1,
         timed_out: false,
+        runtime: "process",
       });
     });
   });

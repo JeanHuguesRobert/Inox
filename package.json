@@ -19,7 +19,8 @@
     "replit": "tsc&& node builds/inox.js",
     "serve": "node bin/inox-serve.js",
     "test:serve": "node scripts/test-inox-serve.js",
-    "test:retrieval": "node scripts/test-retrieval-batch.js"
+    "test:retrieval": "node scripts/test-retrieval-batch.js",
+    "test:continuations": "node scripts/test-serve-continuations.js"
   },
   "repository": {
     "type": "git",

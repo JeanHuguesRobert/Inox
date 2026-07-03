@@ -39,8 +39,9 @@ try {
       corpus_key: "cogentia-public",
       limit: 2,
       budget: 1000,
-    }, { expectFailure: true });
-    assert.equal(missing.error, "supabase_not_configured");
+    }, { expectStatus: 202 });
+    assert.equal(missing.status, "continuation_required");
+    assert.equal(missing.protocol, "inox.continuation.v1");
   }
 
   if (surveyEnv.SUPABASE_URL && surveyEnv.SUPABASE_SERVICE_ROLE_KEY && surveyEnv.OPENAI_API_KEY) {
@@ -97,6 +98,10 @@ async function postJson(route, payload, options = {}) {
     body: JSON.stringify(payload),
   });
   const body = await response.json();
+  if (options.expectStatus) {
+    assert.equal(response.status, options.expectStatus, JSON.stringify(body));
+    return body;
+  }
   if (options.expectFailure) {
     assert.equal(response.ok, false, JSON.stringify(body));
     return body;

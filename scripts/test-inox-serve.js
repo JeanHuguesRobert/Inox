@@ -40,8 +40,12 @@ try {
   });
   assert.equal(unauthorized.status, 401);
 
+  assert.equal(health.runtime, "sidecar");
+  assert.ok(health.pool_size >= 1);
+
   const fileRun = await postJson("/run", { file: "examples/remote-ping.nox" });
   assert.equal(fileRun.ok, true);
+  assert.equal(fileRun.runtime, "sidecar");
   assert.match(fileRun.stdout, /inox-remote-ping ok/);
   assert.equal(fileRun.exit_code, 0);
 

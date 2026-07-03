@@ -19,8 +19,12 @@ Heavy retrieval stays on a capable host; clients send a small JSON mandate over 
 | Piece | Path |
 |-------|------|
 | HTTP adapter | `bin/inox-serve.js` |
-| Run arbitrary `.nox` | `POST /run` |
+| Sidecar pool (default) | `scripts/serve/sidecar-pool.mjs` + `inox-sidecar.mjs` |
+| Worker pool (experimental) | `scripts/serve/worker-pool.mjs` + `inox-worker.mjs` — blocked on [#23](https://github.com/JeanHuguesRobert/Inox/issues/23) |
+| Continuations (IoC) | `scripts/serve/continuation.mjs` + `capability-host.mjs` |
+| Run arbitrary `.nox` | `POST /run` (worker pool, default) |
 | Retrieval fulfiller | `POST /retrieval/batch` → `scripts/remote/retrieval-batch.mjs` |
+| Resume continuations | `POST /continuation/fulfill` |
 | CLI (env input) | `scripts/remote/retrieval-batch-cli.mjs` |
 | Mandate stub | `scripts/remote/retrieval-batch.nox` |
 | Smoke script | `examples/remote-ping.nox` |
@@ -57,12 +61,12 @@ curl -fsS -X POST http://127.0.0.1:8792/retrieval/batch \
 ### `GET /health`
 
 ```json
-{ "ok": true, "service": "inox-remote", "version": "0.4.0", "auth_required": true, "routes": ["/health", "/run", "/retrieval/batch"] }
+{ "ok": true, "service": "inox-remote", "version": "0.4.0", "auth_required": true, "runtime": "sidecar", "pool_size": 4, "continuation_protocol": "inox.continuation.v1", "routes": ["/health", "/run", "/retrieval/batch", "/continuation/fulfill"] }
 ```
 
 ### `POST /run`
 
-Run a `.nox` file or inline source (subprocess via `bin/inox.js`).
+Run a `.nox` file or inline source. Default runtime is a **sidecar process pool**: persistent dispatchers spawn a fresh `bin/inox.js` per job (FastCGI-style — correct isolation, parallel pool). Set `INOX_SERVE_RUNTIME=process` for direct CGI spawn from the HTTP thread; `worker` for experimental thread pool (requires runtime reset, [#23](https://github.com/JeanHuguesRobert/Inox/issues/23)).
 
 ```json
 { "file": "examples/remote-ping.nox" }
@@ -76,7 +80,7 @@ Allowed file roots: `examples/`, `scripts/remote/`, `lib/test/`.
 
 Same JSON contract as Cogentia `docs/retrieval-roadmap.md` batch request. Response: `retrieval-supabase-batch-v1` with `packs[]`.
 
-Requires `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `OPENAI_API_KEY` (semantic/hybrid) in the server environment.
+When secrets are present, fulfills inline. Otherwise returns HTTP **202** with `inox.continuation.v1` pending capability steps; the invoker fulfills via `POST /continuation/fulfill`. See `research/inox-serve-continuations.md`.
 
 ## Environment
 
@@ -85,7 +89,9 @@ Requires `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `OPENAI_API_KEY` (sema
 | `INOX_SERVE_HOST` | `127.0.0.1` | Bind address |
 | `INOX_SERVE_PORT` | `8792` | Listen port |
 | `INOX_SERVE_TOKEN` | (unset) | Bearer auth; **set before non-loopback bind** |
-| `INOX_SERVE_TIMEOUT_MS` | `30000` | Subprocess timeout for `/run` |
+| `INOX_SERVE_TIMEOUT_MS` | `30000` | Job timeout for `/run` |
+| `INOX_SERVE_RUNTIME` | `sidecar` | `sidecar` (pool), `worker` (threads, experimental), or `process` (CGI) |
+| `INOX_SERVE_WORKERS` | `min(4, cpus)` | Sidecar or worker pool size |
 | `SUPABASE_URL` | — | Retrieval backend |
 | `SUPABASE_SERVICE_ROLE_KEY` | — | Retrieval backend |
 | `OPENAI_API_KEY` | — | Query embeddings |
@@ -102,6 +108,7 @@ Requires `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `OPENAI_API_KEY` (sema
 
 ```bash
 npm run test:serve
+npm run test:continuations
 npm run test:retrieval   # uses ../survey/.env credentials when present
 ```
 
@@ -115,4 +122,6 @@ weak node (fracta MCP)  --HTTPS mandate-->  inox-serve (capable host)
                                               Supabase pgvector
 ```
 
-Next steps: wire Cogentia Guide MCP to `INOX_RETRIEVAL_URL` instead of direct Supabase; later replace HTTP with Inox mandate packets + COP fulfill.
+See also: `research/inox-serve-continuations.md` (worker threads + IoC).
+
+Next steps: wire Cogentia Guide MCP to `INOX_RETRIEVAL_URL` with continuation-aware client; native `continuation emit` in `.nox`; COP artifact mapping.
