@@ -6,6 +6,7 @@
  *   POST /run                      sidecar pool (default), worker, or process
  *   POST /retrieval/batch          Cogentia retrieval contract
  *   POST /continuation/fulfill     IoC resume for inox.continuation.v1
+ *   POST /session/turn             inox.session.v1 cognitive packet loop
  *
  * Env:
  *   INOX_SERVE_HOST=127.0.0.1
@@ -20,9 +21,12 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import crypto from "node:crypto";
 import { createSidecarPool } from "../scripts/serve/sidecar-pool.mjs";
 import { createWorkerPool } from "../scripts/serve/worker-pool.mjs";
+import { createSessionPool } from "../scripts/serve/session-pool.mjs";
 import { fulfillContinuation } from "../scripts/serve/continuation.mjs";
+import { INOX_SESSION_PROTOCOL, PACKET, packet } from "../scripts/serve/session-protocol.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const host = process.env.INOX_SERVE_HOST || "127.0.0.1";
@@ -41,6 +45,7 @@ let resumePackBatchFn = null;
 const runPool = runtime === "sidecar"
   ? createSidecarPool()
   : (runtime === "worker" ? createWorkerPool() : null);
+const sessionPool = createSessionPool();
 
 const allowDirs = [
   path.join(root, "examples"),
@@ -65,7 +70,30 @@ const server = http.createServer(async (req, res) => {
         vm_reset_required_for_reuse: runtime === "worker",
         vm_reset_issue: "https://github.com/JeanHuguesRobert/Inox/issues/23",
         continuation_protocol: "inox.continuation.v1",
-        routes: ["/health", "/run", "/retrieval/batch", "/continuation/fulfill"],
+        session_protocol: INOX_SESSION_PROTOCOL,
+        session_pool_size: sessionPool.size,
+        routes: ["/health", "/run", "/retrieval/batch", "/continuation/fulfill", "/session/turn"],
+      });
+    }
+
+    if (req.method === "POST" && req.url === "/session/turn") {
+      if (!authorized(req)) return sendJson(res, 401, { ok: false, error: "unauthorized" });
+      let payload;
+      try {
+        payload = JSON.parse(await readBody(req, maxBodyBytes) || "{}");
+      } catch (error) {
+        const status = error.message === "request_body_too_large" ? 413 : 400;
+        return sendJson(res, status, { ok: false, error: error.message });
+      }
+      const started = Date.now();
+      const result = await sessionTurn(payload);
+      const status = result.type === PACKET.CONTINUATION
+        ? 202
+        : (result.type === PACKET.CANCELLED ? 409 : (result.ok === false ? 400 : 200));
+      return sendJson(res, status, {
+        ...result,
+        duration_ms: Date.now() - started,
+        transport: "http/session/turn",
       });
     }
 
@@ -131,8 +159,23 @@ server.listen(port, host, () => {
 
 process.on("SIGTERM", async () => {
   await runPool?.close();
+  await sessionPool?.close();
   server.close();
 });
+
+async function sessionTurn(payload) {
+  const event = payload.event && typeof payload.event === "object" ? payload.event : null;
+  if (!event?.kind) {
+    return packet(PACKET.ERROR, { ok: false, error: "missing_event", message: "Provide event.kind" });
+  }
+  const turnPacket = packet(PACKET.TURN, {
+    id: payload.id || crypto.randomUUID(),
+    session_id: payload.session_id || undefined,
+    state: payload.state && typeof payload.state === "object" ? payload.state : {},
+    event,
+  });
+  return sessionPool.turn(turnPacket, timeoutMs);
+}
 
 function authorized(req) {
   if (!token) return true;

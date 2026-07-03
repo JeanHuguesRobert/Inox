@@ -45,6 +45,7 @@ This repository instantiates the **language and runtime substrate layer** of the
 | [Inox as the Fractanet Language — External Abstractions Absorption Map](fractanet_language_abstractions.md) *(working-note v0.1 — roadmap for absorbing OTP, actors, streams, MQTT, Python, shell and reactive-set abstractions into Inox dialects and native coverage)* | this repo | 2026-07-03 |
 | [Inox remote serve — proto interpreter and retrieval fulfiller](inox-remote-serve.md) *(HTTP adapter: `/run`, `/retrieval/batch`; Cogentia Phase 4 proto)* | this repo | 2026-07-03 |
 | [Inox serve — remote execution benchmarks](inox-serve-benchmarks.md) *(cold/warm latency; `npm run bench:serve`)* | this repo | 2026-07-03 |
+| [Inox serve — session cognitive packets](inox-session-packets.md) *(inox.session.v1 loop; `POST /session/turn`)* | this repo | 2026-07-03 |
 | [Inox Documentation Index](inox-docs-index.md) *(working index v0.1 — documentation map for current Inox learning and design notes)* | this repo | 2026-06-02 |
 | [Basic Inox Tutorial](inox-tutorial-basic.md) *(working tutorial v0.1)* | this repo | 2026-06-02 |
 | [Inox Naming and the Absence of Assignment](inox-naming-and-assignment.md) *(working note v0.1)* | this repo | 2026-06-02 |
