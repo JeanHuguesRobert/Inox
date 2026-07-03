@@ -2,6 +2,7 @@
 *.js
 !index.js
 !bin/*.js
+!scripts/test-*.js
 *.log
 *.trace
 !test.trace
