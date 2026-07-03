@@ -110,7 +110,10 @@ When secrets are present, fulfills inline. Otherwise returns HTTP **202** with `
 npm run test:serve
 npm run test:continuations
 npm run test:retrieval   # uses ../survey/.env credentials when present
+npm run bench:serve      # cold/warm latency benchmarks → results/inox-serve-bench-latest.json
 ```
+
+See `research/inox-serve-benchmarks.md` for terminology (server_cold, sidecar_warm, inox_isolate_cold_per_job).
 
 ## Relation to Fractanet
 

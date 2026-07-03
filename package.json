@@ -20,7 +20,8 @@
     "serve": "node bin/inox-serve.js",
     "test:serve": "node scripts/test-inox-serve.js",
     "test:retrieval": "node scripts/test-retrieval-batch.js",
-    "test:continuations": "node scripts/test-serve-continuations.js"
+    "test:continuations": "node scripts/test-serve-continuations.js",
+    "bench:serve": "node scripts/bench-inox-serve.mjs"
   },
   "repository": {
     "type": "git",
