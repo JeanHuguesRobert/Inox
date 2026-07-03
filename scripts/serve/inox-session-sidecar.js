@@ -3,9 +3,9 @@
  * Fulfillments are reinjected as turn packets on the same stream.
  */
 import readline from "node:readline";
-import { handleTurn } from "./session-runner.mjs";
-import { INOX_SESSION_PROTOCOL, PACKET, packet, validateTurnPacket } from "./session-protocol.mjs";
-import { clearSessions } from "./session-store.mjs";
+import { handleTurn } from "./session-runner.js";
+import { INOX_SESSION_PROTOCOL, PACKET, packet, validateTurnPacket } from "./session-protocol.js";
+import { clearSessions } from "./session-store.js";
 
 process.stderr.write(`[inox-session-sidecar] protocol=${INOX_SESSION_PROTOCOL} pid=${process.pid}\n`);
 process.stdout.write(`${JSON.stringify(packet(PACKET.READY, { pid: process.pid }))}\n`);

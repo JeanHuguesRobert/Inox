@@ -26,9 +26,9 @@ That is simple and isolated, but expensive: cold V8 isolate, re-parse Inox boots
 
 | Piece | Path |
 |-------|------|
-| Sidecar pool | `scripts/serve/sidecar-pool.mjs` |
-| Sidecar entry | `scripts/serve/inox-sidecar.mjs` |
-| Worker pool (experimental) | `scripts/serve/worker-pool.mjs` + `inox-worker.mjs` |
+| Sidecar pool | `scripts/serve/sidecar-pool.js` |
+| Sidecar entry | `scripts/serve/inox-sidecar.js` |
+| Worker pool (experimental) | `scripts/serve/worker-pool.js` + `inox-worker.js` |
 
 Each worker:
 
@@ -43,7 +43,7 @@ Fallbacks: `INOX_SERVE_RUNTIME=process` (CGI from HTTP thread); `worker` (thread
 ```
 Client ──POST /run──► inox-serve (main thread)
                           │
-                    worker-pool.mjs
+                    worker-pool.js
                           │
               ┌───────────┼───────────┐
               ▼           ▼           ▼
@@ -59,9 +59,9 @@ Protocol: `inox.continuation.v1` (aligned with `cogentia.continuation.v2` and CO
 
 | Piece | Path |
 |-------|------|
-| Continuation store | `scripts/serve/continuation.mjs` |
-| Capability host | `scripts/serve/capability-host.mjs` |
-| Retrieval fulfiller | `scripts/remote/retrieval-batch.mjs` |
+| Continuation store | `scripts/serve/continuation.js` |
+| Capability host | `scripts/serve/capability-host.js` |
+| Retrieval fulfiller | `scripts/remote/retrieval-batch.js` |
 
 ### Capability host
 

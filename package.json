@@ -21,7 +21,7 @@
     "test:serve": "node scripts/test-inox-serve.js",
     "test:retrieval": "node scripts/test-retrieval-batch.js",
     "test:continuations": "node scripts/test-serve-continuations.js",
-    "bench:serve": "node scripts/bench-inox-serve.mjs",
+    "bench:serve": "node scripts/bench-inox-serve.js",
     "test:session": "node scripts/test-session-packets.js"
   },
   "repository": {

@@ -5,18 +5,18 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { fulfillContinuation, getContinuation } from "./continuation.mjs";
+import { fulfillContinuation, getContinuation } from "./continuation.js";
 import {
   COP_ARTIFACT_CONTINUATION,
   EVENT,
   PACKET,
   packet,
-} from "./session-protocol.mjs";
-import { getOrCreateSession, touchSession } from "./session-store.mjs";
+} from "./session-protocol.js";
+import { getOrCreateSession, touchSession } from "./session-store.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const launcher = path.join(root, "bin", "inox.js");
-const retrievalModuleUrl = pathToFileURL(path.join(root, "scripts", "remote", "retrieval-batch.mjs")).href;
+const retrievalModuleUrl = pathToFileURL(path.join(root, "scripts", "remote", "retrieval-batch.js")).href;
 const allowDirs = [
   path.join(root, "examples"),
   path.join(root, "scripts", "remote"),

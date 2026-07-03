@@ -5,8 +5,8 @@ import { spawn } from "node:child_process";
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { clearContinuations } from "./serve/continuation.mjs";
-import { packBatch, resumePackBatch } from "./remote/retrieval-batch.mjs";
+import { clearContinuations } from "./serve/continuation.js";
+import { packBatch, resumePackBatch } from "./remote/retrieval-batch.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 

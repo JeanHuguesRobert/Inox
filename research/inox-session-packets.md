@@ -85,11 +85,11 @@ curl -s -X POST http://127.0.0.1:8792/session/turn \
 
 | Piece | Path |
 |-------|------|
-| Protocol | `scripts/serve/session-protocol.mjs` |
-| Session store | `scripts/serve/session-store.mjs` |
-| Turn handler | `scripts/serve/session-runner.mjs` |
-| Actor loop | `scripts/serve/inox-session-sidecar.mjs` |
-| Pool (sticky `session_id`) | `scripts/serve/session-pool.mjs` |
+| Protocol | `scripts/serve/session-protocol.js` |
+| Session store | `scripts/serve/session-store.js` |
+| Turn handler | `scripts/serve/session-runner.js` |
+| Actor loop | `scripts/serve/inox-session-sidecar.js` |
+| Pool (sticky `session_id`) | `scripts/serve/session-pool.js` |
 
 ## Relation to `processor(json_state, json_event, source)`
 

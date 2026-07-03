@@ -22,11 +22,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import crypto from "node:crypto";
-import { createSidecarPool } from "../scripts/serve/sidecar-pool.mjs";
-import { createWorkerPool } from "../scripts/serve/worker-pool.mjs";
-import { createSessionPool } from "../scripts/serve/session-pool.mjs";
-import { fulfillContinuation } from "../scripts/serve/continuation.mjs";
-import { INOX_SESSION_PROTOCOL, PACKET, packet } from "../scripts/serve/session-protocol.mjs";
+import { createSidecarPool } from "../scripts/serve/sidecar-pool.js";
+import { createWorkerPool } from "../scripts/serve/worker-pool.js";
+import { createSessionPool } from "../scripts/serve/session-pool.js";
+import { fulfillContinuation } from "../scripts/serve/continuation.js";
+import { INOX_SESSION_PROTOCOL, PACKET, packet } from "../scripts/serve/session-protocol.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const host = process.env.INOX_SERVE_HOST || "127.0.0.1";
@@ -38,7 +38,7 @@ const runtime = ["sidecar", "worker", "process"].includes(runtimeName) ? runtime
 const maxSourceBytes = 64 * 1024;
 const maxBodyBytes = 256 * 1024;
 const launcher = path.join(root, "bin", "inox.js");
-const retrievalModuleUrl = pathToFileURL(path.join(root, "scripts", "remote", "retrieval-batch.mjs")).href;
+const retrievalModuleUrl = pathToFileURL(path.join(root, "scripts", "remote", "retrieval-batch.js")).href;
 const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 let packBatchFn = null;
 let resumePackBatchFn = null;
@@ -112,7 +112,7 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, status, {
         ...result,
         duration_ms: Date.now() - started,
-        fulfiller: "retrieval-batch.mjs",
+        fulfiller: "retrieval-batch.js",
       });
     }
 

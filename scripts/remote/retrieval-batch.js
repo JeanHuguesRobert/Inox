@@ -8,7 +8,7 @@ import {
   createCapabilityHost,
   buildContinuationFromSteps,
   canInlineCapability,
-} from "../serve/capability-host.mjs";
+} from "../serve/capability-host.js";
 
 const DEFAULT_CORPUS = "cogentia-public";
 const DEFAULT_MODEL = "text-embedding-3-small";

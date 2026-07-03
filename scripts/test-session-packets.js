@@ -5,7 +5,7 @@ import { spawn } from "node:child_process";
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { EVENT, PACKET } from "./serve/session-protocol.mjs";
+import { EVENT, PACKET } from "./serve/session-protocol.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const port = await freePort();

@@ -18,7 +18,7 @@ Measure how long it takes to run Inox code remotely via `inox-serve`, with expli
 cd Inox
 npm run bench:serve
 # or
-node scripts/bench-inox-serve.mjs --iterations=20 --runtimes=sidecar,process,worker
+node scripts/bench-inox-serve.js --iterations=20 --runtimes=sidecar,process,worker
 ```
 
 Outputs:

@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const sidecarScript = path.join(root, "scripts", "serve", "inox-session-sidecar.mjs");
+const sidecarScript = path.join(root, "scripts", "serve", "inox-session-sidecar.js");
 
 export function createSessionPool(options = {}) {
   const size = Math.max(1, Number(options.size || process.env.INOX_SERVE_SESSION_WORKERS || Math.min(2, os.cpus().length || 1)));

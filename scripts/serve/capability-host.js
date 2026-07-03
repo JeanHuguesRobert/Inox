@@ -2,7 +2,7 @@
  * Capability host: fulfill inline when secrets exist, else emit continuation (IoC).
  */
 import crypto from "node:crypto";
-import { continuationRequired } from "./continuation.mjs";
+import { continuationRequired } from "./continuation.js";
 
 export function createCapabilityHost(env = process.env, options = {}) {
   const inline = options.inline !== false;

@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { Worker } from "node:worker_threads";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const workerScript = path.join(root, "scripts", "serve", "inox-worker.mjs");
+const workerScript = path.join(root, "scripts", "serve", "inox-worker.js");
 
 export function createWorkerPool(options = {}) {
   const size = Math.max(1, Number(options.size || process.env.INOX_SERVE_WORKERS || Math.min(4, os.cpus().length || 2)));

@@ -13,8 +13,8 @@
  *                   runtime is measured but multi-job reuse is not valid today.
  *
  * Usage:
- *   node scripts/bench-inox-serve.mjs
- *   node scripts/bench-inox-serve.mjs --iterations=20 --runtimes=sidecar,process
+ *   node scripts/bench-inox-serve.js
+ *   node scripts/bench-inox-serve.js --iterations=20 --runtimes=sidecar,process
  *   npm run bench:serve
  */
 import fs from "node:fs";

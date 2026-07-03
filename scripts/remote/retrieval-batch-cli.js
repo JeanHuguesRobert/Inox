@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { packBatch } from "./retrieval-batch.mjs";
+import { packBatch } from "./retrieval-batch.js";
 
 const raw = process.env.INOX_RUN_INPUT || "";
 let payload = {};

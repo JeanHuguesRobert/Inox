@@ -3,6 +3,10 @@
 !index.js
 !bin/*.js
 !scripts/test-*.js
+!scripts/serve/*.js
+!scripts/bench-*.js
+!scripts/remote/retrieval-batch.js
+!scripts/remote/retrieval-batch-cli.js
 *.log
 *.trace
 !test.trace

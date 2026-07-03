@@ -19,17 +19,17 @@ Heavy retrieval stays on a capable host; clients send a small JSON mandate over 
 | Piece | Path |
 |-------|------|
 | HTTP adapter | `bin/inox-serve.js` |
-| Sidecar pool (default) | `scripts/serve/sidecar-pool.mjs` + `inox-sidecar.mjs` |
-| Worker pool (experimental) | `scripts/serve/worker-pool.mjs` + `inox-worker.mjs` — blocked on [#23](https://github.com/JeanHuguesRobert/Inox/issues/23) |
-| Continuations (IoC) | `scripts/serve/continuation.mjs` + `capability-host.mjs` |
+| Sidecar pool (default) | `scripts/serve/sidecar-pool.js` + `inox-sidecar.js` |
+| Worker pool (experimental) | `scripts/serve/worker-pool.js` + `inox-worker.js` — blocked on [#23](https://github.com/JeanHuguesRobert/Inox/issues/23) |
+| Continuations (IoC) | `scripts/serve/continuation.js` + `capability-host.js` |
 | Run arbitrary `.nox` | `POST /run` (worker pool, default) |
-| Retrieval fulfiller | `POST /retrieval/batch` → `scripts/remote/retrieval-batch.mjs` |
+| Retrieval fulfiller | `POST /retrieval/batch` → `scripts/remote/retrieval-batch.js` |
 | Resume continuations | `POST /continuation/fulfill` |
-| CLI (env input) | `scripts/remote/retrieval-batch-cli.mjs` |
+| CLI (env input) | `scripts/remote/retrieval-batch-cli.js` |
 | Mandate stub | `scripts/remote/retrieval-batch.nox` |
 | Smoke script | `examples/remote-ping.nox` |
 
-Production retrieval uses the **direct `/retrieval/batch` route** (async `import()` of the `.mjs` module). The `.nox` file documents the mandate contract until Inox handles async I/O natively.
+Production retrieval uses the **direct `/retrieval/batch` route** (async `import()` of the `.js` module). The `.nox` file documents the mandate contract until Inox handles async I/O natively.
 
 ## Quick start
 
@@ -120,7 +120,7 @@ See `research/inox-serve-benchmarks.md` for terminology (server_cold, sidecar_wa
 ```text
 weak node (fracta MCP)  --HTTPS mandate-->  inox-serve (capable host)
                                                     |
-                                              retrieval-batch.mjs
+                                              retrieval-batch.js
                                                     |
                                               Supabase pgvector
 ```
