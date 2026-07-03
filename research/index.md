@@ -3,7 +3,7 @@ title: "Research Index — Inox"
 description: "A map of what is, what is in progress, and what could be."
 layout: default
 nav_order: 1
-last_modified_at: 2026-06-01
+last_modified_at: 2026-07-03
 license: CC BY-SA 4.0
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 date: 2026-05-21
@@ -42,6 +42,7 @@ This repository instantiates the **language and runtime substrate layer** of the
 | [Reactive Sets in Inox — Native Implementation Path](reactive_sets_inox_cop_implementation.md) *(Toubkal/COP/Cogentia implementation path for native reactive sets, queries, attractors and pressure strategies)* | this repo | 2026-06-01 |
 | [JS Interop API for the "Inox for scripts" layer](js-interop-api-for-scripting-layer.md) *(working API note — explicit bridge to the underlying JavaScript VM for scripting and agent extension)* | this repo | 2026-06-05 |
 | [Inox: Two Versions — Scripting vs System Programming](two-versions-scripting-vs-system.md) *(source design note — scripting layer obvious for agents; system layer for l9 + COP complexity)* | this repo | 2026-06-05 |
+| [Inox as the Fractanet Language — External Abstractions Absorption Map](fractanet_language_abstractions.md) *(working-note v0.1 — roadmap for absorbing OTP, actors, streams, MQTT, Python, shell and reactive-set abstractions into Inox dialects and native coverage)* | this repo | 2026-07-03 |
 | [Inox Documentation Index](inox-docs-index.md) *(working index v0.1 — documentation map for current Inox learning and design notes)* | this repo | 2026-06-02 |
 | [Basic Inox Tutorial](inox-tutorial-basic.md) *(working tutorial v0.1)* | this repo | 2026-06-02 |
 | [Inox Naming and the Absence of Assignment](inox-naming-and-assignment.md) *(working note v0.1)* | this repo | 2026-06-02 |
@@ -68,6 +69,7 @@ This repository instantiates the **language and runtime substrate layer** of the
 | [Discours de la seconde méthode](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/second_method.md) | barons-Mariani |
 | [Cogentia Pipeline](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/pipeline.md) *(method note v0.4 — operational counterpart of the Discours; source-to-derived packet workflow used by the reactive sets artifacts)* | cogentia |
 | [Cognitive Packets](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/cognitive_packets.md) *(envelope/payload pattern used by the reactive cognitive layer)* | cogentia |
+| [Memory, Working Memory, and Corpus Sleep Cycle](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/memory_and_corpus_sleep_cycle.md) *(memory temperature, individual/collective memory and consolidation cycle relevant to Inox memory verbs)* | cogentia |
 | [COP — Cognitive Orchestration Protocol (Architecture)](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/Architecture.md) *(canonical orchestration substrate; potential future re-implementation target for an Inox-native `cop-core`)* | inseme |
 | [Reactive Cognitive COP Extension](https://github.com/JeanHuguesRobert/inseme/blob/main/research/reactive_cognitive_cop_extension.md) *(COP-side source document for Packet Attractors, pressure strategies and control/data plane)* | inseme |
 | [COP Reactive Cognitive Extension](https://github.com/JeanHuguesRobert/inseme/blob/main/packages/cop-core/REACTIVE_COGNITIVE_EXTENSION.md) *(operational COP-core protocol note derived from the source document)* | inseme |
@@ -93,6 +95,7 @@ This repository instantiates the **language and runtime substrate layer** of the
 - Reactive-set primitives as the basis for a distributed dataflow Fractanet runtime
 - Native Packet Attractors for routing without fixed addresses
 - Pressure strategies (`best-effort`, `ttl`, `bounded`, `demand`, `durable`) as runtime policies
+- Inox memory verbs for working memory, consolidation, cooling, obsolescence and traceable forgetting
 
 ---
 
