@@ -77,24 +77,25 @@ graph LR
   r_jeanhuguesrobert -->|34| r_cogentia
   r_barons_mariani -->|22| r_marenostrum
   r_cogentia -->|22| r_inseme
+  r_fractavolta -->|20| r_inseme
+  r_inseme -->|20| r_cogentia
   r_cogentia -->|19| r_marenostrum
-  r_fractavolta -->|18| r_inseme
   r_barons_mariani -->|17| r_fractavolta
   r_fractavolta -->|17| r_barons_mariani
-  r_inseme -->|17| r_cogentia
   r_barons_mariani -->|16| r_inseme
   r_jeanhuguesrobert -->|16| r_marenostrum
   r_marenostrum -->|14| r_cogentia
+  r_inox -->|12| r_cogentia
+  r_inseme -->|12| r_inox
   r_marenostrum -->|12| r_fractavolta
   r_inox -->|11| r_barons_mariani
-  r_inox -->|11| r_cogentia
   r_marenostrum -->|11| r_barons_mariani
   r_inox -->|10| r_fractavolta
+  r_inox -->|9| r_inseme
   r_jeanhuguesrobert -->|9| r_fractavolta
   r_fractavolta -->|8| r_inox
   r_inox -->|8| r_marenostrum
-  r_inox -->|7| r_inseme
-  r_inseme -->|7| r_inox
+  r_inseme -->|6| r_fractavolta
   r_jeanhuguesrobert -->|6| r_inseme
   r_jeanhuguesrobert -->|6| r_inox
   r_barons_mariani -->|5| r_inox
@@ -113,7 +114,6 @@ graph LR
   r_gouvernance -->|2| r_fractavolta
   r_inox -->|2| r_jeanhuguesrobert
   r_inseme -->|2| r_marenostrum
-  r_inseme -->|2| r_fractavolta
   r_institut_mariani -->|2| r_barons_mariani
   r_institut_mariani -->|2| r_fractavolta
   r_jeanhuguesrobert -->|2| r_ubikia
@@ -142,6 +142,7 @@ graph LR
   r_jeanhuguesrobert -->|1| r_operium
   r_kudos -->|1| r_institut_mariani
   r_marianivillage -->|1| r_institut_mariani
+  r_operium -->|1| r_inseme
 ```
 <!-- END_AUTO: graph -->
 ---
@@ -156,6 +157,12 @@ graph LR
 | [Reactive Sets in Inox — Native Implementation Path](reactive_sets_inox_cop_implementation.md) *(Toubkal/COP/Cogentia implementation path for native reactive sets, queries, attractors and pressure strategies)* | this repo | 2026-06-01 |
 | [JS Interop API for the "Inox for scripts" layer](js-interop-api-for-scripting-layer.md) *(working API note — explicit bridge to the underlying JavaScript VM for scripting and agent extension)* | this repo | 2026-06-05 |
 | [Inox: Two Versions — Scripting vs System Programming](two-versions-scripting-vs-system.md) *(source design note — scripting layer obvious for agents; system layer for l9 + COP complexity)* | this repo | 2026-06-05 |
+| [Inox as the Fractanet Language — External Abstractions Absorption Map](fractanet_language_abstractions.md) *(working-note v0.1 — roadmap for absorbing OTP, actors, streams, MQTT, Python, shell and reactive-set abstractions into Inox dialects and native coverage)* | this repo | 2026-07-03 |
+| [Packet Attractor — Fractanet routing (canonical COP source)](https://github.com/JeanHuguesRobert/inseme/blob/main/research/packet_attractor_fractanet.md) *(referenced — `cop/packet-attractor`, intermittent capable nodes, distributed blackboard)* | inseme | 2026-07-03 |
+| [Inox remote serve — proto interpreter and retrieval fulfiller](inox-remote-serve.md) *(HTTP adapter: `/run`, `/retrieval/batch`; Cogentia Phase 4 proto)* | this repo | 2026-07-03 |
+| [Inox serve — remote execution benchmarks](inox-serve-benchmarks.md) *(cold/warm latency; `npm run bench:serve`)* | this repo | 2026-07-03 |
+| [Inox serve — worker threads and continuations (IoC)](inox-serve-continuations.md) *(worker-thread execution model and continuation boundary for `inox serve`)* | this repo | 2026-07-03 |
+| [Inox serve — session cognitive packets](inox-session-packets.md) *(inox.session.v1 loop; `POST /session/turn`)* | this repo | 2026-07-03 |
 | [Inox Documentation Index](inox-docs-index.md) *(working index v0.1 — documentation map for current Inox learning and design notes)* | this repo | 2026-06-02 |
 | [Basic Inox Tutorial](inox-tutorial-basic.md) *(working tutorial v0.1)* | this repo | 2026-06-02 |
 | [Inox Naming and the Absence of Assignment](inox-naming-and-assignment.md) *(working note v0.1)* | this repo | 2026-06-02 |
@@ -213,6 +220,7 @@ graph LR
 - Reactive-set primitives as the basis for a distributed dataflow Fractanet runtime
 - Native Packet Attractors for routing without fixed addresses
 - Pressure strategies (`best-effort`, `ttl`, `bounded`, `demand`, `durable`) as runtime policies
+- Inox memory verbs for working memory, consolidation, cooling, obsolescence and traceable forgetting
 - [Research Index — barons-Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/research/index.md)
 - [Research Index — Cogentia](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/index.md)
 - [Research Index — FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md)

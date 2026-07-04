@@ -46,6 +46,7 @@ This repository instantiates the **language and runtime substrate layer** of the
 | [Packet Attractor — Fractanet routing (canonical COP source)](https://github.com/JeanHuguesRobert/inseme/blob/main/research/packet_attractor_fractanet.md) *(referenced — `cop/packet-attractor`, intermittent capable nodes, distributed blackboard)* | inseme | 2026-07-03 |
 | [Inox remote serve — proto interpreter and retrieval fulfiller](inox-remote-serve.md) *(HTTP adapter: `/run`, `/retrieval/batch`; Cogentia Phase 4 proto)* | this repo | 2026-07-03 |
 | [Inox serve — remote execution benchmarks](inox-serve-benchmarks.md) *(cold/warm latency; `npm run bench:serve`)* | this repo | 2026-07-03 |
+| [Inox serve — worker threads and continuations (IoC)](inox-serve-continuations.md) *(worker-thread execution model and continuation boundary for `inox serve`)* | this repo | 2026-07-03 |
 | [Inox serve — session cognitive packets](inox-session-packets.md) *(inox.session.v1 loop; `POST /session/turn`)* | this repo | 2026-07-03 |
 | [Inox Documentation Index](inox-docs-index.md) *(working index v0.1 — documentation map for current Inox learning and design notes)* | this repo | 2026-06-02 |
 | [Basic Inox Tutorial](inox-tutorial-basic.md) *(working tutorial v0.1)* | this repo | 2026-06-02 |
