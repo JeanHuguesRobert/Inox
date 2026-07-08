@@ -1617,7 +1617,6 @@ This is a list of the primitives that are currently implemented in the Iɴᴏx c
 - [Research Index — Cogentia](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/index.md)
 - For researchers
 - [Fractanet — Generalized Control Planes for Heterogeneous Packet Networks](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/fractanet.md)
-- [Research Index — FractaVolta](https://github.com/JeanHuguesRobert/FractaVolta/blob/main/research/index.md)
 - [Concept Index — Inox](concepts.md)
 - [Inox Documentation Index](inox-docs-index.md)
 - [Inox naming conventions and design influences](naming-conventions.md)
