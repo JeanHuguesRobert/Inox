@@ -36,7 +36,7 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 | registre-mariani | yes | main | all | private | stub |
 | ubikia | yes | main | all | public | full |
 | operium | yes | main | all | public | full |
-| serra | no | main | all | public | full |
+| serra | yes | main | all | public | full |
 | JeanHuguesRobert | yes | main | all | public | full |
 | privai | yes | main | all | public | full |
 | gouvernance | yes | main | all | public | full |
@@ -72,8 +72,8 @@ graph LR
   r_github[".github"]
   r_acorsica_org["acorsica.org"]
   r_cogentia -->|97| r_barons_mariani
-  r_barons_mariani -->|63| r_cogentia
-  r_jeanhuguesrobert -->|63| r_barons_mariani
+  r_jeanhuguesrobert -->|66| r_barons_mariani
+  r_barons_mariani -->|65| r_cogentia
   r_fractavolta -->|45| r_cogentia
   r_fractavolta -->|37| r_marenostrum
   r_jeanhuguesrobert -->|34| r_cogentia
@@ -105,11 +105,13 @@ graph LR
   r_cogentia -->|5| r_fractavolta
   r_barons_mariani -->|4| r_ubikia
   r_cogentia -->|4| r_jeanhuguesrobert
+  r_inseme -->|4| r_barons_mariani
   r_marianivillage -->|4| r_fractavolta
+  r_operium -->|4| r_marenostrum
   r_github -->|3| r_gouvernance
-  r_inseme -->|3| r_barons_mariani
   r_inseme -->|3| r_jeanhuguesrobert
   r_kudos -->|3| r_barons_mariani
+  r_operium -->|3| r_inseme
   r_cogentia -->|2| r_inox
   r_fractavolta -->|2| r_jeanhuguesrobert
   r_gouvernance -->|2| r_barons_mariani
@@ -123,6 +125,7 @@ graph LR
   r_marenostrum -->|2| r_inseme
   r_marenostrum -->|2| r_inox
   r_operium -->|2| r_cogentia
+  r_operium -->|2| r_barons_mariani
   r_privai -->|2| r_institut_mariani
   r_ubikia -->|2| r_cogentia
   r_github -->|1| r_institut_mariani
@@ -144,7 +147,6 @@ graph LR
   r_jeanhuguesrobert -->|1| r_operium
   r_kudos -->|1| r_institut_mariani
   r_marianivillage -->|1| r_institut_mariani
-  r_operium -->|1| r_inseme
 ```
 <!-- END_AUTO: graph -->
 ---
