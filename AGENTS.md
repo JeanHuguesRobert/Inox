@@ -1,6 +1,6 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/AGENTS.md
-last_stamped_at: 2026-06-13
+last_stamped_at: 2026-07-13
 document_role: "operational"
 document_kind: "agent-mandate"
 visibility: "public"
@@ -16,6 +16,17 @@ classification_confidence: "strong"
 This file gives operational instructions to AI agents and human assistants working in the `JeanHuguesRobert/Inox` repository.
 
 It is not the full doctrine. It is a compact mandate for acting inside this repository without confusing language design, runtime implementation, examples, and speculative architecture.
+
+## Shared baseline and read order
+
+Before acting here:
+
+1. read this repository-local `AGENTS.md`;
+2. read the shared [`cogentia/AGENTS.md`](https://github.com/JeanHuguesRobert/cogentia/blob/main/AGENTS.md);
+3. apply this local mandate wherever it is more specific or more restrictive;
+4. consult the linked source doctrine when interpretation is needed.
+
+The shared baseline supplies the default corpus workflow. This file specializes it for language design and runtime implementation; it does not silently widen permissions.
 
 ## Repository role
 
@@ -50,7 +61,19 @@ The corpus remains the source of truth.
 Human authorization governs stabilization.
 ```
 
-Reference: `cogentia/research/agent_configuration_layer.md`.
+References:
+
+- [`cogentia/AGENTS.md`](https://github.com/JeanHuguesRobert/cogentia/blob/main/AGENTS.md)
+- [`cogentia/research/agent_configuration_layer.md`](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/agent_configuration_layer.md)
+- [`cogentia/research/optimistic_mainline_governance.md`](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/optimistic_mainline_governance.md)
+
+## Direct-default-branch rule
+
+This repository follows **Optimistic Mainline Governance** on its current default branch, `master`.
+
+Small direct commits to `master` are acceptable when explicitly authorized, scoped, reversible, inspectable by diff, validated when possible, and reported after completion.
+
+Do not create a branch or PR by default. Use one only when explicit instruction, collaboration, repository protection, high risk, semantic or architectural change, or genuine isolation value justifies it.
 
 ## Technical discipline
 
@@ -68,11 +91,11 @@ When touching code or technical documents:
 Use the smallest sufficient container:
 
 ```text
-concept       -> issue or design note
-language rule -> specification note
+concept        -> issue or design note
+language rule  -> specification note
 runtime change -> code + validation
-example       -> example file or documentation
-commit        -> durable trace
+example        -> example file or documentation
+commit         -> durable trace
 ```
 
 ## Validation
