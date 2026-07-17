@@ -1,6 +1,19 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/README.md
-last_stamped_at: 2026-05-21
+last_stamped_at: 2026-05-21T00:00:00.000Z
+title: The Iɴᴏx programming language
+author: unknown
+date: unknown
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+update_policy: UP-DEFAULT-REVIEWED
 ---
 # The Iɴᴏx programming language
 
