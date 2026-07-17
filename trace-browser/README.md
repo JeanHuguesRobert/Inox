@@ -1,3 +1,23 @@
+---
+title: Trace Browser Specification
+author: unknown
+date: '2023-05-28'
+document_role: source
+document_kind: documentation
+visibility: public
+lifecycle_state: working
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: repository
+  origin_repository: JeanHuguesRobert/Inox
+  origin_ref: 7ef9fc9
+  origin_date: '2023-05-28'
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
+---
+
 # Trace Browser Specification
 May 27 2023 by JHR, using ChatGPT & copilot
 
