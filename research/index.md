@@ -3,7 +3,7 @@ title: Research Index — Inox
 description: A map of what is, what is in progress, and what could be.
 layout: default
 nav_order: 1
-last_modified_at: 2026-07-03T00:00:00.000Z
+last_modified_at: 2026-07-17T00:00:00.000Z
 license: CC BY-SA 4.0
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
 date: 2026-05-21T00:00:00.000Z
@@ -53,7 +53,7 @@ This repository instantiates the **language and runtime substrate layer** of the
 | [Reactive Sets in Inox — Native Implementation Path](reactive_sets_inox_cop_implementation.md) *(Toubkal/COP/Cogentia implementation path for native reactive sets, queries, attractors and pressure strategies)* | this repo | 2026-06-01 |
 | [JS Interop API for the "Inox for scripts" layer](js-interop-api-for-scripting-layer.md) *(working API note — explicit bridge to the underlying JavaScript VM for scripting and agent extension)* | this repo | 2026-06-05 |
 | [Inox: Two Versions — Scripting vs System Programming](two-versions-scripting-vs-system.md) *(source design note — scripting layer obvious for agents; system layer for l9 + COP complexity)* | this repo | 2026-06-05 |
-| [Inox as the Fractanet Language — External Abstractions Absorption Map](fractanet_language_abstractions.md) *(working-note v0.1 — roadmap for absorbing OTP, actors, streams, MQTT, Python, shell and reactive-set abstractions into Inox dialects and native coverage)* | this repo | 2026-07-03 |
+| [Inox as the Fractanet Language — External Abstractions Absorption Map](fractanet_language_abstractions.md) *(working-note v0.1 — roadmap for absorbing OTP, actors, streams, MQTT, Python, shell and reactive-set abstractions into Inox dialects and native coverage)* | this repo | 2026-07-03 |\n| [Inox Images, Lineages, Hibernation, and Wake](inox-images-lineages-and-hibernation.md) *(source architecture contract v0.1-draft — semantic images, native materializations, content-addressed snapshots, governed wake, and degraded reconstruction)* | this repo | 2026-07-17 |
 | [Packet Attractor — Fractanet routing (canonical COP source)](https://github.com/JeanHuguesRobert/inseme/blob/main/research/packet_attractor_fractanet.md) *(referenced — `cop/packet-attractor`, intermittent capable nodes, distributed blackboard)* | inseme | 2026-07-03 |
 | [Inox remote serve — proto interpreter and retrieval fulfiller](inox-remote-serve.md) *(HTTP adapter: `/run`, `/retrieval/batch`; Cogentia Phase 4 proto)* | this repo | 2026-07-03 |
 | [Inox serve — remote execution benchmarks](inox-serve-benchmarks.md) *(cold/warm latency; `npm run bench:serve`)* | this repo | 2026-07-03 |
