@@ -1,0 +1,178 @@
+{
+  "schema_id": "inox.conformance-manifest.v1",
+  "profile_id": "inox-micro-v0",
+  "profile_version": "0.1.0-draft",
+  "status": "draft-for-human-review",
+  "update_policy": "UP-DECISION-REVIEW",
+  "normative_spec": "research/inox-cpp-micro-runtime-and-images.md",
+  "principal": "Jean Hugues Noël Robert",
+  "drafted_by": "OpenAI Codex (GPT-5)",
+  "date": "2026-07-16",
+  "provenance": {
+    "origin_type": "derived-conformance-contract",
+    "origin_repository": "JeanHuguesRobert/Inox",
+    "origin_ref": "master@4177159e2096df1512b8001c09ba90e1d563c30c",
+    "derived_from": [
+      "research/inox-cpp-micro-runtime-and-images.md",
+      "profiles/inox-micro-v0.json"
+    ]
+  },
+  "review": {
+    "status": "unreviewed",
+    "reviewed_by": []
+  },
+  "vectors": [
+    {
+      "id": "cell.pack.void",
+      "phase": "M1",
+      "operation": "pack_info",
+      "input": { "type": 0, "name": 0 },
+      "expected_info_hex": "0x00000000"
+    },
+    {
+      "id": "cell.pack.boolean",
+      "phase": "M1",
+      "operation": "pack_info",
+      "input": { "type": 1, "name": 0 },
+      "expected_info_hex": "0x10000000"
+    },
+    {
+      "id": "cell.pack.invalid",
+      "phase": "M1",
+      "operation": "pack_info",
+      "input": { "type": 8, "name": 0 },
+      "expected_info_hex": "0x80000000"
+    },
+    {
+      "id": "cell.pack.maximum",
+      "phase": "M1",
+      "operation": "pack_info",
+      "input": { "type": 15, "name": 268435455 },
+      "expected_info_hex": "0xffffffff"
+    },
+    {
+      "id": "cell.serialize.little-endian",
+      "phase": "M1",
+      "operation": "serialize_cell",
+      "input": { "value_hex": "0x11223344", "info_hex": "0x856789ab" },
+      "expected_bytes_hex": "44332211ab896785"
+    },
+    {
+      "id": "handle.flash.zero-offset",
+      "phase": "M1",
+      "operation": "pack_handle",
+      "input": { "region": 1, "cell_offset": 0 },
+      "expected_handle_hex": "0x10000000"
+    },
+    {
+      "id": "handle.ram.offset-one",
+      "phase": "M1",
+      "operation": "pack_handle",
+      "input": { "region": 2, "cell_offset": 1 },
+      "expected_handle_hex": "0x20000001"
+    },
+    {
+      "id": "handle.zero.invalid",
+      "phase": "M1",
+      "operation": "validate_handle",
+      "input": { "handle_hex": "0x00000000", "access": "read" },
+      "expected_error": "INOX_E_BAD_HANDLE"
+    },
+    {
+      "id": "handle.flash.write-rejected",
+      "phase": "M1",
+      "operation": "validate_handle",
+      "input": { "handle_hex": "0x10000001", "access": "write", "mapped_cells": 2 },
+      "expected_error": "INOX_E_READ_ONLY"
+    },
+    {
+      "id": "handle.ram.out-of-bounds",
+      "phase": "M1",
+      "operation": "validate_handle",
+      "input": { "handle_hex": "0x20000002", "access": "read", "mapped_cells": 2 },
+      "expected_error": "INOX_E_BAD_HANDLE"
+    },
+    {
+      "id": "vm.integer-add",
+      "phase": "M2",
+      "operation": "primitive",
+      "primitive_id": 10,
+      "input_stack": [
+        { "type": 2, "value": 2, "name": 0 },
+        { "type": 2, "value": 3, "name": 0 }
+      ],
+      "expected_stack": [
+        { "type": 2, "value": 5, "name": 0 }
+      ]
+    },
+    {
+      "id": "vm.integer-add-overflow",
+      "phase": "M2",
+      "operation": "primitive",
+      "primitive_id": 10,
+      "input_stack": [
+        { "type": 2, "value": 2147483647, "name": 0 },
+        { "type": 2, "value": 1, "name": 0 }
+      ],
+      "expected_error": "INOX_E_INTEGER_OVERFLOW",
+      "expected_stack_unchanged": true
+    },
+    {
+      "id": "vm.divide-by-zero",
+      "phase": "M2",
+      "operation": "primitive",
+      "primitive_id": 13,
+      "input_stack": [
+        { "type": 2, "value": 7, "name": 0 },
+        { "type": 2, "value": 0, "name": 0 }
+      ],
+      "expected_error": "INOX_E_DIVIDE_BY_ZERO",
+      "expected_stack_unchanged": true
+    },
+    {
+      "id": "vm.dup-underflow",
+      "phase": "M2",
+      "operation": "primitive",
+      "primitive_id": 6,
+      "input_stack": [],
+      "expected_error": "INOX_E_STACK_UNDERFLOW",
+      "expected_stack_unchanged": true
+    },
+    {
+      "id": "vm.budget-zero",
+      "phase": "M2",
+      "operation": "run_budget",
+      "input": { "instruction_budget": 0 },
+      "expected_status": "INOX_YIELDED_BUDGET",
+      "expected_executed": 0
+    },
+    {
+      "id": "image.bad-magic",
+      "phase": "M3",
+      "operation": "verify_image_mutation",
+      "mutation": { "offset": 0, "replace_hex": "00" },
+      "expected_error": "INOX_E_BAD_IMAGE"
+    },
+    {
+      "id": "image.wrong-hash",
+      "phase": "M3",
+      "operation": "verify_image_mutation",
+      "mutation": { "offset": 64, "xor_hex": "01" },
+      "expected_error": "INOX_E_IMAGE_HASH"
+    },
+    {
+      "id": "snapshot.base-mismatch",
+      "phase": "M5",
+      "operation": "restore_snapshot",
+      "input": { "mounted_base": "fixture-base-a", "snapshot_base": "fixture-base-b" },
+      "expected_error": "INOX_E_BASE_MISMATCH"
+    },
+    {
+      "id": "link.payload-too-large",
+      "phase": "M5",
+      "operation": "parse_frame_header",
+      "input": { "payload_size": 4097 },
+      "expected_error": "INOX_E_TRANSPORT"
+    }
+  ]
+}
