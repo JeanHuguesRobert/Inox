@@ -502,6 +502,14 @@ whether an execution demand can route first toward an admissible capability, and
 only then toward a concrete provider — under explicit constraints of mandate,
 locality, privacy, latency, energy, cost and traceability.
 
+Here locality is not one scalar. It includes the distance between computation
+and its working data, the cognitive distance between a task and its relevant
+traces, the sovereignty distance between a subject and its information, and the
+institutional distance between an act and the authority that can govern it.
+An Inox deployment should reduce these distances where doing so preserves its
+mandate and reversibility; it should cross them explicitly when a remote
+capability, replication or coordination is genuinely needed.
+
 This carries real material weight. The International Energy Agency put total
 global data-centre electricity use — across all workloads, AI included but not AI
 alone — at roughly 415 TWh in 2024, about 1.5% of global electricity consumption,
