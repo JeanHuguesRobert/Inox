@@ -1,5 +1,6 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/AGENTS.md
+shared_instructions: https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.shared.md
 last_stamped_at: 2026-07-13
 document_role: "operational"
 document_kind: "agent-mandate"
