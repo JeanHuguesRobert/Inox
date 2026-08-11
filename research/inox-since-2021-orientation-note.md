@@ -51,6 +51,10 @@ tags:
   - webassembly
   - energy-aware-compute
   - fractanet
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Inox Since 2021

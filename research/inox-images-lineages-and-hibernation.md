@@ -53,6 +53,10 @@ tags:
   - cross-compilation
   - fractanet
   - degraded-mode
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Inox Images, Lineages, Hibernation, and Wake

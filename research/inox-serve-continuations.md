@@ -6,6 +6,11 @@ document_kind: "operational-note"
 visibility: "public"
 lifecycle_state: "active"
 summary: "Replace CGI-style subprocesses with a worker pool; emit inox.continuation.v1 when external capabilities are required."
+document_role: "source"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Worker threads and continuations

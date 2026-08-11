@@ -17,6 +17,10 @@ visibility: "public"
 lifecycle_state: "working"
 source_or_derived: "source-document"
 human_validation_required: true
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "working-note"
+classification_confidence: "medium"
 related_documents:
   - "inseme/research/packet_attractor_fractanet.md"
   - "Inox/research/inox-spec.md"

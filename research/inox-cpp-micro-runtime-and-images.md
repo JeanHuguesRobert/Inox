@@ -54,6 +54,10 @@ tags:
   - content-addressing
   - usb
   - fractanet
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Inox Micro C++ Runtime and Images

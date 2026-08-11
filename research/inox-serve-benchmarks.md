@@ -6,6 +6,11 @@ document_kind: "operational-note"
 visibility: "public"
 lifecycle_state: "active"
 summary: "Re-runnable cold/warm latency benchmarks for POST /run (sidecar, process, local CLI)."
+document_role: "source"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Remote execution benchmarks

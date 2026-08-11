@@ -6,6 +6,11 @@ document_kind: "operational-note"
 visibility: "public"
 lifecycle_state: "active"
 summary: "Stateful actor loop: continuations on stdout, fulfillments reinjected on stdin; COP-aligned packets."
+document_role: "source"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Session cognitive packets

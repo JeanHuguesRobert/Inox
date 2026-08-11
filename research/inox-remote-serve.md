@@ -6,6 +6,11 @@ document_kind: "operational-note"
 visibility: "public"
 lifecycle_state: "active"
 summary: "HTTP adapter to run Inox remotely and fulfill Cogentia retrieval.batch mandates via Supabase."
+document_role: "source"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "medium"
 ---
 
 # Inox remote serve
