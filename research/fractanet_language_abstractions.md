@@ -454,6 +454,72 @@ Prefer:
 - human validation anchors where responsibility is engaged;
 - redundant but non-capturable stores for long-term memory.
 
+### 14.1 Control-plane non-duplication and containers
+
+Fractanet should not adopt an infrastructure abstraction merely because it is conventional when that abstraction duplicates capabilities which Fractanet/Inseme must already provide as sovereign primitives.
+
+This applies especially to container stacks and orchestrators. Their useful functions — deployment, restart policy, health checks, service identity, secrets, configuration, persistent storage, networking policy, logs, metrics, rollback and migration — overlap substantially with the Fractanet control plane that must exist independently for agents, Inox runtimes, edge nodes and heterogeneous compute.
+
+Canonical rule:
+
+> **Do not duplicate the control plane.**
+
+A container is therefore **not a required Fractanet execution primitive**. Docker/OCI support MAY exist as a compatibility and import/export adapter when it provides net value, for example to run third-party software already distributed and tested as an image, to create a temporary isolation boundary, or to accelerate an experiment.
+
+The target relationship is:
+
+```text
+source / package / binary / WASM / OCI image
+                    ↓
+             deployment adapter
+                    ↓
+          Fractanet control plane
+                    ↓
+ secrets / identity / policy / storage
+ logs / health / supervision / migration
+                    ↓
+       native / VM / WASM / container / edge runtime
+```
+
+The control plane remains above the runtime choice. Runtime-specific mechanisms MUST NOT silently become a second authority for capabilities that Fractanet already governs.
+
+In particular, a container-specific secret store, service registry, restart policy or observability layer should not become canonical merely because a workload happens to be containerized. The existing Inseme Vault work is a concrete example: Fractanet needs coherent secret semantics across native processes, agents, remote machines, microcontrollers and optional containers; container-local secret semantics would otherwise create duplicate authorities or permanent translation layers.
+
+### 14.2 Desired state over packaged environment
+
+Container images historically provide useful reproducibility by packaging an environment. In an agent-operated Fractanet, the stronger target is **continuously verified desired state**:
+
+```text
+DesiredState + Constraints + Budget + AcceptanceTests
+                        ↓
+                      Agent
+                        ↓
+                choose runtime/substrate
+                        ↓
+          build / configure / deploy / verify
+                        ↓
+               observe / repair / migrate
+```
+
+This does not assume that AI makes dependency management magically disappear. The requirement is stronger: the agent MUST be able to prove operational conformance through explicit checks and traces, regardless of whether the chosen substrate is native, containerized, virtualized, WASM-based or remote.
+
+Therefore:
+
+```text
+container image = optional implementation artifact
+verified capability state = architectural objective
+```
+
+Runtime choice should be made from total operational cost, isolation needs, portability, available packaging, resource overhead, observability, recoverability and anti-capture constraints — not from a default rule that every service must be containerized.
+
+A recurring infrastructure function implemented both by Fractanet and by a chosen runtime/orchestrator SHOULD trigger an explicit duplication review:
+
+1. Which layer is authoritative?
+2. Can the lower-layer mechanism be bypassed or reduced to an adapter?
+3. What translation/synchronization cost does duplication create?
+4. Does the duplicated layer improve isolation or portability enough to justify that cost?
+5. Can the workload move to another runtime without changing its Fractanet-level semantics?
+
 ---
 
 ## 15. Next artifacts
