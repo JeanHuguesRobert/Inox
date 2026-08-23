@@ -73,52 +73,55 @@ graph LR
   r_github[".github"]
   r_acorsica_org["acorsica.org"]
   r_structenv["StructEnv"]
-  r_cogentia -->|108| r_barons_mariani
+  r_cogentia -->|110| r_barons_mariani
+  r_jeanhuguesrobert -->|91| r_barons_mariani
   r_barons_mariani -->|71| r_cogentia
-  r_jeanhuguesrobert -->|68| r_barons_mariani
-  r_fractavolta -->|48| r_cogentia
+  r_jeanhuguesrobert -->|54| r_cogentia
+  r_fractavolta -->|52| r_cogentia
+  r_jeanhuguesrobert -->|39| r_marenostrum
   r_fractavolta -->|37| r_marenostrum
-  r_inseme -->|36| r_cogentia
-  r_jeanhuguesrobert -->|35| r_cogentia
-  r_cogentia -->|28| r_inseme
-  r_fractavolta -->|24| r_inseme
+  r_inseme -->|37| r_cogentia
+  r_cogentia -->|29| r_inseme
+  r_jeanhuguesrobert -->|26| r_fractavolta
+  r_jeanhuguesrobert -->|26| r_inseme
   r_barons_mariani -->|22| r_marenostrum
+  r_fractavolta -->|22| r_inseme
+  r_inseme -->|20| r_barons_mariani
+  r_jeanhuguesrobert -->|20| r_inox
   r_barons_mariani -->|19| r_fractavolta
   r_cogentia -->|19| r_marenostrum
   r_fractavolta -->|19| r_barons_mariani
-  r_inseme -->|19| r_barons_mariani
   r_barons_mariani -->|18| r_inseme
   r_inox -->|16| r_cogentia
-  r_jeanhuguesrobert -->|16| r_marenostrum
   r_marenostrum -->|16| r_cogentia
-  r_inseme -->|13| r_fractavolta
+  r_inseme -->|12| r_fractavolta
   r_inseme -->|12| r_inox
   r_marenostrum -->|12| r_fractavolta
   r_inox -->|11| r_barons_mariani
   r_marenostrum -->|11| r_barons_mariani
   r_inox -->|10| r_fractavolta
   r_inox -->|9| r_inseme
-  r_jeanhuguesrobert -->|9| r_fractavolta
   r_fractavolta -->|8| r_inox
   r_inox -->|8| r_marenostrum
-  r_jeanhuguesrobert -->|7| r_inseme
+  r_jeanhuguesrobert -->|8| r_ubikia
+  r_ubikia -->|8| r_cogentia
+  r_cogentia -->|7| r_jeanhuguesrobert
+  r_inseme -->|7| r_jeanhuguesrobert
   r_inseme -->|6| r_kudos
-  r_jeanhuguesrobert -->|6| r_inox
-  r_ubikia -->|6| r_cogentia
   r_barons_mariani -->|5| r_inox
   r_barons_mariani -->|5| r_jeanhuguesrobert
   r_cogentia -->|5| r_fractavolta
+  r_operium -->|5| r_cogentia
   r_ubikia -->|5| r_barons_mariani
   r_barons_mariani -->|4| r_ubikia
-  r_cogentia -->|4| r_jeanhuguesrobert
+  r_fractavolta -->|4| r_jeanhuguesrobert
   r_marianivillage -->|4| r_fractavolta
   r_operium -->|4| r_marenostrum
   r_ubikia -->|4| r_jeanhuguesrobert
   r_github -->|3| r_gouvernance
-  r_fractavolta -->|3| r_jeanhuguesrobert
-  r_inseme -->|3| r_jeanhuguesrobert
+  r_cogentia -->|3| r_operium
+  r_jeanhuguesrobert -->|3| r_institut_mariani
   r_kudos -->|3| r_barons_mariani
-  r_operium -->|3| r_cogentia
   r_operium -->|3| r_barons_mariani
   r_operium -->|3| r_inseme
   r_cogentia -->|2| r_inox
@@ -128,7 +131,6 @@ graph LR
   r_inseme -->|2| r_marenostrum
   r_institut_mariani -->|2| r_barons_mariani
   r_institut_mariani -->|2| r_fractavolta
-  r_jeanhuguesrobert -->|2| r_ubikia
   r_marenostrum -->|2| r_jeanhuguesrobert
   r_marenostrum -->|2| r_inseme
   r_marenostrum -->|2| r_inox
@@ -141,6 +143,8 @@ graph LR
   r_gouvernance -->|1| r_inox
   r_gouvernance -->|1| r_kudos
   r_gouvernance -->|1| r_marianivillage
+  r_inseme -->|1| r_operium
+  r_inseme -->|1| r_privai
   r_inseme -->|1| r_ubikia
   r_institut_mariani -->|1| r_privai
   r_institut_mariani -->|1| r_kudos
@@ -237,7 +241,13 @@ graph LR
 - [Reactive Sets in Inox — Native Implementation Path](reactive_sets_inox_cop_implementation.md)
 - [The Iɴᴏx programming language](../README.md)
 - [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
+- [Research Index — barons-Mariani](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/barons-Mariani-index.md)
+- [Research Index — Cogentia](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/cogentia-index.md)
+- [Research Index — FractaVolta](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/FractaVolta-index.md)
+- [Research Index — Inseme](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/inseme-index.md)
+- [Research Index — Jean Hugues Noël Robert (Profile / Entry Point)](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/JeanHuguesRobert-index.md)
 - [Research Index — Jean Hugues Noël Robert (Profile / Entry Point)](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/index.md)
+- [Research Index — MareNostrum](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/marenostrum-index.md)
 - [Research Index — MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md)
 <!-- END_AUTO: possibilities -->
 ---

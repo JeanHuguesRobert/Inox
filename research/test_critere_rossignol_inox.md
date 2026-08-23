@@ -125,8 +125,8 @@ continuation:
 ### Backlinks
 
 *These documents link to this file:*
-- Barons Mariani
+- [Barons Mariani](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/README.md)
 - [Research Index — Inox](index.md)
 - [The Iɴᴏx programming language](../README.md)
-- Jean Hugues Noël Robert, baron Mariani
+- [Jean Hugues Noël Robert, baron Mariani](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/README.md)
 <!-- END_AUTO: backlinks -->
