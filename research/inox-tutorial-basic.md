@@ -291,7 +291,7 @@ and only later show their expansion.
 | `42 >x` | `42 /x make.local` | Create local named value `x`. |
 | `x>` | `/x local` | Retrieve local named value `x`. |
 | `$x` | `/x local` | Retrieve local named value `x`, prefix style. |
-| `43 >x!` | `43 /x local!` | Update existing local named value `x`. |
+| `43 >x!` or `43 $x!` | `43 /x local!` | Update existing local named value `x`. |
 | `_x` | `/x data` | Retrieve named value `x` from the data stack. |
 | `_x!` | `/x data!` | Update named value `x` in the data stack. |
 | `:x` | `/x rename` | Rename the top stack value as `x`. |
@@ -345,7 +345,7 @@ Comparison is separate from update.
 A comparison form may look like:
 
 ```inox
-x> 42 =?
+x> 42 =
 ```
 
 depending on the current equality predicate in the specification and implementation.
@@ -424,7 +424,8 @@ Core forms:
 >x       create local named value
 x>       retrieve local named value, postfix style
 $x       retrieve local named value, prefix style
->x!      update local named value
+>x!      update local named value, flow-oriented spelling
+$x!      update local named value, equivalent value-oriented spelling
 _x       retrieve data-stack named value
 _x!      update data-stack named value
 :x       rename top stack value

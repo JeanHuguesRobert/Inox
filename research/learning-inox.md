@@ -75,11 +75,12 @@ The reference implementation lives in `lib/inox.ts` — one ~24 500-line TypeScr
 to hello  "hello" out.
 ```
 
-That's a complete verb definition: `to NAME BODY .` (or `;` — both terminate).
+That's a complete verb definition: `to NAME BODY .`.
 
 - `to` starts compilation: subsequent tokens are appended to the new verb's definition rather than executed immediately.
 - The body is a sequence of *verbs* and *literals*, separated by whitespace.
-- `.` (period) or `;` ends the definition and returns to normal evaluation.
+- `.` (period) ends the definition and returns to normal evaluation. In the
+  current runtime, `;` instead terminates a Smalltalk-style keyword call.
 
 Verbs can have **any printable name**: `hello`, `even?`, `>R`, `@!`, `make.metaclass`, `if:then:else:`. Suffix conventions:
 
@@ -108,7 +109,7 @@ out( "hello" )         ~~ prefix
 "hello" /out call      ~~ explicit
 ```
 
-All three push `"hello"` then run `out`. Prefix uses `( ... )` to group arguments. Postfix is the bare concatenative form. Operators (`+`, `&`, `=?`) work in infix between two operands: `3 + 2`, `"a" & "b"`.
+All three push `"hello"` then run `out`. Prefix uses `( ... )` to group arguments. Postfix is the bare concatenative form. Operators such as `+`, `&`, `=`, and `<>` work in infix between two operands: `3 + 2`, `"a" & "b"`.
 
 Smalltalk-style keyword form for multi-part verbs:
 

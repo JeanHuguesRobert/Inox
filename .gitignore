@@ -9,6 +9,7 @@
 dist-*/
 *.js.map
 *.js
+!scripts/probe-spec-runtime-audit.js
 !index.js
 !bin/*.js
 !scripts/test-*.js
