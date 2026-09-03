@@ -331,11 +331,18 @@ The `{}` enclosed _block_ that defines the function can then access the argument
 `&` is an operator that joins two pieces of text found on the top of the stack.
 
 
-```
-to tell-to/  with /m /d /{ out( "Tell " & $m & " to " && $d }
-```
+> Historical shorthand, retained as provenance rather than as an executable
+> grammar example: `to tell-to/ with /m /d /{ out( "Tell " & $m & " to " && $d }`.
+> It contains an unsupported `&&` token and unbalanced delimiters in the
+> current TypeScript minimal runtime. The audited executable keyword and local
+> examples are recorded in `research/inox-spec-runtime-audit.md`; a canonical
+> abbreviated function grammar needs a language-design decision before this
+> specification can prescribe one.
 
-This is an abbreviated syntax that is defined in the _standard library_. `xx{ ... }` is like `xx( ... )` but the former invokes the `xx{` verb with the block as sole argument whereas the later invokes the verb `xx` when `)` is reached.
+The `xx{ ... }` description is historical evidence of an intended block-call
+convenience, not proof that every spelling shown above is part of the current
+core grammar. `xx{ ... }` and `xx( ... )` must be evaluated against the
+selected dialect/profile.
 
 `/{` is like `{`, it marks the begining of a _block_, a sequence of verbs and literals. There is however an important difference, only `/{' creates a new _scope_ and fiils it with the named parameters. It is convenient to use _local variables_ that will be automaticaly discarded when the block execution ends, ie when the variables become "out of scope".
 
@@ -497,7 +504,7 @@ variable: /global-state is: "initial state".
 constant: /error-state  is: "error".
 
 loop: {
-  if: global-state =? error-state then: { break };
+  if: global-state = error-state then: { break };
   ....
   if: xxx then: { "next" global-state! };
   ...
@@ -525,7 +532,7 @@ say-to( "Hello", "Bob" )  ~~ outputs Say Hello to Bob
 
 Local variables are named cells stored into another stack, the _control stack_. Syntax `>xyz` creates such a named cell using the value from the top of the _data stack_. It reads _"consume TOS and create local named value xyz"_. Use either `$xyz` or `xyz>` to later retrieve the value of the nearest matching local named cell. It reads _"get local named value xyz"_.
 
-To update an existing local named value using the top of the stack, use `>xyz!`. `!` (exclamation point) means "update" in this context and by convention it more generally signals _"some side effect or surprise involved"_. `$xyz!` is accepted as an equivalent form when supported by the dialect/compiler.
+To update an existing local named value using the top of the stack, use `>xyz!` or `$xyz!`; both forms are equivalent. `!` (exclamation point) means "update" in this context and by convention it more generally signals _"some side effect or surprise involved"_. The `$xyz!` spelling is reserved for this update meaning and must not be redefined to mean something else.
 
 ``>{`` and `}` specify respectively the begining and the end of the **scope** within which local variables are created and used. These scopes can nest in such a way that a local variable created by a verb can be accessed from the other verbs invoked while the scope exists, unless that verb created another local variable with the same name.
 

@@ -222,6 +222,9 @@ counter>    retrieve current counter
 >counter!   update the existing local named value counter
 ```
 
+`$counter!` is equivalent to `>counter!`; use either spelling only for that
+local-update meaning.
+
 Use `update`, not `assign`.
 
 ## 10. Equality and comparison
@@ -229,7 +232,7 @@ Use `update`, not `assign`.
 If equality is introduced, explain it separately:
 
 ```inox
-x> 42 =?
+x> 42 =
 ```
 
 or whichever equality predicate is current in the implementation/specification.

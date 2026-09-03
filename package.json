@@ -22,7 +22,8 @@
     "test:retrieval": "node scripts/test-retrieval-batch.js",
     "test:continuations": "node scripts/test-serve-continuations.js",
     "bench:serve": "node scripts/bench-inox-serve.js",
-    "test:session": "node scripts/test-session-packets.js"
+    "test:session": "node scripts/test-session-packets.js",
+    "probe:spec-runtime-audit": "node scripts/probe-spec-runtime-audit.js"
   },
   "repository": {
     "type": "git",
