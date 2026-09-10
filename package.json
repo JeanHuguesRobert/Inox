@@ -22,7 +22,8 @@
     "test:retrieval": "node scripts/test-retrieval-batch.js",
     "test:continuations": "node scripts/test-serve-continuations.js",
     "bench:serve": "node scripts/bench-inox-serve.js",
-    "test:session": "node scripts/test-session-packets.js"
+    "test:session": "node scripts/test-session-packets.js",
+    "test:shutdown": "node scripts/test-pool-shutdown.js"
   },
   "repository": {
     "type": "git",
@@ -37,8 +38,7 @@
     "url": "https://github.com/virteal/Inox/issues"
   },
   "homepage": "https://github.com/virteal/Inox#readme",
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "typescript": "^6.0.3",
     "@types/node": "^25.9.1"

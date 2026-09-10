@@ -14,12 +14,14 @@ export function createSidecarPool(options = {}) {
   const slots = [];
   const queue = [];
   let jobSeq = 0;
+  let closed = false;
 
   for (let index = 0; index < size; index++) {
     spawnSlot(index);
   }
 
   function spawnSlot(index) {
+    if (closed) return;
     const child = spawn(process.execPath, [sidecarScript], {
       cwd: root,
       env: {
@@ -88,11 +90,12 @@ export function createSidecarPool(options = {}) {
           error: "sidecar_exited",
         });
       }
-      setTimeout(() => spawnSlot(index), 50);
+      if (!closed) setTimeout(() => spawnSlot(index), 50);
     });
   }
 
   function pump() {
+    if (closed) return;
     while (queue.length) {
       const slot = slots.find(item => item?.ready && !item.busy && item.child?.stdin?.writable);
       if (!slot) return;
@@ -112,6 +115,7 @@ export function createSidecarPool(options = {}) {
 
   function run(job, timeoutMs) {
     const id = `job-${++jobSeq}`;
+    if (closed) return Promise.resolve({ ok: false, exit_code: 1, stdout: "", stderr: "sidecar_pool_closed", runtime: "sidecar", error: "sidecar_pool_closed" });
     return new Promise((resolve) => {
       let settled = false;
       const timer = timeoutMs > 0
@@ -147,6 +151,9 @@ export function createSidecarPool(options = {}) {
   }
 
   async function close() {
+    if (closed) return;
+    closed = true;
+    for (const job of queue.splice(0)) job.resolve({ ok: false, exit_code: 1, stdout: "", stderr: "sidecar_pool_closed", runtime: "sidecar", error: "sidecar_pool_closed" });
     for (const slot of slots) {
       slot?.child?.stdin?.end();
       slot?.child?.kill("SIGTERM");

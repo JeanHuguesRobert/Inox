@@ -2,6 +2,7 @@
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { once } from "node:events";
 import net from "node:net";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -20,10 +21,12 @@ const child = spawn(process.execPath, ["bin/inox-serve.js"], {
     INOX_SERVE_PORT: String(port),
     INOX_SERVE_TOKEN: token,
     INOX_SERVE_SESSION_WORKERS: "1",
+    INOX_SERVE_WORKERS: "1",
     SUPABASE_URL: "",
     OPENAI_API_KEY: "",
   },
   stdio: ["ignore", "pipe", "pipe"],
+  detached: process.platform !== "win32",
 });
 
 let stderr = "";
@@ -103,7 +106,30 @@ try {
     session_turns: turn3.session_turns,
   }, null, 2));
 } finally {
+  const exited = child.exitCode !== null || child.signalCode !== null
+    ? Promise.resolve([child.exitCode, child.signalCode])
+    : once(child, "close");
   child.kill();
+  let shutdownTimer;
+  try {
+    const [code, signal] = await Promise.race([
+      exited,
+      new Promise((_, reject) => {
+        shutdownTimer = setTimeout(() => reject(new Error("inox-serve shutdown timed out")), 5000);
+      }),
+    ]);
+    assert.equal(code, 0, `inox-serve shutdown: code=${code}, signal=${signal}`);
+  } finally {
+    clearTimeout(shutdownTimer);
+    if (child.exitCode === null && child.signalCode === null) {
+      // The failure path must not leave respawned test descendants behind.
+      if (process.platform === "win32") child.kill("SIGKILL");
+      else {
+        try { process.kill(-child.pid, "SIGKILL"); }
+        catch (error) { if (error.code !== "ESRCH") throw error; }
+      }
+    }
+  }
 }
 
 async function waitForHealth() {

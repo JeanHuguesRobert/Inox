@@ -14,12 +14,14 @@ export function createSessionPool(options = {}) {
   const slots = [];
   const queue = [];
   let turnSeq = 0;
+  let closed = false;
 
   for (let index = 0; index < size; index++) {
     spawnSlot(index);
   }
 
   function spawnSlot(index) {
+    if (closed) return;
     const child = spawn(process.execPath, [sidecarScript], {
       cwd: root,
       env: { ...process.env, INOX_SERVE_ROOT: root },
@@ -83,7 +85,7 @@ export function createSessionPool(options = {}) {
           turn_id: pending.turn_id,
         });
       }
-      setTimeout(() => spawnSlot(index), 50);
+      if (!closed) setTimeout(() => spawnSlot(index), 50);
     });
   }
 
@@ -97,6 +99,7 @@ export function createSessionPool(options = {}) {
   }
 
   function pump() {
+    if (closed) return;
     for (let i = 0; i < queue.length; i++) {
       const job = queue[i];
       const slot = slotForSession(job.turn_packet?.session_id || null);
@@ -120,6 +123,7 @@ export function createSessionPool(options = {}) {
   function turn(turnPacket, timeoutMs) {
     const turnId = turnPacket.id || `turn-${++turnSeq}`;
     const packetWithId = { ...turnPacket, id: turnId };
+    if (closed) return Promise.resolve({ type: "error", ok: false, error: "session_pool_closed", turn_id: turnId });
     return new Promise((resolve) => {
       let settled = false;
       const timer = timeoutMs > 0
@@ -150,6 +154,9 @@ export function createSessionPool(options = {}) {
   }
 
   async function close() {
+    if (closed) return;
+    closed = true;
+    for (const job of queue.splice(0)) job.resolve({ type: "error", ok: false, error: "session_pool_closed", turn_id: job.turn_id });
     for (const slot of slots) {
       slot?.child?.stdin?.end();
       slot?.child?.kill("SIGTERM");

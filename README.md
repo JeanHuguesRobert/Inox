@@ -136,3 +136,15 @@ Jean Hugues Noël Robert, baron Mariani — *Virteal*
 
 *License: MIT (code) · CC BY-SA 4.0 (text).*
 *Author: Jean Hugues Noël Robert, baron Mariani — Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica — jhr@baronsmariani.org*
+
+### Server shutdown regression (2026-09-10)
+
+Intentional closure of the session and sidecar pools stops worker replacement,
+settles queued requests with a pool-closed error, and rejects later requests.
+Previously, worker exit handlers unconditionally respawned after SIGTERM,
+leaving test servers alive after successful assertions. Keep shutdown distinct
+from crash recovery: delayed replacement callbacks must also check pool state.
+
+Run `npm run build`, `npm run test:shutdown`, and `npm run test:session`;
+the session test now requires the server to close successfully within five
+seconds and bounds cleanup if that assertion fails.
