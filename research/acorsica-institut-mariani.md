@@ -58,5 +58,4 @@ Ils ne valent ni fusion institutionnelle, ni portage juridique, ni financement, 
 *These documents link to this file:*
 - [Lien avec C.O.R.S.I.C.A. et l’Institut Mariani](../acorsica-institut-mariani.md)
 - [Research Index — Inox](index.md)
-- [C.O.R.S.I.C.A., Institut Mariani et corpus personnel](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/acorsica-et-corpus.md)
 <!-- END_AUTO: backlinks -->
