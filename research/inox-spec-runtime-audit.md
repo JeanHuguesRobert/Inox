@@ -15,6 +15,10 @@ related:
   - "https://github.com/JeanHuguesRobert/Inox/issues/4"
   - "https://github.com/JeanHuguesRobert/Inox/issues/34"
   - "https://github.com/JeanHuguesRobert/Inox/issues/35"
+classification_source: "cogentia.js"
+classification_version: "1"
+classification_rule: "explicit-metadata"
+classification_confidence: "strong"
 ---
 
 # Inox specification/runtime semantic-drift audit
