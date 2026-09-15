@@ -3,7 +3,7 @@ canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/README.md
 last_stamped_at: 2026-05-21T00:00:00.000Z
 title: The Iɴᴏx programming language
 author: unknown
-date: unknown
+date: null
 provenance:
   origin_type: unknown
   origin_repository: unknown
@@ -14,7 +14,12 @@ review:
   status: unreviewed
   reviewed_by: []
 update_policy: UP-DEFAULT-REVIEWED
+license: CC BY-SA 4.0
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+language: en
+status: working-paper
 ---
+
 # The Iɴᴏx programming language
 
 > *« Le style, c'est l'homme »* — Buffon, 1753.  

@@ -1,16 +1,14 @@
 ---
-title: "Implement Inox Reactive Sets Seed"
-subtitle: "Minimal coding continuation for ReactiveSet, ReactiveQuery, PacketAttractor and pressure strategies"
-version: "0.1"
-status: "coding-prompt — continuation"
-date: "2026-06-01"
-author: "Jean Hugues Noël Robert"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-license: "CC BY-SA 4.0"
-language: "en"
-repository: "JeanHuguesRobert/Inox"
-intended_path: "prompts/implement_reactive_sets_seed.md"
-derived_from: "research/reactive_sets_inox_cop_implementation.md"
+title: Implement Inox Reactive Sets Seed
+subtitle: Minimal coding continuation for ReactiveSet, ReactiveQuery, PacketAttractor and pressure strategies
+version: '0.1'
+status: coding-prompt — continuation
+date: '2026-06-01'
+author: Jean Hugues Noël Robert
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+license: CC BY-SA 4.0
+language: en
+derived_from: research/reactive_sets_inox_cop_implementation.md
 tags:
   - inox
   - coding-prompt
@@ -21,16 +19,27 @@ tags:
   - cop
   - fractanet
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/prompts/implement_reactive_sets_seed.md
-last_stamped_at: 2026-06-01
-document_role: "derived"
-document_kind: "prompt"
-visibility: "public"
-lifecycle_state: "active"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "prompt"
-classification_confidence: "strong"
+last_stamped_at: 2026-06-01T00:00:00.000Z
+document_role: derived
+document_kind: prompt
+visibility: public
+lifecycle_state: active
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: prompt
+classification_confidence: strong
+update_policy: UP-DEFAULT-REVIEWED
+review:
+  status: unreviewed
+  reviewed_by: []
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
 ---
+
 
 # Implement Inox Reactive Sets Seed
 

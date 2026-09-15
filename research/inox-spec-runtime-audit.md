@@ -1,25 +1,38 @@
 ---
-title: "Inox specification/runtime semantic-drift audit"
-date: "2026-08-26"
-status: "audit report — language decisions pending where stated"
-document_role: "derived"
-document_kind: "audit-report"
-visibility: "public"
-lifecycle_state: "working"
-language: "en"
+title: Inox specification/runtime semantic-drift audit
+date: '2026-08-26'
+status: audit report — language decisions pending where stated
+document_role: derived
+document_kind: audit-report
+visibility: public
+lifecycle_state: working
+language: en
 related:
-  - "inox-spec.md"
-  - "inox-tutorial-basic.md"
-  - "learning-inox.md"
-  - "inox-naming-and-assignment.md"
-  - "https://github.com/JeanHuguesRobert/Inox/issues/4"
-  - "https://github.com/JeanHuguesRobert/Inox/issues/34"
-  - "https://github.com/JeanHuguesRobert/Inox/issues/35"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "explicit-metadata"
-classification_confidence: "strong"
+  - inox-spec.md
+  - inox-tutorial-basic.md
+  - learning-inox.md
+  - inox-naming-and-assignment.md
+  - https://github.com/JeanHuguesRobert/Inox/issues/4
+  - https://github.com/JeanHuguesRobert/Inox/issues/34
+  - https://github.com/JeanHuguesRobert/Inox/issues/35
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: explicit-metadata
+classification_confidence: strong
+license: CC BY-SA 4.0
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+update_policy: UP-DEFAULT-REVIEWED
+review:
+  status: unreviewed
+  reviewed_by: []
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
 ---
+
 
 # Inox specification/runtime semantic-drift audit
 

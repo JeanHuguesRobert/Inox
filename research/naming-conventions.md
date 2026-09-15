@@ -1,21 +1,33 @@
 ---
-title: "Inox naming conventions and design influences"
-author: "Jean Hugues Noël Robert, baron Mariani"
+title: Inox naming conventions and design influences
+author: Jean Hugues Noël Robert, baron Mariani
 status: working-paper — working notes
-date: "2026-05-22"
+date: '2026-05-22'
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/naming-conventions.md
-affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-license: "CC BY-SA 4.0"
-last_stamped_at: 2026-06-01
-document_role: "source"
-document_kind: "working-note"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "working-note"
-classification_confidence: "medium"
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+license: CC BY-SA 4.0
+last_stamped_at: 2026-06-01T00:00:00.000Z
+document_role: source
+document_kind: working-note
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: working-note
+classification_confidence: medium
+language: en
+update_policy: UP-DEFAULT-REVIEWED
+review:
+  status: unreviewed
+  reviewed_by: []
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
 ---
+
 
 # Inox naming conventions and design influences
 

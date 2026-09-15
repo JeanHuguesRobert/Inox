@@ -1,22 +1,34 @@
 ---
-title: "Inox: Two Versions — Scripting vs System Programming"
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A."
-date: "2026-06-05"
-license: "CC BY-SA 4.0"
-status: "working-note"
-corpus_role: "source"
-keywords: "Inox, scripting, system programming, l9, COP, coding agents"
-summary: "Primary design note distinguishing the agent-obvious Inox scripting layer from the l9/COP system programming layer."
-document_role: "source"
-document_kind: "working-note"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "working-note"
-classification_confidence: "medium"
+title: 'Inox: Two Versions — Scripting vs System Programming'
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A.
+date: '2026-06-05'
+license: CC BY-SA 4.0
+status: working-note
+corpus_role: source
+summary: Primary design note distinguishing the agent-obvious Inox scripting layer from the l9/COP system programming layer.
+document_role: source
+document_kind: working-note
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: working-note
+classification_confidence: medium
+tags: Inox, scripting, system programming, l9, COP, coding agents
+language: en
+update_policy: UP-DEFAULT-REVIEWED
+review:
+  status: unreviewed
+  reviewed_by: []
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
 ---
+
 # Inox: Two Versions — Scripting (Obvious for Agents) vs System Programming (l9 + COP)
 
 User's explicit framing (2026):

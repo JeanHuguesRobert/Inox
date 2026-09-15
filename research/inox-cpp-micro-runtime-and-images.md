@@ -1,48 +1,46 @@
 ---
-title: "Inox Micro C++ Runtime and Images — Implementation Contract"
-subtitle: "Normative v0 specification for a portable Linux/ESP32 runtime, immutable images, mutable overlays, snapshots, and USB control"
-author: "Jean Hugues Noël Robert, baron Mariani"
-drafted_by: "OpenAI Codex (GPT-5)"
-principal: "Jean Hugues Noël Robert"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A."
-date: "2026-07-16"
-status: "draft-for-human-review"
-version: "0.1.0-draft"
-license: "MIT (code examples) · CC BY-SA 4.0 (text)"
-language: "en"
-repository: "JeanHuguesRobert/Inox"
-canonical_path: "Inox/research/inox-cpp-micro-runtime-and-images.md"
-canonical_url: "https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-cpp-micro-runtime-and-images.md"
-document_role: "source"
-document_kind: "implementation-contract"
-visibility: "public"
-lifecycle_state: "working"
-source_or_derived: "source-document"
-update_policy: "UP-DECISION-REVIEW"
+title: Inox Micro C++ Runtime and Images — Implementation Contract
+subtitle: Normative v0 specification for a portable Linux/ESP32 runtime, immutable images, mutable overlays, snapshots, and USB control
+author: Jean Hugues Noël Robert, baron Mariani
+drafted_by: OpenAI Codex (GPT-5)
+principal: Jean Hugues Noël Robert
+affiliation: Institut Mariani / C.O.R.S.I.C.A.
+date: '2026-07-16'
+status: draft-for-human-review
+version: 0.1.0-draft
+license: MIT (code examples) · CC BY-SA 4.0 (text)
+language: en
+canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-cpp-micro-runtime-and-images.md
+document_role: source
+document_kind: implementation-contract
+visibility: public
+lifecycle_state: working
+source_or_derived: source-document
+update_policy: UP-DECISION-REVIEW
 human_validation_required: true
 provenance:
-  origin_type: "conversation-and-repository-audit"
-  origin_repository: "JeanHuguesRobert/Inox"
-  origin_ref: "master@4177159e2096df1512b8001c09ba90e1d563c30c"
-  origin_date: "2026-07-16"
+  origin_type: conversation-and-repository-audit
+  origin_repository: JeanHuguesRobert/Inox
+  origin_ref: master@4177159e2096df1512b8001c09ba90e1d563c30c
+  origin_date: '2026-07-16'
   derived_from:
-    - "Inox/AGENTS.md"
-    - "Inox/README.md"
-    - "Inox/lib/inox.ts"
-    - "Inox/research/inox-spec.md"
-    - "Inox/research/two-versions-scripting-vs-system.md"
-    - "Inox issue #5"
-    - "conversation checkpoints R34-R36"
+    - Inox/AGENTS.md
+    - Inox/README.md
+    - Inox/lib/inox.ts
+    - Inox/research/inox-spec.md
+    - Inox/research/two-versions-scripting-vs-system.md
+    - 'Inox issue #5'
+    - conversation checkpoints R34-R36
 review:
-  status: "unreviewed"
+  status: unreviewed
   reviewed_by: []
 related_documents:
-  - "Inox/research/inox-spec.md"
-  - "Inox/research/two-versions-scripting-vs-system.md"
-  - "Inox/research/fractanet_language_abstractions.md"
-  - "Inox/profiles/inox-micro-v0.json"
-  - "Inox/test/conformance/micro/README.md"
-  - "https://github.com/JeanHuguesRobert/Inox/issues/5"
+  - Inox/research/inox-spec.md
+  - Inox/research/two-versions-scripting-vs-system.md
+  - Inox/research/fractanet_language_abstractions.md
+  - Inox/profiles/inox-micro-v0.json
+  - Inox/test/conformance/micro/README.md
+  - https://github.com/JeanHuguesRobert/Inox/issues/5
 tags:
   - inox
   - cpp
@@ -54,11 +52,12 @@ tags:
   - content-addressing
   - usb
   - fractanet
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "explicit-metadata"
-classification_confidence: "medium"
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: explicit-metadata
+classification_confidence: medium
 ---
+
 
 # Inox Micro C++ Runtime and Images
 

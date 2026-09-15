@@ -1,16 +1,29 @@
 ---
-title: "Corpus Status — Inox"
-description: "Current state of the Inox knowledge corpus — what is proved, what is open, what remains possible"
+title: Corpus Status — Inox
+description: Current state of the Inox knowledge corpus — what is proved, what is open, what remains possible
 layout: default
 nav_order: 2
-last_modified_at: 2026-06-08
+last_modified_at: 2026-06-08T00:00:00.000Z
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/corpus-status.md
-last_stamped_at: 2026-06-01
+last_stamped_at: 2026-06-01T00:00:00.000Z
 license: CC BY-SA 4.0
 affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
-date: 2026-05-27
+date: 2026-05-27T00:00:00.000Z
 creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par les outils du corpus)
+language: en
+update_policy: UP-DEFAULT-REVIEWED
+status: working-paper
+review:
+  status: unreviewed
+  reviewed_by: []
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
 ---
+
 
 # Corpus Status — Inox
 

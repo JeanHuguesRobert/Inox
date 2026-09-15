@@ -1,23 +1,35 @@
 ---
-title: "Inox Documentation Index"
-subtitle: "Orientation map for specification, doctrine, tutorials, and pending documentation patches"
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-date: "2026-06-02"
-license: "MIT (code) · CC BY-SA 4.0 (text)"
-status: "working-note"
-version: "0.1"
-corpus_role: "index"
-canonical_url: "https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-docs-index.md"
-document_role: "index"
-document_kind: "navigation"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "explicit-index"
-classification_confidence: "medium"
+title: Inox Documentation Index
+subtitle: Orientation map for specification, doctrine, tutorials, and pending documentation patches
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+date: '2026-06-02'
+license: MIT (code) · CC BY-SA 4.0 (text)
+status: working-note
+version: '0.1'
+corpus_role: index
+canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-docs-index.md
+document_role: index
+document_kind: navigation
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: explicit-index
+classification_confidence: medium
+language: en
+update_policy: UP-DEFAULT-REVIEWED
+review:
+  status: unreviewed
+  reviewed_by: []
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
 ---
+
 
 # Inox Documentation Index
 

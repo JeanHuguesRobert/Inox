@@ -1,17 +1,32 @@
 ---
-title: "Inox serve — session cognitive packets (inox.session.v1)"
-status: "working-note"
-corpus_role: "source"
-document_kind: "operational-note"
-visibility: "public"
-lifecycle_state: "active"
-summary: "Stateful actor loop: continuations on stdout, fulfillments reinjected on stdin; COP-aligned packets."
-document_role: "source"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "explicit-metadata"
-classification_confidence: "medium"
+title: Inox serve — session cognitive packets (inox.session.v1)
+status: working-note
+corpus_role: source
+document_kind: operational-note
+visibility: public
+lifecycle_state: active
+summary: 'Stateful actor loop: continuations on stdout, fulfillments reinjected on stdin; COP-aligned packets.'
+document_role: source
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: explicit-metadata
+classification_confidence: medium
+license: CC BY-SA 4.0
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+language: en
+date: '2026-09-15'
+update_policy: UP-DEFAULT-REVIEWED
+review:
+  status: unreviewed
+  reviewed_by: []
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
 ---
+
 
 # Session cognitive packets
 

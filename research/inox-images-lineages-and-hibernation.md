@@ -1,47 +1,45 @@
 ---
-title: "Inox Images, Lineages, Hibernation, and Wake"
-subtitle: "Semantic truth, native materializations, content-addressed state, and graceful reconstruction across Fractanet nodes"
-description: "Source architecture note defining the Inox model-to-image-to-instance lifecycle, immutable semantic images, target-specific native materializations, snapshots, lineages, hibernation, wake, memory placement, and degraded reconstruction."
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A."
-date: "2026-07-17"
-version: "0.1-draft"
-status: "source working paper — draft under human validation"
-license: "CC BY-SA 4.0"
-language: "en"
-repository: "JeanHuguesRobert/Inox"
-canonical_path: "Inox/research/inox-images-lineages-and-hibernation.md"
-canonical_url: "https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-images-lineages-and-hibernation.md"
-document_role: "source"
-document_kind: "architecture-contract"
-visibility: "public"
-lifecycle_state: "working"
-source_or_derived: "source-document"
+title: Inox Images, Lineages, Hibernation, and Wake
+subtitle: Semantic truth, native materializations, content-addressed state, and graceful reconstruction across Fractanet nodes
+description: Source architecture note defining the Inox model-to-image-to-instance lifecycle, immutable semantic images, target-specific native materializations, snapshots, lineages, hibernation, wake, memory placement, and degraded reconstruction.
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A.
+date: '2026-07-17'
+version: 0.1-draft
+status: source working paper — draft under human validation
+license: CC BY-SA 4.0
+language: en
+canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-images-lineages-and-hibernation.md
+document_role: source
+document_kind: architecture-contract
+visibility: public
+lifecycle_state: working
+source_or_derived: source-document
 human_validation_required: true
 related_documents:
-  - "Inox/research/inox-spec.md"
-  - "Inox/research/fractanet_language_abstractions.md"
-  - "Inox/research/inox-cpp-micro-runtime-and-images.md"
-  - "Inox/profiles/inox-micro-v0.json"
-  - "cogentia/research/memory_and_corpus_sleep_cycle.md"
-  - "FractaVolta/research/capability_regimes.md"
-  - "FractaVolta/research/generalized_packet_networks.md"
-  - "inseme/packages/cop-core/Invariants.md"
+  - Inox/research/inox-spec.md
+  - Inox/research/fractanet_language_abstractions.md
+  - Inox/research/inox-cpp-micro-runtime-and-images.md
+  - Inox/profiles/inox-micro-v0.json
+  - cogentia/research/memory_and_corpus_sleep_cycle.md
+  - FractaVolta/research/capability_regimes.md
+  - FractaVolta/research/generalized_packet_networks.md
+  - inseme/packages/cop-core/Invariants.md
 provenance:
-  origin_type: "conversation"
-  origin_repository: "unknown"
-  origin_ref: "Conversation checkpoint on Inox images, Smalltalk images, cross-compilation, hibernation, content-addressed buckets, and degraded wake — 2026-07-16/17"
-  origin_date: "2026-07-16"
+  origin_type: conversation
+  origin_repository: unknown
+  origin_ref: Conversation checkpoint on Inox images, Smalltalk images, cross-compilation, hibernation, content-addressed buckets, and degraded wake — 2026-07-16/17
+  origin_date: '2026-07-16'
   derived_from:
-    - "Inox/research/inox-spec.md"
-    - "Inox/research/fractanet_language_abstractions.md"
-    - "Inox/research/inox-cpp-micro-runtime-and-images.md"
-    - "cogentia/research/memory_and_corpus_sleep_cycle.md"
-    - "FractaVolta/research/capability_regimes.md"
+    - Inox/research/inox-spec.md
+    - Inox/research/fractanet_language_abstractions.md
+    - Inox/research/inox-cpp-micro-runtime-and-images.md
+    - cogentia/research/memory_and_corpus_sleep_cycle.md
+    - FractaVolta/research/capability_regimes.md
 review:
-  status: "unreviewed"
+  status: unreviewed
   reviewed_by: []
-update_policy: "UP-DEFAULT-REVIEWED"
+update_policy: UP-DEFAULT-REVIEWED
 tags:
   - inox
   - image
@@ -53,11 +51,12 @@ tags:
   - cross-compilation
   - fractanet
   - degraded-mode
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "explicit-metadata"
-classification_confidence: "medium"
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: explicit-metadata
+classification_confidence: medium
 ---
+
 
 # Inox Images, Lineages, Hibernation, and Wake
 

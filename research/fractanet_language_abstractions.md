@@ -1,38 +1,36 @@
 ---
-title: "Inox as the Fractanet Language — External Abstractions Absorption Map"
-subtitle: "Supervision, actors, streams, adapters, reactive sets, memory and progressive native coverage"
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A."
-date: "2026-07-03"
-status: "working-note"
-version: "0.1"
-license: "CC BY-SA 4.0"
-language: "en"
-repository: "JeanHuguesRobert/Inox"
-canonical_path: "Inox/research/fractanet_language_abstractions.md"
-canonical_url: "https://github.com/JeanHuguesRobert/Inox/blob/master/research/fractanet_language_abstractions.md"
-document_role: "source"
-document_kind: "working-note"
-visibility: "public"
-lifecycle_state: "working"
-source_or_derived: "source-document"
+title: Inox as the Fractanet Language — External Abstractions Absorption Map
+subtitle: Supervision, actors, streams, adapters, reactive sets, memory and progressive native coverage
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A.
+date: '2026-07-03'
+status: working-note
+version: '0.1'
+license: CC BY-SA 4.0
+language: en
+canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/fractanet_language_abstractions.md
+document_role: source
+document_kind: working-note
+visibility: public
+lifecycle_state: working
+source_or_derived: source-document
 human_validation_required: true
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "working-note"
-classification_confidence: "medium"
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: working-note
+classification_confidence: medium
 related_documents:
-  - "inseme/research/packet_attractor_fractanet.md"
-  - "Inox/research/inox-spec.md"
-  - "Inox/research/two-versions-scripting-vs-system.md"
-  - "Inox/research/js-interop-api-for-scripting-layer.md"
-  - "Inox/research/reactive_sets_inox_cop_implementation.md"
-  - "FractaVolta/research/fractanet.md"
-  - "inseme/packages/cop-core/Invariants.md"
-  - "inseme/packages/cop-core/ImplementationProfiles.md"
-  - "cogentia/research/pipeline.md"
-  - "cogentia/research/cognitive_packets.md"
-  - "cogentia/research/memory_and_corpus_sleep_cycle.md"
+  - inseme/research/packet_attractor_fractanet.md
+  - Inox/research/inox-spec.md
+  - Inox/research/two-versions-scripting-vs-system.md
+  - Inox/research/js-interop-api-for-scripting-layer.md
+  - Inox/research/reactive_sets_inox_cop_implementation.md
+  - FractaVolta/research/fractanet.md
+  - inseme/packages/cop-core/Invariants.md
+  - inseme/packages/cop-core/ImplementationProfiles.md
+  - cogentia/research/pipeline.md
+  - cogentia/research/cognitive_packets.md
+  - cogentia/research/memory_and_corpus_sleep_cycle.md
 tags:
   - inox
   - fractanet
@@ -46,7 +44,18 @@ tags:
   - adapters
   - memory
   - corpus-sleep-cycle
+update_policy: UP-DEFAULT-REVIEWED
+review:
+  status: unreviewed
+  reviewed_by: []
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
 ---
+
 
 # Inox as the Fractanet Language
 

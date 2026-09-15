@@ -1,22 +1,34 @@
 ---
-title: "Inox token-efficiency for LLMs — open hypothesis"
-subtitle: "Does concatenative composition + named values + multi-dialect dispatch align Inox with autoregressive code generation?"
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A."
+title: Inox token-efficiency for LLMs — open hypothesis
+subtitle: Does concatenative composition + named values + multi-dialect dispatch align Inox with autoregressive code generation?
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A.
 status: working-paper — working hypothesis, accumulating evidence
-date: "2026-05-23"
-license: "CC BY-SA 4.0"
+date: '2026-05-23'
+license: CC BY-SA 4.0
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/llm_token_efficiency.md
-last_stamped_at: 2026-06-01
-document_role: "source"
-document_kind: "research-paper"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "research-paper"
-classification_confidence: "medium"
+last_stamped_at: 2026-06-01T00:00:00.000Z
+document_role: source
+document_kind: research-paper
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: research-paper
+classification_confidence: medium
+language: en
+update_policy: UP-DEFAULT-REVIEWED
+review:
+  status: unreviewed
+  reviewed_by: []
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
 ---
+
 
 # Inox token-efficiency for LLMs — open hypothesis
 

@@ -1,27 +1,39 @@
 ---
-title: "Learning Inox — A tutorial for AI agents (and humans in a hurry)"
-author: "Written collaboratively by an AI agent under jhrobert's review"
-canonical_source: "research/inox-spec.md"
+title: Learning Inox — A tutorial for AI agents (and humans in a hurry)
+author: Written collaboratively by an AI agent under jhrobert's review
+canonical_source: research/inox-spec.md
 derived_by: agent
-derived_from: "research/inox-spec.md"
+derived_from: research/inox-spec.md
 status: generated automatically — tutorial for AI agents (and humans in a hurry); sections marked ⚠️ need author review
-date: "2026-06-17"
+date: '2026-06-17'
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/learning-inox.md
-affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-license: "CC BY-SA 4.0"
-last_stamped_at: 2026-06-17
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+license: CC BY-SA 4.0
+last_stamped_at: 2026-06-17T00:00:00.000Z
 generated_automatically: true
-derived_product_type: "tutorial"
-ai_assisted_by: "Codex"
-document_role: "derived"
-document_kind: "profile"
-visibility: "public"
-lifecycle_state: "generated"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "profile"
-classification_confidence: "medium"
+derived_product_type: tutorial
+ai_assisted_by: Codex
+document_role: derived
+document_kind: profile
+visibility: public
+lifecycle_state: generated
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: profile
+classification_confidence: medium
+language: en
+update_policy: UP-DEFAULT-REVIEWED
+review:
+  status: unreviewed
+  reviewed_by: []
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
 ---
+
 
 > **Status (2026-05-22 to 2026-05-23).** The 2023 OO bootstrap blocker
 > turned out to be a chain of latent runtime bugs in `lib/inox.ts`, not

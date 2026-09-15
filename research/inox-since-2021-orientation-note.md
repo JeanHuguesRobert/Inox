@@ -1,44 +1,42 @@
 ---
-title: "Inox Since 2021"
-subtitle: "An Experimental Language for Rational Exploration in a Cybernetic Civilisation"
-author: "Jean Hugues Noël Robert, baron Mariani"
-drafted_by: "OpenAI Codex (GPT-5), under the author's mandate"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A."
-date: "2026-07-28"
-version: "0.6-draft"
-status: "source orientation note — human validation required"
-license: "CC BY-SA 4.0"
-language: "en"
-repository: "JeanHuguesRobert/Inox"
-canonical_path: "Inox/research/inox-since-2021-orientation-note.md"
-document_role: "source"
-document_kind: "historical-and-philosophical-orientation-note"
-visibility: "public"
-lifecycle_state: "working"
-source_or_derived: "source-document"
+title: Inox Since 2021
+subtitle: An Experimental Language for Rational Exploration in a Cybernetic Civilisation
+author: Jean Hugues Noël Robert, baron Mariani
+drafted_by: OpenAI Codex (GPT-5), under the author's mandate
+affiliation: Institut Mariani / C.O.R.S.I.C.A.
+date: '2026-07-28'
+version: 0.6-draft
+status: source orientation note — human validation required
+license: CC BY-SA 4.0
+language: en
+document_role: source
+document_kind: historical-and-philosophical-orientation-note
+visibility: public
+lifecycle_state: working
+source_or_derived: source-document
 human_validation_required: true
-update_policy: "UP-DEFAULT-REVIEWED"
+update_policy: UP-DEFAULT-REVIEWED
 provenance:
-  origin_type: "author-conversation-and-corpus-review"
-  origin_repository: "JeanHuguesRobert/Inox"
-  origin_ref: "Conversation checkpoints R114–R137 — 2026-07-28; v0.6 editorial fluency pass — 2026-07-28"
-  origin_date: "2026-07-28"
+  origin_type: author-conversation-and-corpus-review
+  origin_repository: JeanHuguesRobert/Inox
+  origin_ref: Conversation checkpoints R114–R137 — 2026-07-28; v0.6 editorial fluency pass — 2026-07-28
+  origin_date: '2026-07-28'
   derived_from:
-    - "Inox/README.md"
-    - "Inox/research/inox-spec.md"
-    - "Inox/research/fractanet_language_abstractions.md"
-    - "Inox/research/inox-images-lineages-and-hibernation.md"
-    - "Inox/research/inox-cpp-micro-runtime-and-images.md"
-    - "MareNostrum/research/infrastructure_is_all_you_need.md"
-    - "MareNostrum/research/DHITL.md"
-    - "barons-Mariani/research/democratic_ai_safety.md"
-    - "barons-Mariani/research/alien_academic.md"
+    - Inox/README.md
+    - Inox/research/inox-spec.md
+    - Inox/research/fractanet_language_abstractions.md
+    - Inox/research/inox-images-lineages-and-hibernation.md
+    - Inox/research/inox-cpp-micro-runtime-and-images.md
+    - MareNostrum/research/infrastructure_is_all_you_need.md
+    - MareNostrum/research/DHITL.md
+    - barons-Mariani/research/democratic_ai_safety.md
+    - barons-Mariani/research/alien_academic.md
 review:
-  status: "external-review-feedback-integrated; post-integration-review-pending"
+  status: external-review-feedback-integrated; post-integration-review-pending
   reviewed_by:
-    - "OpenAI Codex (GPT-5), reviewer role, 2026-07-28"
-    - "Grok (xAI), external review of v0.3, 2026-07-28"
-    - "Claude Opus 4.8 (Anthropic), external review of v0.3, 2026-07-28"
+    - OpenAI Codex (GPT-5), reviewer role, 2026-07-28
+    - Grok (xAI), external review of v0.3, 2026-07-28
+    - Claude Opus 4.8 (Anthropic), external review of v0.3, 2026-07-28
 tags:
   - inox
   - cybernetics
@@ -51,11 +49,12 @@ tags:
   - webassembly
   - energy-aware-compute
   - fractanet
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "explicit-metadata"
-classification_confidence: "medium"
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: explicit-metadata
+classification_confidence: medium
 ---
+
 
 # Inox Since 2021
 

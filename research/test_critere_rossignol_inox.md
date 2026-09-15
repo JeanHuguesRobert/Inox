@@ -1,25 +1,37 @@
 ---
-title: "Test du critère Rossignol — Inox"
-subtitle: "Un dispositif à plusieurs Rossignols superposés"
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica"
-date: "2026-05-31"
-status: "working-note — application locale d'un critère doctrinal v0.1"
-version: "0.1"
-license: "CC BY-SA 4.0"
+title: Test du critère Rossignol — Inox
+subtitle: Un dispositif à plusieurs Rossignols superposés
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+date: '2026-05-31'
+status: working-note — application locale d'un critère doctrinal v0.1
+version: '0.1'
+license: CC BY-SA 4.0
 ai_assisted_by:
-  - "Claude — articulation 2026-05-31"
+  - Claude — articulation 2026-05-31
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/test_critere_rossignol_inox.md
-last_stamped_at: 2026-06-01
-document_role: "source"
-document_kind: "working-note"
-visibility: "public"
-lifecycle_state: "working"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "working-note"
-classification_confidence: "medium"
+last_stamped_at: 2026-06-01T00:00:00.000Z
+document_role: source
+document_kind: working-note
+visibility: public
+lifecycle_state: working
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: working-note
+classification_confidence: medium
+language: fr
+update_policy: UP-DEFAULT-REVIEWED
+review:
+  status: unreviewed
+  reviewed_by: []
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
 ---
+
 
 # Test du critère Rossignol — Inox
 

@@ -1,35 +1,37 @@
 ---
-title: "Inox Micro v0 Conformance Contract"
-author: "Jean Hugues Noël Robert, baron Mariani"
-drafted_by: "OpenAI Codex (GPT-5)"
-principal: "Jean Hugues Noël Robert"
-date: "2026-07-16"
-status: "draft-for-human-review"
-version: "0.1.0-draft"
-license: "MIT"
-repository: "JeanHuguesRobert/Inox"
-document_role: "operational"
-document_kind: "conformance-contract"
-visibility: "public"
-lifecycle_state: "working"
-update_policy: "UP-DECISION-REVIEW"
+title: Inox Micro v0 Conformance Contract
+author: Jean Hugues Noël Robert, baron Mariani
+drafted_by: OpenAI Codex (GPT-5)
+principal: Jean Hugues Noël Robert
+date: '2026-07-16'
+status: draft-for-human-review
+version: 0.1.0-draft
+license: MIT
+document_role: operational
+document_kind: conformance-contract
+visibility: public
+lifecycle_state: working
+update_policy: UP-DECISION-REVIEW
 human_validation_required: true
 provenance:
-  origin_type: "derived-conformance-contract"
-  origin_repository: "JeanHuguesRobert/Inox"
-  origin_ref: "master@4177159e2096df1512b8001c09ba90e1d563c30c"
-  origin_date: "2026-07-16"
+  origin_type: derived-conformance-contract
+  origin_repository: JeanHuguesRobert/Inox
+  origin_ref: master@4177159e2096df1512b8001c09ba90e1d563c30c
+  origin_date: '2026-07-16'
   derived_from:
-    - "research/inox-cpp-micro-runtime-and-images.md"
-    - "profiles/inox-micro-v0.json"
+    - research/inox-cpp-micro-runtime-and-images.md
+    - profiles/inox-micro-v0.json
 review:
-  status: "unreviewed"
+  status: unreviewed
   reviewed_by: []
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "explicit-metadata"
-classification_confidence: "medium"
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: explicit-metadata
+classification_confidence: medium
+affiliation: Institut Mariani / C.O.R.S.I.C.A., 1 cours Paoli, F-20250 Corte, Corsica
+language: en
 ---
+
 
 # Inox Micro v0 conformance contract
 

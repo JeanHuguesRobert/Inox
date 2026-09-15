@@ -1,22 +1,34 @@
 ---
-title: "Lien avec C.O.R.S.I.C.A. et l’Institut Mariani"
-author: "Jean Hugues Noël Robert, baron Mariani"
-affiliation: "Institut Mariani / C.O.R.S.I.C.A."
-date: "2026-06-03"
-license: "CC BY-SA 4.0"
-status: "published"
-corpus_role: "source"
-keywords: "Inox, C.O.R.S.I.C.A., Institut Mariani, Fractanet, autonomie de capacité, séparation institutionnelle"
-summary: "Note de clarification institutionnelle sur les liens documentaires entre Inox, C.O.R.S.I.C.A. et l’Institut Mariani."
-document_role: "source"
-document_kind: "research-paper"
-visibility: "public"
-lifecycle_state: "stable"
-classification_source: "cogentia.js"
-classification_version: "1"
-classification_rule: "research-paper"
-classification_confidence: "medium"
+title: Lien avec C.O.R.S.I.C.A. et l’Institut Mariani
+author: Jean Hugues Noël Robert, baron Mariani
+affiliation: Institut Mariani / C.O.R.S.I.C.A.
+date: '2026-06-03'
+license: CC BY-SA 4.0
+status: published
+corpus_role: source
+summary: Note de clarification institutionnelle sur les liens documentaires entre Inox, C.O.R.S.I.C.A. et l’Institut Mariani.
+document_role: source
+document_kind: research-paper
+visibility: public
+lifecycle_state: stable
+classification_source: cogentia.js
+classification_version: '1'
+classification_rule: research-paper
+classification_confidence: medium
+tags: Inox, C.O.R.S.I.C.A., Institut Mariani, Fractanet, autonomie de capacité, séparation institutionnelle
+language: fr
+update_policy: UP-DEFAULT-REVIEWED
+review:
+  status: unreviewed
+  reviewed_by: []
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
 ---
+
 # Lien avec C.O.R.S.I.C.A. et l’Institut Mariani
 
 Ce dépôt documente **Inox**, langage, runtime et substrat technique bas niveau du corpus, notamment dans la perspective des futurs nœuds Fractanet.
