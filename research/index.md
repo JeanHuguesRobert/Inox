@@ -133,3 +133,28 @@ This repository instantiates the **language and runtime substrate layer** of the
 - [Research Index — Jean Hugues Noël Robert (Profile / Entry Point)](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/index.md)
 - [Research Index — MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md)
 <!-- END_AUTO: backlinks -->
+<!-- BEGIN_AUTO: index_catalog -->
+## Corpus catalog
+
+*Generated navigation. Editorial sections above remain human-maintained.*
+
+| Document | Role | Updated |
+|---|---|---|
+| [Align Inox documentation and implementation comments around named stack cells](../.cogentia/issues/jeanhuguesrobert-inox/issue-00004.md) | source | unknown |
+| [Audit Inox specification, tutorials, examples, and runtime for semantic drift](../.cogentia/issues/jeanhuguesrobert-inox/issue-00034.md) | source | unknown |
+| [Bug: implement specified $xyz! local-update syntax](../.cogentia/issues/jeanhuguesrobert-inox/issue-00035.md) | source | unknown |
+| [Consider Smalltalk-style become: for in-place object identity swap](../.cogentia/issues/jeanhuguesrobert-inox/issue-00015.md) | source | unknown |
+| [Control-stack scope cleanup is unbalanced in recursive method dispatch (extend-class{ / Invalid return)](../.cogentia/issues/jeanhuguesrobert-inox/issue-00016.md) | source | unknown |
+| [Destiny of the l8 and side repositories in the corpus](../.cogentia/issues/jeanhuguesrobert-inox/issue-00017.md) | source | unknown |
+| [Inox Micro C++ Runtime and Images — Implementation Contract](inox-cpp-micro-runtime-and-images.md) | source | 2026-07-29 |
+| [Inox Micro v0 Conformance Contract](../test/conformance/micro/README.md) | operational | 2026-07-29 |
+| [Inox Since 2021](inox-since-2021-orientation-note.md) | source | 2026-08-01 |
+| [Inox specification/runtime semantic-drift audit](inox-spec-runtime-audit.md) | derived | 2026-09-03 |
+| [M1: robust C++ extraction and standalone Inox Micro core](../.cogentia/issues/jeanhuguesrobert-inox/issue-00027.md) | source | unknown |
+| [Replace the fragile C++/TS dual-source comment trick with a robust, tested mechanism](../.cogentia/issues/jeanhuguesrobert-inox/issue-00005.md) | source | unknown |
+| [Restore C++ CLI target opportunistically for Sensoria](../.cogentia/issues/jeanhuguesrobert-inox/issue-00033.md) | source | unknown |
+| [RFC/prototype: packetized Linux–USB–ESP32 edge-device bridge](../.cogentia/issues/jeanhuguesrobert-inox/issue-00030.md) | source | unknown |
+| [Runtime API: reset Inox VM state between processor() runs (embeddable / worker-pool use)](../.cogentia/issues/jeanhuguesrobert-inox/issue-00023.md) | source | unknown |
+| [The Iɴᴏx programming language](../README.md) | unknown | 2026-07-03 |
+
+<!-- END_AUTO: index_catalog -->
