@@ -2429,6 +2429,10 @@ const tag_integer   = 2;
 const tag_float     = 3;
 const tag_tag       = 4;
 const tag_verb      = 5;
+// TODO: tag_primitive is 8 in TypeScript but 6 in the C++ definition below.
+// This collides with tag_invalid (8). Verify parity and test the type/tag
+// conversions before correcting it. type_invalid is an exclusive upper bound:
+// last valid native type + 1, not a permanently reserved type slot.
 const tag_primitive = 8
 const tag_reference = 7;
 const tag_invalid   = 8;
