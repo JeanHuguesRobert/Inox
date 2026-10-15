@@ -40,7 +40,7 @@
   "homepage": "https://github.com/virteal/Inox#readme",
   "dependencies": {},
   "devDependencies": {
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "@types/node": "^25.9.1"
   }
 }
