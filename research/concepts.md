@@ -187,5 +187,7 @@ Working name for the FractaVolta network — the distributed mesh of autonomous 
 ### Backlinks
 
 *These documents link to this file:*
+- [FractaXXXX — A Generative Grammar of Possibilities](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/fractaxxxx.md)
+- [Locality Principle](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/locality_principle.md)
 - [Research Index — Inox](index.md)
 <!-- END_AUTO: backlinks -->

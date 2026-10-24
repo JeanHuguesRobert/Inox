@@ -533,6 +533,11 @@ Do not implement:
 ### Backlinks
 
 *These documents link to this file:*
+- For researchers
 - [Research Index — Inox](index.md)
 - [The Iɴᴏx programming language](../README.md)
+- COP Reactive Cognitive Extension
+- [Packet Attractor — Fractanet Distributed Demand and Capability Routing](https://github.com/JeanHuguesRobert/inseme/blob/main/research/packet_attractor_fractanet.md)
+- [Reactive Cognitive COP Extension](https://github.com/JeanHuguesRobert/inseme/blob/main/research/reactive_cognitive_cop_extension.md)
+- [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
 <!-- END_AUTO: backlinks -->

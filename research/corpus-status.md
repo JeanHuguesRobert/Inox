@@ -30,6 +30,7 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 | FractaVolta | yes | main | all | public | full |
 | marenostrum | yes | main | all | public | full |
 | barons-Mariani | yes | main | all | public | full |
+| suicide-corse | no | main | all | public | full |
 | inseme | yes | main | research | public | full |
 | survey | yes | main | all | public | full |
 | Inox | yes | master | all | public | full |
@@ -45,7 +46,7 @@ creator: Jean Hugues Noël Robert, baron Mariani (généré automatiquement par 
 | Kudos | yes | main | all | public | full |
 | .github | yes | main | all | public | full |
 | acorsica.org | yes | main | all | public | full |
-| StructEnv | no | main | all | public | full |
+| StructEnv | yes | main | all | public | full |
 <!-- END_AUTO: registered_repos -->
 ---
 
@@ -57,6 +58,7 @@ graph LR
   r_fractavolta["FractaVolta"]
   r_marenostrum["marenostrum"]
   r_barons_mariani["barons-Mariani"]
+  r_suicide_corse["suicide-corse"]
   r_inseme["inseme"]
   r_survey["survey"]
   r_inox["Inox"]
@@ -73,9 +75,94 @@ graph LR
   r_github[".github"]
   r_acorsica_org["acorsica.org"]
   r_structenv["StructEnv"]
+  r_cogentia -->|139| r_barons_mariani
+  r_barons_mariani -->|95| r_cogentia
+  r_jeanhuguesrobert -->|68| r_barons_mariani
+  r_fractavolta -->|54| r_cogentia
+  r_inseme -->|45| r_cogentia
+  r_fractavolta -->|37| r_marenostrum
+  r_jeanhuguesrobert -->|36| r_cogentia
+  r_cogentia -->|35| r_inseme
+  r_barons_mariani -->|24| r_marenostrum
+  r_barons_mariani -->|22| r_fractavolta
+  r_fractavolta -->|22| r_inseme
+  r_fractavolta -->|21| r_barons_mariani
+  r_inseme -->|20| r_barons_mariani
+  r_barons_mariani -->|19| r_inseme
+  r_cogentia -->|19| r_marenostrum
+  r_marenostrum -->|19| r_cogentia
+  r_barons_mariani -->|16| r_jeanhuguesrobert
+  r_inox -->|16| r_cogentia
+  r_jeanhuguesrobert -->|16| r_marenostrum
+  r_operium -->|14| r_cogentia
+  r_inseme -->|12| r_fractavolta
+  r_inseme -->|12| r_inox
+  r_marenostrum -->|12| r_fractavolta
+  r_inox -->|11| r_barons_mariani
+  r_marenostrum -->|11| r_barons_mariani
+  r_cogentia -->|10| r_fractavolta
+  r_inox -->|10| r_fractavolta
+  r_inox -->|9| r_inseme
+  r_jeanhuguesrobert -->|9| r_fractavolta
+  r_cogentia -->|8| r_jeanhuguesrobert
+  r_fractavolta -->|8| r_inox
+  r_inox -->|8| r_marenostrum
+  r_ubikia -->|8| r_cogentia
+  r_barons_mariani -->|7| r_inox
+  r_inseme -->|7| r_jeanhuguesrobert
+  r_jeanhuguesrobert -->|7| r_inseme
+  r_inseme -->|6| r_kudos
+  r_jeanhuguesrobert -->|6| r_inox
+  r_cogentia -->|5| r_privai
+  r_ubikia -->|5| r_barons_mariani
+  r_barons_mariani -->|4| r_ubikia
+  r_cogentia -->|4| r_inox
+  r_fractavolta -->|4| r_jeanhuguesrobert
+  r_marianivillage -->|4| r_fractavolta
+  r_operium -->|4| r_inseme
+  r_operium -->|4| r_marenostrum
+  r_ubikia -->|4| r_jeanhuguesrobert
+  r_github -->|3| r_gouvernance
+  r_jeanhuguesrobert -->|3| r_ubikia
+  r_kudos -->|3| r_barons_mariani
+  r_operium -->|3| r_barons_mariani
+  r_barons_mariani -->|2| r_privai
+  r_cogentia -->|2| r_operium
+  r_gouvernance -->|2| r_barons_mariani
+  r_gouvernance -->|2| r_fractavolta
+  r_inox -->|2| r_jeanhuguesrobert
+  r_inseme -->|2| r_marenostrum
+  r_institut_mariani -->|2| r_barons_mariani
+  r_institut_mariani -->|2| r_fractavolta
+  r_marenostrum -->|2| r_jeanhuguesrobert
+  r_marenostrum -->|2| r_inseme
+  r_marenostrum -->|2| r_inox
+  r_github -->|1| r_institut_mariani
+  r_barons_mariani -->|1| r_institut_mariani
+  r_cogentia -->|1| r_kudos
+  r_gouvernance -->|1| r_jeanhuguesrobert
+  r_gouvernance -->|1| r_cogentia
+  r_gouvernance -->|1| r_inseme
+  r_gouvernance -->|1| r_marenostrum
+  r_gouvernance -->|1| r_inox
+  r_gouvernance -->|1| r_kudos
+  r_gouvernance -->|1| r_marianivillage
+  r_inseme -->|1| r_operium
+  r_inseme -->|1| r_privai
+  r_inseme -->|1| r_ubikia
+  r_institut_mariani -->|1| r_privai
+  r_institut_mariani -->|1| r_kudos
+  r_institut_mariani -->|1| r_marianivillage
+  r_institut_mariani -->|1| r_inseme
+  r_institut_mariani -->|1| r_cogentia
+  r_institut_mariani -->|1| r_marenostrum
+  r_institut_mariani -->|1| r_inox
+  r_jeanhuguesrobert -->|1| r_operium
+  r_kudos -->|1| r_institut_mariani
+  r_marianivillage -->|1| r_institut_mariani
+  r_privai -->|1| r_barons_mariani
+  r_privai -->|1| r_institut_mariani
 ```
-
-*(No cross-repo links detected.)*
 <!-- END_AUTO: graph -->
 ---
 
@@ -159,13 +246,7 @@ graph LR
 - [Reactive Sets in Inox — Native Implementation Path](reactive_sets_inox_cop_implementation.md)
 - [The Iɴᴏx programming language](../README.md)
 - [Research Index — Inseme](https://github.com/JeanHuguesRobert/inseme/blob/main/research/index.md)
-- [Research Index — barons-Mariani](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/barons-Mariani-index.md)
-- [Research Index — Cogentia](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/cogentia-index.md)
-- [Research Index — FractaVolta](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/FractaVolta-index.md)
-- [Research Index — Inseme](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/inseme-index.md)
-- [Research Index — Jean Hugues Noël Robert (Profile / Entry Point)](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/JeanHuguesRobert-index.md)
 - [Research Index — Jean Hugues Noël Robert (Profile / Entry Point)](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/research/index.md)
-- [Research Index — MareNostrum](https://github.com/JeanHuguesRobert/JeanHuguesRobert/blob/main/marenostrum-index.md)
 - [Research Index — MareNostrum](https://github.com/JeanHuguesRobert/marenostrum/blob/main/research/index.md)
 <!-- END_AUTO: possibilities -->
 ---
