@@ -1,12 +1,29 @@
 ---
 title: "Inox serve — worker threads and continuations (IoC)"
-status: "working-note"
+author: unknown
+affiliation: unknown
+date: null
+last_modified_at: 2026-10-27
+license: unknown
+language: en
+canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-serve-continuations.md
+status: working-paper
 corpus_role: "source"
 document_kind: "operational-note"
 visibility: "public"
 lifecycle_state: "active"
 summary: "Replace CGI-style subprocesses with a worker pool; emit inox.continuation.v1 when external capabilities are required."
 document_role: "source"
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 classification_source: "cogentia.js"
 classification_version: "1"
 classification_rule: "explicit-metadata"
@@ -115,7 +132,7 @@ Response (202):
 
 ### Fulfill and resume
 
-The invoker (fracta MCP, Cogentia Guide, any COP worker) performs the external calls, then:
+An authorized invoker performs the external calls, then:
 
 ```bash
 curl -s -X POST http://127.0.0.1:8792/continuation/fulfill \
@@ -160,5 +177,5 @@ npm run test:retrieval
 ## Next steps
 
 1. Native Inox syntax for `continuation emit` inside `.nox` scripts (today: JS fulfiller + future mandat packets).
-2. Wire Cogentia Guide MCP to `INOX_RETRIEVAL_URL` with continuation-aware client.
+2. Earlier proposal to wire the Guide to `INOX_RETRIEVAL_URL` is parked; the live Guide currently uses Supabase. Keep the Inox session and continuation protocol generic for its authorized clients.
 3. Map `inox.continuation.v1` ↔ `cop/continuation` artifact envelope for COP routers.

@@ -1,12 +1,29 @@
 ---
-title: "Inox remote serve — proto interpreter and retrieval fulfiller"
-status: "working-note"
+title: "Inox remote serve — remote runtime, sessions, and optional retrieval"
+author: unknown
+affiliation: unknown
+date: null
+last_modified_at: 2026-10-27
+license: unknown
+language: en
+canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/research/inox-remote-serve.md
+status: working-paper
 corpus_role: "source"
 document_kind: "operational-note"
 visibility: "public"
 lifecycle_state: "active"
-summary: "HTTP adapter to run Inox remotely and fulfill Cogentia retrieval.batch mandates via Supabase."
+summary: "HTTP adapter for remote Inox execution, stateful sessions, continuations, and an optional Cogentia retrieval batch route."
 document_role: "source"
+update_policy: UP-DEFAULT-REVIEWED
+provenance:
+  origin_type: unknown
+  origin_repository: unknown
+  origin_ref: unknown
+  origin_date: unknown
+  derived_from: []
+review:
+  status: unreviewed
+  reviewed_by: []
 classification_source: "cogentia.js"
 classification_version: "1"
 classification_rule: "explicit-metadata"
@@ -15,9 +32,14 @@ classification_confidence: "medium"
 
 # Inox remote serve
 
-Proto **remote interpreter** for weak nodes (fracta, small VPS) toward [Cogentia retrieval Phase 4](https://github.com/JeanHuguesRobert/cogentia/issues/42).
+Remote Inox runtime for executing `.nox` work on a capable host, carrying
+stateful session turns, and exchanging continuations. It also exposes an
+optional Cogentia retrieval batch endpoint.
 
-Heavy retrieval stays on a capable host; clients send a small JSON mandate over HTTPS.
+The earlier proposal to connect this service to Guide retrieval is parked. The
+live Guide currently uses Supabase and does not route requests to Inox; the
+presence of `/retrieval/batch` describes a server capability, not a Guide
+integration.
 
 ## Components
 
@@ -34,7 +56,10 @@ Heavy retrieval stays on a capable host; clients send a small JSON mandate over 
 | Mandate stub | `scripts/remote/retrieval-batch.nox` |
 | Smoke script | `examples/remote-ping.nox` |
 
-Production retrieval uses the **direct `/retrieval/batch` route** (async `import()` of the `.js` module). The `.nox` file documents the mandate contract until Inox handles async I/O natively.
+The optional retrieval plugin uses the **direct `/retrieval/batch` route**
+(async `import()` of the `.js` module). The `.nox` file documents the mandate
+contract until Inox handles async I/O natively. This route remains available to
+authorized clients independently of the Guide.
 
 ## Quick start
 
@@ -123,13 +148,15 @@ See `research/inox-serve-benchmarks.md` for terminology (server_cold, sidecar_wa
 ## Relation to Fractanet
 
 ```text
-weak node (fracta MCP)  --HTTPS mandate-->  inox-serve (capable host)
-                                                    |
-                                              retrieval-batch.js
-                                                    |
-                                              Supabase pgvector
+authorized client  --HTTPS /run or /session/turn-->  inox-serve (capable host)
+                                                        |
+                                                optional /retrieval/batch
+                                                        |
+                                                Supabase pgvector
 ```
 
 See also: `research/inox-serve-continuations.md` (worker threads + IoC).
 
-Next steps: wire Cogentia Guide MCP to `INOX_RETRIEVAL_URL` with continuation-aware client; native `continuation emit` in `.nox`; COP artifact mapping.
+Guide wiring is parked; do not treat `INOX_RETRIEVAL_URL` as current Guide
+configuration. Continue the generic runtime work: native `continuation emit`
+in `.nox` and COP artifact mapping.
