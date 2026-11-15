@@ -318,3 +318,8 @@ value >x!
 *These documents link to this file:*
 - [Research Index — Inox](index.md)
 <!-- END_AUTO: backlinks -->
+
+## Specification and runtime reconciliation (historical)
+
+- [26 August 2026 semantic-drift audit, recovered 15 November 2026](inox-spec-runtime-audit.md) — evidence and unresolved questions, not a current normative spec.
+- Reproduce the observational minimal-CLI cases with npm run probe:spec-runtime-audit after rebuilding the runtime as appropriate; interpret current results independently.

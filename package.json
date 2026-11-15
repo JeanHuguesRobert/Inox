@@ -14,6 +14,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "probe:spec-runtime-audit": "node scripts/probe-spec-runtime-audit.js",
     "build:src": "tsc -p tsconfig.src.json",
     "run": "tsc && node --enable-source-maps builds/inox.js",
     "replit": "tsc&& node builds/inox.js",
