@@ -660,6 +660,8 @@ The minimum cross-node fixture is: target already has immutable base A; host bui
 
 ---
 
+**Implementation checkpoint (2026-11-22, GPT-6 under Jean Hugues Noël Robert):** [Host image prototype](../tools/inox-image/README.md) implements deterministic structured Cell-definition assembly, `inox.image.v1` headers and sections with SHA-256 and CRC-32, a one-level append-only `DELTA_IMAGE` bound to its base, cache verification, and a reference execution of an extension calling a definition from its cached base. It does **not** implement a C++/ESP32 loader, general relocation, distributed transport, mutable snapshots or a complete production ABI. This narrows, rather than replaces, the unsolved cross-platform contract.
+
 ## 12. Execution model
 
 ### 12.1 Runtime state

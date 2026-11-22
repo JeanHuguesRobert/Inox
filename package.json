@@ -24,7 +24,8 @@
     "test:continuations": "node scripts/test-serve-continuations.js",
     "bench:serve": "node scripts/bench-inox-serve.js",
     "test:session": "node scripts/test-session-packets.js",
-    "test:shutdown": "node scripts/test-pool-shutdown.js"
+    "test:shutdown": "node scripts/test-pool-shutdown.js",
+    "test:micro:host-image": "node --test tools/inox-image/test.mjs"
   },
   "repository": {
     "type": "git",

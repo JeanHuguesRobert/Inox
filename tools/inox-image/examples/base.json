@@ -1,0 +1,13 @@
+{
+  "name": "arithmetic-base",
+  "entry": "add_two",
+  "definitions": [
+    {
+      "name": "add_two",
+      "instructions": [
+        { "literal": 2 },
+        { "primitive": "integer-add" }
+      ]
+    }
+  ]
+}

@@ -598,6 +598,8 @@ For the experimental acceptance fixture, record: (1) a cold activation, (2) an a
 
 ---
 
+**Implementation checkpoint (2026-11-22, GPT-6 under Jean Hugues Noël Robert):** [The host-only image prototype](../tools/inox-image/README.md) now demonstrates base A + extension C + cache-aware activation and negative validation tests. Byte sizes can be measured on the host, but no native micro-runtime or Fractanet delta transport is present; this is a concrete fixture for L2a, not completion of L2a–L5.
+
 ## 11. Native materialization and cross-compilation
 
 Cross-compilation is treated as a governed derivation:

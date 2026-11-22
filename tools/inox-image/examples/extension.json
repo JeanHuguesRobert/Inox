@@ -1,0 +1,13 @@
+{
+  "name": "arithmetic-extension",
+  "entry": "answer",
+  "definitions": [
+    {
+      "name": "answer",
+      "instructions": [
+        { "literal": 40 },
+        { "call": "add_two" }
+      ]
+    }
+  ]
+}

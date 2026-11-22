@@ -69,6 +69,10 @@ On failure it emits:
 
 The process exits with code zero only when every selected vector passes.
 
+## Host-only image/delta prototype (2026-11-22)
+
+The **non-normative host reference fixture** at [`tools/inox-image/`](../../../tools/inox-image/README.md) runs with `npm run test:micro:host-image`. It reuses Micro v0 Cell/primitive identifiers, and tests one-level content-addressed definition extensions and cache composition. It is **not** the M3 native C++ runner and does not satisfy the remaining Micro conformance vectors.
+
 ## Required runners
 
 The intended commands are:
