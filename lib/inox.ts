@@ -12215,7 +12215,9 @@ function primitive_pack_info(){
   const type_cell = TOS;
   const type_id = tag_to_type( value_of( type_cell ) );
   de&&mand( type_id != type_invalid );
-  const info = pack( type_tag, value_of( name_cell ) );
+  // 2026-11-22 — GPT-6 coding agent, under Jean Hugues Robert's direction.
+  // Use the caller-supplied type, not the hard-coded tag type (round-trip fix).
+  const info = pack( type_id, value_of( name_cell ) );
   clear( type_cell );
   clear( name_cell );
   init_cell(  TOS, info, pack( type_integer, tag_info ) );
@@ -19988,24 +19990,14 @@ function primitive_as_block(){
   const runnable = pop();
   const type = type_of( runnable );
 
-// #2026: Old code was:
-//   // Done if already a good loking dynamic block
-  // Done if already a good looking dynamic block: consume the input arg (already
-  // popped into 'runnable'), produce the result block ref on stack, and clear
-  // the consumed input cell so we don't leave DIRTY cells above final TOS
-  // (the source of the "stack not restored in correct shape after define-verb /
-  // as-block activation" that was causing later pop_tag / type 0/4 / bad eq
-  // during class maker "make.global" etc., and requiring adhoc pop-4 in super
-  // and underflow tolerants).
+  // 2026-11-22 — GPT-6 coding agent, under Jean Hugues Robert's direction.
+  // Already a block: pop() lowered TOS without clearing the Cell; push()
+  // restores that same slot. Clearing it would release the returned reference.
   if( type_of( runnable ) == type_reference
   &&  area_tag( value_of( runnable ) ) == tag_block
   ){
-// #2026: Old code was:
-//     push();
-    const ref_area = value_of( runnable );
-    const result_slot = push();
-    set( result_slot, type_reference, tag_block, ref_area );
-    clear( runnable );  // clear the arg cell we popped (now below the result)
+    push();                         // restore the same slot after pop()
+    set_name( runnable, tag_block ); // normalize name; retain reference ownership
     if( run_de ){
       try { console.error( "DIAG: primitive_as_block block-case after, TOS=" + C(TOS) + " CSP=" + C(CSP) ); } catch(e){}
     }
