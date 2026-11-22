@@ -15,28 +15,41 @@
     "lib/stdlib.nox",
     "scripts/test-l9-bootstrap.js",
     "research/two-versions-scripting-vs-system.md",
-    "package.json"
+    "package.json",
+    "lib/inox.ts",
+    "lib/bootstrap.nox",
+    "scripts/test-loop-control.js",
+    "AGENTS.md"
   ],
   "checkpoint": {
-    "result": "The scoped L9 and stdlib bootstrap repairs load successfully in INOX_WITH_L9=1; 16 targeted executable behavior cases pass. Original minimal CLI must remain unchanged. Other integration suites are run before final publication.",
+    "result": "L9 bootstrap remains successful. Root repairs to loop-while, loop-until and three range helpers pass 82 executable loop/stack-continuation tests across minimal and L9 modes. Iteration consumes constant control depth up to 1000 cycles; no recursive fallback was introduced. Full L9 actors/tasks/promises remain incomplete.",
     "completed_repair_steps": [
       "class{ saves the outer code value before entering extend-class{ to avoid dynamic-scope self-recursion",
       "make.task stub explicitly supplies task/ receiver to make{",
       "multiline stdlib verb terminators are attached to the end of the preceding instruction, eliminating phantom missing-verb .",
       "stdlib class extensions are compiled inside initialize-stdlib-classes with matching brace indentation",
       "integer.times is registered with a stack-only tail-recursive helper; direct nested from:to:do: is not presently reliable",
-      "agent-authored .nox comments are ASCII-only because non-ASCII source comments cause text-cell assertions"
+      "agent-authored .nox comments are ASCII-only because non-ASCII source comments cause text-cell assertions",
+      "loop-while checker now continues only while condition is true, not false",
+      "both while-checker and until-checker preserve their permanent CSP frames across all iterations",
+      "both loop checkers retrieve after-loop continuation from the sentinel before clearing it, without dropping unrelated caller frames",
+      "loop-until no longer invokes debugger unconditionally",
+      "three from:...:do: range helpers now use valid postfix comparisons, repaired iterative loops, inclusive bounds and signed steps",
+      "82 regression cases validate loop behavior, resumption and 1000-iteration constant CSP depth in both minimal and L9 modes",
+      "Global root-cause-first/no-silent-workaround rule recorded in Cogentia engineering policy and specialized in Inox AGENTS.md"
     ],
     "known_remaining_defects": [
       "make.task still contains a visible stub and is not the full task maker",
-      "from:to:do: does not reliably iterate beyond its first body call in the original bootstrap, and experimental loop rewrite was incomplete; left unchanged",
       "unbounded CSP growth during recursion can overwrite parser memory in the historical JS VM; separate general control-stack correctness fix needed",
       "L9 actor, promise, scheduler and full inheritance semantics lack a dedicated end-to-end suite",
-      "stdlib.nox is marked derived but no checked-in generator was found; regeneration needs a reproducible source"
+      "stdlib.nox is marked derived but no checked-in generator was found; regeneration needs a reproducible source",
+      "integer.times retains the former recursive workaround because direct nested it-method{ ... from: ... } compilation fails; this is a separate known compiler bug, not a repaired feature",
+      "zero-step range invalid input invokes the historical FATAL hook but its error diagnostics and nested-scope unwinding remain defective",
+      "proper tail-call elimination/again is specified but not implemented; no recursion replaces the fixed loops"
     ],
     "runtime_implemented": true,
     "full_l9_completed": false,
     "deployed": false
   },
-  "next_packet_candidate": "Test and repair the general from:to:do: control/local semantics and overflow-safe CSP, then exercise task, promise and actor workflows with observability and regression fixtures under Inox #16."
+  "next_packet_candidate": "Fix the root cause of nested it-method{...from:...} compilation; fix FATAL scoped error propagation and CSP bounds checks in the core VM; then exercise full L9 task/promise/actor runtime under issue #16."
 }

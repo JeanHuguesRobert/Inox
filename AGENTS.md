@@ -1,7 +1,7 @@
 ---
 canonical_url: https://github.com/JeanHuguesRobert/Inox/blob/master/AGENTS.md
 shared_instructions: https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.shared.md
-last_stamped_at: 2026-07-13
+last_stamped_at: 2026-11-22
 document_role: "operational"
 document_kind: "agent-mandate"
 visibility: "public"
@@ -86,6 +86,10 @@ When touching code or technical documents:
 - keep capability boundaries explicit;
 - prefer small reversible changes;
 - report commands run and checks not run.
+
+## FixBugsFirst: correct the mechanism, not its symptom (2026-11-22)
+
+Apply the shared [root-cause-first engineering rule](https://github.com/JeanHuguesRobert/cogentia/blob/main/instructions/AGENTS.policy-engineering.md#root-cause-first--workarounds-by-exception-only-2026-11-22). For Inox, distinguish actual prefix/infix/postfix grammar, compilation, control/data stack invariants, scope/`it` lifetime and language semantics before editing the VM. A loop replaced with recursion while tail-call elimination remains a `ToDo` **is not repaired**: its control stack still grows. Tests must reproduce the former failure and check bounded return-stack usage, plus the same behavior across the minimal and L9 bootstraps. Keep agent-authored code/comments attributable to the coding agent under the Principal's direction.
 
 ## Routing discipline
 

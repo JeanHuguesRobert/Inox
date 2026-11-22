@@ -194,35 +194,45 @@ to kk!           /it 2 upper!
 to ll            /it 3 upper
 to ll!           /it 3 upper!
 
+~~ 2026-11-22: GPT-6 coding agent, under Jean Hugues Noel Robert.
+~~ Postfix comparisons are explicit; the original mixed form combined with
+~~ loop-while's broken checker stopped early. Use the fixed iterative VM.
 to from:to:do:
   it{
     it >runable, >ii-to, ii!
-    if: ii <= ii-to> then: {
-      do: { runable> .run() } while: { ii-to> > ++it };
+    if: ii ii-to> <= then: {
+      do: { runable> .run() } while: { ++it ii-to> <= };
     };
   }
 
 to from:down-to:do:
   it{
     it >runable, >ii-down-to, ii!
-    if: ii >= ii-down-to> then: {
-      do: { runable> .run() } while: { ii-to> > --it };
+    if: ii ii-down-to> >= then: {
+      do: { runable> .run() } while: { --it ii-down-to> >= };
     };
   }
 
+~~ 2026-11-22: GPT-6 coding agent, under Jean Hugues Noel Robert.
+~~ The step direction and range comparisons must use proper postfix operands;
+~~ rely on the repaired loop-while primitive instead of recursion.
 to from:to:by:do:
   it{
     it >runable, >ii-by, >ii-to, ii!
-    if: ii-by> >0 then: {
-      if: ii <= ii-to> then: {
-        do: { runable> .run() } while: { ii + ii-by>, ii!, ii <= ii-to> };
+    if: ii-by> 0 > then: {
+      if: ii ii-to> <= then: {
+        do: { runable> .run() } while: { ii ii-by> + ii! ii ii-to> <= };
       };
     } else: {
-      if: ii >= ii-to> then: {
-        do: { runable> .run() } while: { ii + ii-by>, ii!, ii >= ii-to> };
+      if: ii-by> 0 < then: {
+        if: ii ii-to> >= then: {
+          do: { runable> .run() } while: { ii ii-by> + ii! ii ii-to> >= };
+        };
+      } else: {
+        "from:to:by:do: zero step" FATAL
       };
     };
-  };
+  }
 
 
 ~~ ToDo: closures, partial, complete, shared

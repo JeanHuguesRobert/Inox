@@ -258,9 +258,11 @@ to xor?  <> .
 ~~ ==========================================================================
 
 ~~ 2026-11-22: GPT-6 coding agent, under Jean Hugues Noel Robert.
-~~ Use stack-only tail recursion: nested from:to:do: / ++it is not yet reliable.
-~~ Tested with zero, one, three and 500 iterations; the full loop remains
-~~ a separate core-language defect, not a change in integer.times semantics.
+~~ LEGACY WORKAROUND, NOT A COMPLETE FIX: this recursive method helper was
+~~ introduced before the root loop bugs were repaired. from:to:do: now works
+~~ iteratively. The direct nested `it-method{ ... from: ... }` form still
+~~ fails in the compiler; investigate and repair that separate root cause.
+~~ No tail-call elimination is implemented for this recursion.
 to stdlib.times-loop
   if: over 0 > then: {
     duplicate run

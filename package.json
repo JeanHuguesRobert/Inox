@@ -26,7 +26,8 @@
     "test:session": "node scripts/test-session-packets.js",
     "test:shutdown": "node scripts/test-pool-shutdown.js",
     "test:micro:host-image": "node --test tools/inox-image/test.mjs",
-    "test:l9": "node scripts/test-l9-bootstrap.js"
+    "test:l9": "node scripts/test-l9-bootstrap.js",
+    "test:loop-control": "node scripts/test-loop-control.js"
   },
   "repository": {
     "type": "git",

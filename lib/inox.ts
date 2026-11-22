@@ -12666,19 +12666,23 @@ function primitive_until_checker(){
   const flag = pop_boolean();
   if( flag == 0 ){
     const body_block = value_of( CSP );
-    CSP -= ONE;
-    const condition_block = value_of( CSP );
+    // 2026-11-22: GPT-6 coding agent, under Jean Hugues Noel Robert.
+    // Keep both permanent loop frames instead of shrinking CSP per iteration.
+    const condition_block = value_of( CSP - ONE );
     defer( tag_loop_until, until_checker_definition );
     defer( tag_loop_condition, condition_block );
     IP = body_block;
   }else{
-    // Drop loop sentinel, condition and body from control stack
+    // 2026-11-22: GPT-6 coding agent, under Jean Hugues Noel Robert.
+    // The sentinel (CSP-2) holds the continuation AFTER the loop.
+    // The former code incorrectly read below it, skipping caller code and
+    // consuming one unrelated frame. Restore IP before clearing the sentinel.
+    const resume_ip = value_of( CSP - 2 * ONE );
     reset( CSP - 0 * ONE );
     reset( CSP - 1 * ONE );
     reset( CSP - 2 * ONE );
     CSP -= 3 * ONE;
-    IP = value_of( CSP );
-    CSP -= ONE;
+    IP = resume_ip;
   }
 }
 primitive( "until-checker", primitive_until_checker );
@@ -12693,28 +12697,36 @@ let while_checker_definition = 0;
 
 function primitive_while_checker(){
   const flag = pop_boolean();
-  if( flag == 0 ){
+  // 2026-11-22: GPT-6 coding agent, under Jean Hugues Noel Robert.
+  // Unlike until-checker, while-checker repeats only while true.
+  if( flag != 0 ){
     const body_block = value_of( CSP );
-    CSP -= ONE;
-    const condition_block = value_of( CSP );
+    // 2026-11-22: GPT-6 under Jean Hugues Noel Robert.
+    // Preserve the body/condition control frames for the next iteration.
+    // Decrementing CSP here removes one permanent frame on every cycle.
+    const condition_block = value_of( CSP - ONE );
     defer( tag_loop_until, while_checker_definition );
     defer( tag_loop_condition, condition_block );
     IP = body_block;
   }else{
-    // Drop loop sentinel, condition and body from control stack
+    // 2026-11-22: GPT-6 coding agent, under Jean Hugues Noel Robert.
+    // The sentinel (CSP-2) holds the continuation AFTER the loop.
+    // The former code incorrectly read below it, skipping caller code and
+    // consuming one unrelated frame. Restore IP before clearing the sentinel.
+    const resume_ip = value_of( CSP - 2 * ONE );
     reset( CSP - 0 * ONE );
     reset( CSP - 1 * ONE );
     reset( CSP - 2 * ONE );
     CSP -= 3 * ONE;
-    IP = value_of( CSP );
-    CSP -= ONE;
+    IP = resume_ip;
   }
 }
 primitive( "while-checker", primitive_while_checker );
 
 
 function primitive_loop_until(){
-  debug();
+  // 2026-11-22: GPT-6 coding agent, under Jean Hugues Noel Robert.
+  // An unconditional debug() intercepted execution of every until loop.
   const condition_block = pop_block();
   const body_block      = pop_block();
   call(  tag_break_sentinel, body_block );
