@@ -126,7 +126,7 @@
   ],
   "image": {
     "format": "inox.image.v1",
-    "extension": ".inoximg",
+    "extension": ".xnx",
     "header_size_bytes": 128,
     "section_entry_size_bytes": 32,
     "maximum_sections": 32,

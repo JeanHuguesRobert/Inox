@@ -25,6 +25,8 @@ provenance:
 
 **Purpose.** Exercise the shortest verified path from a structured definition to executable 8-byte `Cell` blocks, immutable content-addressed base images, base-bound delta image extensions, a cache plan, and an actual result from a deliberately limited **host-side reference interpreter**. No Inox source parser or Alan compiler is necessary for this fixture.
 
+Files use the `.xnx` suffix (**eXecutable iNoX**), already prescribed for compiled Inox files in `research/inox-spec.md`. The binary magic `INOXIMG\0` and the serialized image format remain unchanged; the filename suffix is not hashed.
+
 This implementation uses the existing `inox.image.v1` container contract: 128-byte header, 32-byte section descriptors, SHA-256 (header hash field zeroed), CRC-32 for each section, 4+28-bit `Cell.info`, 32-bit region/offset handles, primitive IDs from the documented Micro v0 profile, and a `DELTA_IMAGE` bound to its base by `base_sha256`.
 
 ## Run the complete fixture
@@ -34,13 +36,13 @@ From the Inox repository root:
 ```sh
 npm run test:micro:host-image
 mkdir -p /tmp/inox-image-demo/cache
-node tools/inox-image/cli.mjs build --source tools/inox-image/examples/base.json --output /tmp/inox-image-demo/base.inoximg
-node tools/inox-image/cli.mjs build --source tools/inox-image/examples/extension.json --base /tmp/inox-image-demo/base.inoximg --output /tmp/inox-image-demo/extension.inoximg
-node tools/inox-image/cli.mjs cache-put --image /tmp/inox-image-demo/base.inoximg --cache /tmp/inox-image-demo/cache
-node tools/inox-image/cli.mjs plan --image /tmp/inox-image-demo/extension.inoximg --cache /tmp/inox-image-demo/cache
-node tools/inox-image/cli.mjs run --image /tmp/inox-image-demo/extension.inoximg --cache /tmp/inox-image-demo/cache
-node tools/inox-image/cli.mjs cache-put --image /tmp/inox-image-demo/extension.inoximg --cache /tmp/inox-image-demo/cache
-node tools/inox-image/cli.mjs plan --image /tmp/inox-image-demo/extension.inoximg --cache /tmp/inox-image-demo/cache
+node tools/inox-image/cli.mjs build --source tools/inox-image/examples/base.json --output /tmp/inox-image-demo/base.xnx
+node tools/inox-image/cli.mjs build --source tools/inox-image/examples/extension.json --base /tmp/inox-image-demo/base.xnx --output /tmp/inox-image-demo/extension.xnx
+node tools/inox-image/cli.mjs cache-put --image /tmp/inox-image-demo/base.xnx --cache /tmp/inox-image-demo/cache
+node tools/inox-image/cli.mjs plan --image /tmp/inox-image-demo/extension.xnx --cache /tmp/inox-image-demo/cache
+node tools/inox-image/cli.mjs run --image /tmp/inox-image-demo/extension.xnx --cache /tmp/inox-image-demo/cache
+node tools/inox-image/cli.mjs cache-put --image /tmp/inox-image-demo/extension.xnx --cache /tmp/inox-image-demo/cache
+node tools/inox-image/cli.mjs plan --image /tmp/inox-image-demo/extension.xnx --cache /tmp/inox-image-demo/cache
 ```
 
 Expected result: `run` returns `42` from the extension's `answer` definition calling `add_two` in the cached base. Before adding the extension, `plan` lists **only the extension digest as missing**. After adding it, `plan` lists no missing artifacts; the base is never overwritten. `inspect` and `verify` can be used with `--image FILE` to validate files independently.

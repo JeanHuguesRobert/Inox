@@ -512,7 +512,8 @@ reference count.
 
 ### 11.1 General rules
 
-- File extension: `.inoximg`.
+- File extension: `.xnx` (**eXecutable iNoX**), consistent with the compiled-file convention in `research/inox-spec.md`.
+- The internal binary magic remains `INOXIMG\0` and the format ID remains `inox.image.v1`; renaming the suffix does not change serialized bytes or content digests.
 - All integers: unsigned little-endian unless stated otherwise.
 - Maximum v1 file size: 64 MiB.
 - Required alignment for sections containing cells: 8 bytes.
@@ -640,7 +641,7 @@ at bytes 64..95.
 Canonical artifact name:
 
 ```text
-sha256-<64 lowercase hexadecimal digits>.inoximg
+sha256-<64 lowercase hexadecimal digits>.xnx
 ```
 
 The runtime MUST recompute and compare the hash before executing an untrusted or
@@ -1157,7 +1158,7 @@ Acceptance:
 Deliverables:
 
 - deterministic `inox-image` tool;
-- `.inoximg` reader/writer;
+- `.xnx` reader/writer;
 - malformed-image corpus.
 
 Acceptance:

@@ -171,7 +171,7 @@ export function build(source, {baseFile=null}={}) {
   const meta={schema:'inox.definition-layer.v0',profile:'inox-micro-v0',name:source.name||'definitions',base_sha256:parent?.digest||null,cell_offset:offset,cell_count:output.length,entry_offset:entryOffset,definitions:entries};
   return packageImage({kind,baseDigest:parent?.digest,absoluteOffset:offset,compiled:output,meta,usedIds:[...used]});
 }
-export function cachePath(directory,digest){if(!/^[0-9a-f]{64}$/.test(digest))throw Error('invalid hash');return path.join(directory,`sha256-${digest}.inoximg`)}
+export function cachePath(directory,digest){if(!/^[0-9a-f]{64}$/.test(digest))throw Error('invalid hash');return path.join(directory,`sha256-${digest}.xnx`)}
 export function cachePut(file,directory){const img=readImage(file);fs.mkdirSync(directory,{recursive:true});const dest=cachePath(directory,img.digest);if(fs.existsSync(dest)){if(readImage(dest).digest!==img.digest)throw Error('INOX_E_IMAGE_HASH: corrupted cache');return {digest:img.digest,bytesAddedToCache:0,path:dest}}fs.writeFileSync(dest,img.bytes,{flag:'wx'});return {digest:img.digest,bytesAddedToCache:img.byteLength,path:dest}}
 function cached(directory,digest){const p=cachePath(directory,digest);if(!fs.existsSync(p))return false;if(readImage(p).digest!==digest)throw Error('INOX_E_IMAGE_HASH: corrupted cache');return true}
 export function plan(imageFile,directory){const img=readImage(imageFile),missing=[];if(img.base && !cached(directory,img.base))missing.push(img.base);if(!cached(directory,img.digest))missing.push(img.digest);return {image:img.digest,base:img.base,missing,currentArtifactBytesToSend:cached(directory,img.digest)?0:img.byteLength};}

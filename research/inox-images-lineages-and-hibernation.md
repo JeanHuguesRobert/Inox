@@ -1037,7 +1037,7 @@ The Inox Micro contract instantiates this general model:
 
 | General concept | Inox Micro v0 realization |
 |---|---|
-| Semantic image | canonical `.inoximg` content and declared semantics |
+| Semantic image | canonical `.xnx` (eXecutable iNoX) content and declared semantics |
 | Native materialization | ESP32 flash layout or Linux C++ target artifact |
 | Immutable base | flash/mapped immutable regions |
 | Mutable overlay | RAM regions, stacks, queues, handles |
@@ -1152,7 +1152,7 @@ historical lineage record.
 
 ### L2 — Inox Micro integration
 
-- connect `.inoximg` and snapshot formats to the general manifests;
+- connect `.xnx` and snapshot formats to the general manifests;
 - emit activation and hibernation records through the host link;
 - demonstrate base-in-flash and overlay-in-RAM;
 - restore after reboot.

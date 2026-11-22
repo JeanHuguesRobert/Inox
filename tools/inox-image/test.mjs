@@ -5,20 +5,31 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { build, readImage, cachePut, plan, compose, run } from './core.mjs';
+import { build, readImage, cachePut, cachePath, plan, compose, run } from './core.mjs';
 const root = fs.mkdtempSync(path.join(os.tmpdir(),'inox-image-test-'));
 process.on('exit',()=>fs.rmSync(root,{recursive:true,force:true}));
 const fixtures=path.join(import.meta.dirname,'examples');
 const baseInput=JSON.parse(fs.readFileSync(path.join(fixtures,'base.json'),'utf8'));
 const deltaInput=JSON.parse(fs.readFileSync(path.join(fixtures,'extension.json'),'utf8'));
-const base=build(baseInput), basePath=path.join(root,'base.inoximg');fs.writeFileSync(basePath,base);
-const delta=build(deltaInput,{baseFile:basePath}),deltaPath=path.join(root,'delta.inoximg');fs.writeFileSync(deltaPath,delta);
+const base=build(baseInput), basePath=path.join(root,'base.xnx');fs.writeFileSync(basePath,base);
+const delta=build(deltaInput,{baseFile:basePath}),deltaPath=path.join(root,'delta.xnx');fs.writeFileSync(deltaPath,delta);
 const store=path.join(root,'cache');
 const digest=b=>crypto.createHash('sha256').update(b).digest('hex');
 function withHash(bytes){const result=Buffer.from(bytes);result.fill(0,64,96);Buffer.from(digest(result),'hex').copy(result,64);return result}
 function crc32(buf){let c=~0;for(const value of buf){c^=value;for(let j=0;j<8;j++)c=(c>>>1)^((c&1)?0xedb88320:0)}return (~c)>>>0}
 function withModifiedCell(buffer,transform){const b=Buffer.from(buffer);const sectionTable=128, sectionOffset=b.readUInt32LE(sectionTable+8), size=b.readUInt32LE(sectionTable+12);transform(b,sectionOffset);b.writeUInt32LE(crc32(b.subarray(sectionOffset,sectionOffset+size)),sectionTable+28);return withHash(b)}
 
+test('XNX naming is canonical, binary magic and image format remain unchanged',()=>{
+  const id=readImage(base).digest;
+  assert.ok(basePath.endsWith('.xnx'));
+  assert.ok(deltaPath.endsWith('.xnx'));
+  assert.ok(cachePath(root,id).endsWith('.xnx'));
+  assert.equal(base.subarray(0,8).toString('ascii'),'INOXIMG\0');
+  const renamed=path.join(root,'unchanged-by-rename.xnx');
+  fs.copyFileSync(basePath,renamed);
+  assert.equal(readImage(renamed).digest,id);
+  assert.ok(fs.readFileSync(renamed).equals(base));
+});
 test('deterministic base and delta bytes and digest',()=>{
   assert.ok(base.equals(build(baseInput)));assert.ok(delta.equals(build(deltaInput,{baseFile:basePath})));
   assert.equal(readImage(base).kind,'base');assert.equal(readImage(delta).kind,'delta');
@@ -84,7 +95,7 @@ test('image rejects invalid references, definitions, metadata & unknown primitiv
 });
 test('cache verifies present entries rather than trusting their filename',()=>{
   const bad=path.join(root,'corrupt-cache');fs.mkdirSync(bad);
-  const fake=path.join(bad,`sha256-${readImage(delta).digest}.inoximg`);
+  const fake=path.join(bad,`sha256-${readImage(delta).digest}.xnx`);
   fs.writeFileSync(fake,base);
   assert.throws(()=>plan(deltaPath,bad),/INOX_E_IMAGE_HASH/);
   assert.throws(()=>cachePut(deltaPath,bad),/INOX_E_IMAGE_HASH/);
