@@ -5,6 +5,7 @@ description: "Source architecture note defining the Inox model-to-image-to-insta
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 date: "2026-07-17"
+last_modified_at: "2026-11-22"
 version: "0.1-draft"
 status: "source working paper — draft under human validation"
 license: "CC BY-SA 4.0"
@@ -460,6 +461,14 @@ remaining more disciplined than arbitrary object serialization.
 
 ---
 
+### 8.1. What is actually made smaller
+
+**Clarification recorded 2026-11-22 by GPT-6, under Jean Hugues Noël Robert's direction.** This analogy concerns **packaging, caching, deployment and reproducibility**, not a claim that Docker packages an entire independent Linux kernel. OCI images generally package a filesystem-based userspace and application dependencies; Linux containers use the host kernel. Inox aims at a smaller **unit of deployable meaning** and a much smaller **target interpreter**: a named executable definition, a related set of `Cell` blocks, a dialect, or a resumable work unit. The host still supplies physical memory and admitted external capabilities.
+
+The enabling combination is: a small Cell-based dispatch VM, deterministic construction of definitions, immutable reusable image bases, and transferable *changes relative to already present bases*. The advantage is **semantic granularity**, not a promise of a specific byte count. Compare transmitted payload, resident VM footprint and mutable instance RAM **separately**, accounting for symbol/import tables and relocation metadata; benchmark before claiming an order-of-magnitude saving.
+
+---
+
 ## 9. Content addressing and logical naming
 
 Two identities are needed.
@@ -546,6 +555,46 @@ Examples:
 
 A materializer MAY omit unreachable code or data for a constrained target, but
 the reduction algorithm, roots, profile, and resulting digest MUST be recorded.
+
+---
+
+### 10.4. Executable definition layers versus instance overlays
+
+**Clarification recorded 2026-11-22 by GPT-6, under Jean Hugues Noël Robert's direction.** Three kinds of change must remain distinct, despite all three potentially being serialized as content-addressed deltas:
+
+| Artifact | Changes what? | Sharing rule |
+|---|---|---|
+| **Immutable definition extension** | Executable Cell definitions, symbols/imports, declared dependencies | May be content-addressed, cached and reused across instances; does not alter the base image |
+| **Mutable instance overlay** | Per-instance globals, stacks, mailboxes, allocators and working data | Belongs to a particular activation; must not silently become shared mutable state |
+| **Continuation or snapshot** | Logical execution point and enough bounded mutable state to resume | Bound to the exact compatible semantic code base, runtime profile and provenance |
+
+An added definition is **not** a mutation of the immutable base. The compiler/assembler emits a new immutable artifact or a new composition manifest referencing the existing base plus the extension. Its hash, symbols, target ABI and dependencies are explicit. A mutable instance overlay can later be promoted to new immutable semantic content through an explicit derivation (section 19), but this is not automatic.
+
+The image builder does **not** need the complete Inox source-language parser. A proposed compilation route, coordinated with [Alan v0.2](https://github.com/JeanHuguesRobert/cogentia/blob/main/research/alan_turing_mcp.md), is:
+
+```text
+Alan Text -> validated AST -> definition-oriented Inox IR
+           -> small Cell assembler -> immutable definition artifact
+           -> semantic image composition -> target VM materialization
+```
+
+The AST lowering owns variables, branches, symbols and effect suspension semantics. The tiny assembler constructs definitions from literal, primitive, verb, branch and return cells. Both the assembler and compiler may later run in Inox itself, supported by precompiled bootstrap images; no source parser is needed on a micro-runtime that consumes validated images. This pipeline is **proposed**, not an implemented Alan-to-Inox compiler, delta linker or self-hosted bootstrap.
+
+### 10.5. Differential distribution: cold versus warm node
+
+The unit transferred over Fractanet should be the **smallest missing verified artifact(s)**, not necessarily a complete new image or application environment. The receiving node may already have the VM, a compatible native materialization, the immutable semantic base and some definition extensions. The sender or artifact resolver sends content identities and a composition manifest first; the node fetches **only missing content-addressed extensions** and any separately required continuation/state payload.
+
+```text
+Known on target:    VM(profile P) + base image A + extension B
+New required work:  composition(A, B, extension C) + state S
+Transfer:           manifest + C (if absent) + S (if required)
+Execute:            validate P, A, B, C; bind instance state; resume
+Later warm replay:  manifest/identifiers + a smaller changed S, if C is cached
+```
+
+This is **not** a byte-for-byte delta against an unspecified memory dump: each dependency must be identified by digest and a declared composition/relocation contract. On cache miss or incompatible execution profile, fall back to the necessary base/native materialization or rebuild it from semantic inputs. A valid artifact does not implicitly convey authority to execute an external effect.
+
+For the experimental acceptance fixture, record: (1) a cold activation, (2) an activation with the base cached, (3) an activation with base and extension cached, and (4) continuation migration between isolated runtimes. Measure **actual transferred bytes**, required manifests/metadata, VM size, startup cost and peak mutable RAM; test missing/wrong base and symbol/ABI mismatch. The expected advantage comes from content reuse and small definitions, not from assuming every delta or image is tiny.
 
 ---
 
@@ -1106,6 +1155,16 @@ historical lineage record.
 - demonstrate base-in-flash and overlay-in-RAM;
 - restore after reboot.
 
+### L2a — Definition-level packaging and differential transport fixture
+
+- produce one named executable Cell definition with the smallest deterministic host assembler or structured Cell builder, without the general Inox source parser;
+- package an immutable base A and an independently content-addressed extension C as a **composition**, not a mutable overlay;
+- prove that a receiving node already holding A obtains only C plus necessary manifest metadata, and that a node also caching C avoids retransmission;
+- serialize an instance state S separately and demonstrate resumption against the exact compatible code composition;
+- measure cold/warm transport bytes, VM/metadata footprint and mutable RAM; reject absent bases, incompatible primitive ABI or unresolved relocations.
+
+This is a proposed experiment between L2 and L3, not an assertion that the delta format, compiler or runtime is operational.
+
 ### L3 — Cross-target materialization
 
 - Linux and ESP32 materializations from one semantic base;
@@ -1138,6 +1197,9 @@ Each level must remain independently reviewable.
 
 Future conformance suites should cover:
 
+- cold versus base-cached versus base-and-extension-cached transport byte counts;
+- immutable definition extension/delta applied only against its declared base, with symbol and primitive-ABI compatibility;
+- cached code reused while mutable overlays remain isolated between instances;
 - canonical semantic digest;
 - native manifest/base linkage;
 - snapshot/base mismatch;
@@ -1215,6 +1277,8 @@ one semantic Inox image
   -> fresh governed activation
   -> preserved lineage and trace
 ```
+
+A second, narrower acceptance test concerns **distribution of an executable behavior**: two target instances share base A; a new definition extension C is built once; only a target missing C receives the extension; subsequent activation reuses C by content digest and sends at most the required mutable state/continuation. Record actual payload sizes, load time and the unchanged immutable base hash.
 
 The important result is not merely persistence. It is the preservation of
 meaning, identity, authority, and inspectability while executable structure

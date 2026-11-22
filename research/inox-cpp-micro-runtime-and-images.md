@@ -6,6 +6,7 @@ drafted_by: "OpenAI Codex (GPT-5)"
 principal: "Jean Hugues Noël Robert"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 date: "2026-07-16"
+last_modified_at: "2026-11-22"
 status: "draft-for-human-review"
 version: "0.1.0-draft"
 license: "MIT (code examples) · CC BY-SA 4.0 (text)"
@@ -646,6 +647,16 @@ The runtime MUST recompute and compare the hash before executing an untrusted or
 newly received image. A platform MAY cache a previously verified immutable image
 using platform-specific secure metadata, but the cache optimization is outside
 the portable core.
+
+---
+
+### 11.8 Delta extension boundary and host-side definition building (design clarification)
+
+**Clarification recorded 2026-11-22 by GPT-6, under Jean Hugues Noël Robert's direction.** The header already reserves a `DELTA_IMAGE` flag and a `base_sha256` field. This **does not yet constitute a complete interoperable binary format for incremental executable definitions**: versioned patch/merge semantics, relocation, symbol import binding, base dependency validation and immutable code extension ordering still need specified conformance tests. Do not advertise cross-node executable code deltas merely because the flag exists.
+
+For a future compatible profile, distinguish an **immutable, content-addressed definition extension** (new compiled `Cell` blocks applied by composing images) from the **mutable runtime overlay** and from a **snapshot of execution state** (section 17). The host should be able to build definitions from a small structured IR or an intentionally tiny assembler, rather than requiring the complete Inox source parser. A micro-target may receive a ready image/composition and execute it without embedding a parser/compiler.
+
+The minimum cross-node fixture is: target already has immutable base A; host builds extension C; target verifies A/C, imports and profile, and fetches C only if missing; target retains a separate mutable region S; warm repeated activation does not resend C. The test must measure actual bytes and memory rather than prescribe an invented universal image size. See [Inox Images, Lineages, Hibernation, and Wake](inox-images-lineages-and-hibernation.md) sections 8.1, 10.4 and 10.5.
 
 ---
 
