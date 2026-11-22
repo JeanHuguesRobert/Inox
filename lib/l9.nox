@@ -219,7 +219,11 @@ to extend-class{  with class-name/ code/ parameters
 ~~   update-class(  it )
 to class{  with class-name/ code/ parameters
   if: verb.exist?( $class-name ) then: {
-    $class-name extend-class{ $code run }
+    ~~ 2026-11-22: GPT-6 coding agent, under Jean Hugues Noel Robert.
+    ~~ Preserve the outer code block before extend-class{ introduces its own
+    ~~ dynamically scoped `code`, otherwise the inner block runs itself.
+    $code >outer-code
+    $class-name extend-class{ $outer-code run }
   } else: {
     $class-name >it
     make.metaclass( it ) >metaclass
@@ -351,7 +355,9 @@ global: l9-root/    is: _;
 ~~ #2026: make.task stub was added in 2026
 to make.task  >fork? >spawn? >parent
   "make.task stub (see task maker for real logic)" out
-  make{
+  ~~ 2026-11-22: GPT-6 coding agent, under Jean Hugues Noel Robert.
+  ~~ make{ requires a class tag receiver; the stub was missing task/.
+  task/ make{
     $parent :parent
     false :done?
     false :canceled?

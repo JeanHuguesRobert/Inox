@@ -1,0 +1,42 @@
+{
+  "id": "ctn_inox_l9_bootstrap_2026_11_22",
+  "packet_id": "CPKT-2026-11-22-INOX-L9-FBF",
+  "kind": "cognitive_packet_journey",
+  "subject": "inox_l9_bootstrap_repair_and_full_runtime_behavior_validation",
+  "status": "in_progress",
+  "created_at": "2026-11-22",
+  "updated_at": "2026-11-22",
+  "principal": "Jean Hugues Noel Robert",
+  "authority_source": "Principal request to continue L9 debugging and finish putting it in working order; explicit FixBugsFirst doctrine and agent coding attribution requirement",
+  "source_issue": "https://github.com/JeanHuguesRobert/Inox/issues/16",
+  "mission": "Restore boot of the opt-in L9 object environment and generated stdlib, then verify actual method dispatch and track remaining runtime correctness defects before claiming L9 is fully operational.",
+  "target_documents": [
+    "lib/l9.nox",
+    "lib/stdlib.nox",
+    "scripts/test-l9-bootstrap.js",
+    "research/two-versions-scripting-vs-system.md",
+    "package.json"
+  ],
+  "checkpoint": {
+    "result": "The scoped L9 and stdlib bootstrap repairs load successfully in INOX_WITH_L9=1; 16 targeted executable behavior cases pass. Original minimal CLI must remain unchanged. Other integration suites are run before final publication.",
+    "completed_repair_steps": [
+      "class{ saves the outer code value before entering extend-class{ to avoid dynamic-scope self-recursion",
+      "make.task stub explicitly supplies task/ receiver to make{",
+      "multiline stdlib verb terminators are attached to the end of the preceding instruction, eliminating phantom missing-verb .",
+      "stdlib class extensions are compiled inside initialize-stdlib-classes with matching brace indentation",
+      "integer.times is registered with a stack-only tail-recursive helper; direct nested from:to:do: is not presently reliable",
+      "agent-authored .nox comments are ASCII-only because non-ASCII source comments cause text-cell assertions"
+    ],
+    "known_remaining_defects": [
+      "make.task still contains a visible stub and is not the full task maker",
+      "from:to:do: does not reliably iterate beyond its first body call in the original bootstrap, and experimental loop rewrite was incomplete; left unchanged",
+      "unbounded CSP growth during recursion can overwrite parser memory in the historical JS VM; separate general control-stack correctness fix needed",
+      "L9 actor, promise, scheduler and full inheritance semantics lack a dedicated end-to-end suite",
+      "stdlib.nox is marked derived but no checked-in generator was found; regeneration needs a reproducible source"
+    ],
+    "runtime_implemented": true,
+    "full_l9_completed": false,
+    "deployed": false
+  },
+  "next_packet_candidate": "Test and repair the general from:to:do: control/local semantics and overflow-safe CSP, then exercise task, promise and actor workflows with observability and regression fixtures under Inox #16."
+}

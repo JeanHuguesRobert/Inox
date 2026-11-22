@@ -3,6 +3,7 @@ title: "Inox: Two Versions — Scripting vs System Programming"
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 date: "2026-06-05"
+last_modified_at: "2026-11-22"
 license: "CC BY-SA 4.0"
 status: "working-note"
 corpus_role: "source"
@@ -44,7 +45,9 @@ There are two intended "versions" / layers / audiences for Inox:
 
 2. **System programming layer** (l9 + COP + future dynamic objects/actors)
    - Opt-in: `INOX_WITH_L9=1` (or `INOX_FULL=1`).
-   - Currently still contains bugs (the l9.nox OO/class/actor/task/promise work inherited from l8 is incomplete; parser asserts, it-method resolution, extend non-extensible, etc. — see git history around the Claude sessions and l9 test disable).
+   - **FBF status (2026-11-22, GPT-6 coding agent under Jean Hugues Noel Robert):** the opt-in startup now loads `l9.nox` **and** `stdlib.nox` without the previous assertion; the focused `npm run test:l9` suite exercises class extension, basic integer method dispatch, recursion and `integer.times`. This is **bootstrap + verified subset**, not completion of the actor/task/promise layer.
+   - **Remaining defects:** `make.task` is still an explicit stub; the general `from:to:do:` helper remains incorrect (and may fail differently in the two modes), so `integer.times` uses a tested stack-only recursive helper for now. The control-stack overflow without bounds checking described in Inox #16 remains a separate safety/correctness bug. Complete task/promise semantics, broader method dispatch, and cross-target execution are not thereby validated.
+   - **Inox source encoding:** the current parser is not robust to non-ASCII characters even in comments. Agent attribution inside `.nox` uses ASCII `Noel`; full names and richer provenance belong in the commit, issue and Cognitive Packet. The derived `stdlib.nox` has no checked-in generator today, so these fixes are attributed in the file while a reproducible generator remains future work.
    - Goal: a **dynamic system programming language** for the cognitive substrate itself.
    - **Cannot (and should not) be "obvious"**: it manipulates the richer, less usual, traceable concepts required for rational exploration at scale:
      - Continuations as first-class input/closure delivery.
