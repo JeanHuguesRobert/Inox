@@ -90,6 +90,15 @@ to stack.each{  >coll, >code
     $code .run( ii $coll stack.fetch )
   }
 
+~~ 2026-11-23: GPT-6 coding agent, under Jean Hugues Noel Robert.
+~~ Lists have stack storage and do not inherit stack.each{ via their
+~~ class hierarchy. Iterate with the canonical stack length/fetch protocol.
+~~ This also enables the promise handlers list to dispatch .each{ correctly.
+to list.each{  >coll, >code
+  from: 0 to: $coll stack.length - 1 do: {
+    $code .run( ii $coll stack.fetch )
+  };
+
 ~~ 2026-11-23 - GPT-6 coding agent under Jean Hugues Noel Robert.
 ~~ Array has its own length/get primitives. The generic object iterator
 ~~ addresses named object fields, not the indexed payload of an array.
@@ -397,19 +406,22 @@ to initialize-l9
     }
     resolved?/method{ .$resolved? }
     rejected?/method{ .$rejected? }
+    ~~ 2026-11-23: GPT-6 coding agent under Jean Hugues Noel Robert.
+    ~~ @schedule denotes an object FIELD, not the schedule method. Dispatch
+    ~~ the actual method on the promise receiver after settling it.
     resolve/it-method{
       >value
       return-if( @resolved? or @rejected? )
       true @resolved?!
       value> @resolve-value!
-      @schedule
+      it .schedule
     }
     reject/it-method{
       >reason
       return-if( @resolved? or @rejected? )
       true @rejected?!
       reason> @reject-reason!
-      @schedule
+      it .schedule
     }
     then/it-method{
       make.promise-handler >handler
@@ -418,8 +430,12 @@ to initialize-l9
     }
     schedule/it-method{
       return-if( not @resolved? and not @rejected? )
-      @handlers.each{ .schedule }
-      @handlers.clear
+      ~~ 2026-11-23: GPT-6 coding agent under Jean Hugues Noel Robert.
+      ~~ Resolve handler list as a field, then invoke a method; the fused
+      ~~ @handlers.each{ / @handlers.clear forms did not dispatch correctly.
+      ~~ Handler callbacks/then propagation remain separate open work.
+      @handlers .each{ .schedule }
+      @handlers .clear
     }
   }
 
@@ -511,7 +527,9 @@ to initialize-l9
     cancel/it-method{
       return-if( @done? or @canceled? )
       true @canceled?!
-      @subtasks.each{ .cancel }
+      ~~ 2026-11-23: GPT-6 coding agent, under Jean Hugues Noel Robert.
+      ~~ Separate attribute lookup from the each{ method invocation.
+      @subtasks .each{ .cancel }
       ( it not= l9 ) then{
         @raise( /canceled )
       }

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * 2026-11-23 — GPT-6 coding agent, under Jean Hugues Noel Robert.
- * FBF RED diagnostic for L9 task lifecycle: cancel/resume remain unimplemented
+ * FBF RED diagnostic for L9 task lifecycle: child cancellation/raise, resume and promise then remain unimplemented
  * or broken. Keep outside all green/CI suites until both functions actually
  * work. A process that exits 0 with "FATAL" in stdout is not a pass.
  */
@@ -10,8 +10,9 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 const cwd=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const tests=[
-  ['root cancellation and status', 'to p l9-root .cancel l9-root .canceled? out. p', '1'],
+  ['child cancellation propagation and exception', 'to p l9-root false false make.task/ as-verb run >kid l9-root .cancel $kid .canceled? out. p', '1'],
   ['root resume and status', 'to p l9-root .resume l9-root .paused? out. p', '0'],
+  ['promise then registers handler', 'to p make.promise >v $v .then "OK" out. p', 'OK'],
 ];
 let passed=0;
 for(const [name,program,expected] of tests){
