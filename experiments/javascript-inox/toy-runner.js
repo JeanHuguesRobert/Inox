@@ -97,7 +97,19 @@ export class VM {
     this.IP = this.alloc({ name: '', type: 'verb', value: address });
     this.alloc({ name: '', type: 'return', value: null });
     this.steps = 0;
-    this.run();
+    const initialDSP = this.DSP;
+    try {
+      this.run();
+    } catch (error) {
+      // A failed invocation must not leave a fake running frame behind.
+      this.IP = null;
+      this.control.length = 0;
+      this.CSP = 0;
+      this.data.length = Math.min(this.data.length, initialDSP);
+      this.DSP = this.data.length;
+      this.definition = null;
+      throw error;
+    }
   }
   run() {
     while (this.IP !== null) {
@@ -219,6 +231,13 @@ export class VM {
     p('char.end?', vm => vm.push({
       name: '', type: 'literal', value: vm.pop().value === null
     }));
+    p('char.quote?', vm => vm.push({
+      name: '', type: 'literal', value: vm.pop().value === '"'
+    }));
+    p('char.backslash?', vm => vm.push({
+      name: '', type: 'literal', value: vm.pop().value === '\\'
+    }));
+    p('lex.error', vm => { throw new SyntaxError('unterminated string literal'); });
     p('text.concat', vm => {
       const c = vm.pop().value, a = vm.pop().value;
       vm.push({ name: '', type: 'literal', value: a + c });
