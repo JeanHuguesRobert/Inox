@@ -3,7 +3,8 @@
  * Independent from historical TS runtime and from .xnx.
  */
 export class VM {
-  constructor({ maxSteps = 100000 } = {}) {
+  constructor({ maxSteps = 100000, bootstrapCompiler = true } = {}) {
+    this.bootstrapCompiler = bootstrapCompiler;
     this.cells = []; // One logical address space for code and stack Cells
     this.words = new Map(); // name -> entry address
     this.primitiveEntries = new Set();
@@ -180,6 +181,18 @@ export class VM {
       if (condition) vm.IP = target;
     });
     p('jump', vm => { vm.IP = vm.pop().value; });
+    // Relative branches are independent of a definition's loaded address.
+    p('branch-relative-if', vm => {
+      const offset = vm.pop().value, condition = vm.pop().value;
+      if (!Number.isInteger(offset)) throw new Error('non-integer branch offset');
+      if (condition) vm.IP += offset;
+    });
+    p('jump-relative', vm => {
+      const offset = vm.pop().value;
+      if (!Number.isInteger(offset)) throw new Error('non-integer jump offset');
+      vm.IP += offset;
+    });
+    if (!this.bootstrapCompiler) return;
     // Stage-0 assembles only 'to': its compile loop EXECUTES inside the VM.
     const entry = this.cells.length;
     const next = name => ({
