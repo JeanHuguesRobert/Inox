@@ -1,0 +1,1 @@
+to compile next-token def.begin next-token dup token.end? 3 branch-relative-if def.emit -8 jump-relative drop def.finish .
