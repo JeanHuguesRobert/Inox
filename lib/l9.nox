@@ -383,13 +383,24 @@ to initialize-l9
         _ :on-reject
       }
     }
-    schedule/it-method{ >promise
-      if: @next-promise something? then: {
-        promise> @next-promise.schedule
+    ~~ 2026-11-23: GPT-6 coding agent under Jean Hugues Noel Robert.
+    ~~ Deliver the settled source to the handler; settle the *next* promise
+    ~~ with the returned callback value or propagate unchanged if absent.
+    ~~ Exception-to-rejection translation remains a separate L9 contract.
+    schedule/it-method{ >source
+      @next-promise >next
+      if: $source .resolved? then: {
+        if: @on-resolve something? then: {
+          @on-resolve .run( $source resolve-value/ object.@ ) $next .resolve
+        } else: {
+          $source resolve-value/ object.@ $next .resolve
+        };
       } else: {
-        make.promise @next-promise!
-        ~~ ToDo: resolve/reject with the result of the on-resolve/on-reject
-      ~~ #2026: Old code had no semicolon here: };
+        if: @on-reject something? then: {
+          @on-reject .run( $source reject-reason/ object.@ ) $next .resolve
+        } else: {
+          $source reject-reason/ object.@ $next .reject
+        };
       };
     }
   }
@@ -423,18 +434,29 @@ to initialize-l9
       reason> @reject-reason!
       it .schedule
     }
-    then/it-method{
-      make.promise-handler >handler
-      @handlers.push( $handler )
-      @schedule
+    ~~ 2026-11-23: GPT-6 under Jean Hugues Noel Robert. Register a real
+    ~~ handler (late-bound maker); return its next promise immediately.
+    ~~ Both callbacks are explicitly supplied, using _ when absent.
+    ~~ Current L9 settlement is synchronous. Exception-to-rejection and
+    ~~ returned-promise assimilation await real L9 exception/actor semantics.
+    then/it-method{ >on-reject >on-resolve
+      make.promise-handler/ as-verb run >handler
+      $on-resolve $handler on-resolve/ object.!
+      $on-reject $handler on-reject/ object.!
+      make.promise/ as-verb run >next
+      $next $handler next-promise/ object.!
+      @handlers $handler stack.push
+      it .schedule
+      $next
     }
     schedule/it-method{
-      return-if( not @resolved? and not @rejected? )
-      ~~ 2026-11-23: GPT-6 coding agent under Jean Hugues Noel Robert.
-      ~~ Resolve handler list as a field, then invoke a method; the fused
-      ~~ @handlers.each{ / @handlers.clear forms did not dispatch correctly.
-      ~~ Handler callbacks/then propagation remain separate open work.
-      @handlers .each{ .schedule }
+      ~~ 2026-11-23: GPT-6 coding agent, under Jean Hugues Noel Robert.
+      ~~ The postfix predicate checks that both settlement flags are false.
+      ~~ The former mixed `not @resolved? and not @rejected?` returned early
+      ~~ for a fulfilled promise and skipped its registered handlers.
+      return-if( @resolved? @rejected? or not )
+      it >source
+      @handlers .each{ >handler $source $handler .schedule }
       @handlers .clear
     }
   }
@@ -535,9 +557,10 @@ to initialize-l9
       }
     }
     ~~ ToDo 2026-11-23 - GPT-6 under Jean Hugues Noel Robert:
-    ~~ cancel/it-method{ above still triggers scope-close/make.local when
-    ~~ @subtasks.each{ .cancel } is followed by the conditional raise path.
-    ~~ The red lifecycle probe must pass before declaring cancel operational.
+    ~~ Root cancel and .each{ are now verified. A child cancel reaches the
+    ~~ unfinished task.raise exception path (not a collection-iteration bug).
+    ~~ Do not omit that raise or mark child cancellation complete until the
+    ~~ actor/task exception delivery contract and red probe are repaired.
     canceled?/method{ .$canceled? }
     stop/method{ true swap .>should-stop?! }
     success?/it-method{ ( @done? and @error nothing? ) }
@@ -572,6 +595,10 @@ to initialize-l9
     signal/it-method{  with result/ parameter
     }
     ~~ #2026: Old code had: raise/it-method{ with reason/ parameters
+    ~~ ToDo 2026-11-23 - GPT-6 under Jean Hugues Noel Robert:
+    ~~ This is a declaration scaffold, NOT an implemented exception path.
+    ~~ Define supervised task error propagation and actor wakeup/failure
+    ~~ semantics before implementing it; no silent swallowing or fake state.
     raise/it-method{ with reason/ parameter
     }
     setup-stacks/it-method{  with data-stack/ control-stack/ parameters

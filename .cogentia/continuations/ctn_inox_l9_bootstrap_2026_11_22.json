@@ -27,7 +27,7 @@
     "scripts/probe-l9-task-root.js"
   ],
   "checkpoint": {
-    "result": "L9 root/task structures and basic lifecycle are functional in a verified subset: 29 structural task tests, 22 bootstrap cases and 15 basic lifecycle cases. Root cancellation, list iteration and promise resolve/reject are validated; child raise, task resume and promise.then callback/scheduling remain explicitly red.",
+    "result": "L9 bootstrap, task structures and elementary task/promise lifecycles pass; local synchronous promise chaining through then() now passes 17 cases. The three remaining deliberately red diagnostics are child cancel exception handling, task.resume scheduler, and callback exceptions not being translated to promise rejection.",
     "completed_repair_steps": [
       "class{ saves the outer code value before entering extend-class{ to avoid dynamic-scope self-recursion",
       "make.task stub explicitly supplies task/ receiver to make{",
@@ -49,17 +49,18 @@
       "2026-11-23 GPT-6: repaired extensible object.! validation and array.get, stack.push, stack.fetch, added array.each with native indices; 29 end-to-end L9 structural regression cases pass",
       "2026-11-23 GPT-6: added native list.each{ based on stack length/fetch; promise handler lists now have correct iteration semantics",
       "2026-11-23 GPT-6: fixed @subtasks .each{ dispatch; root cancel and repeat cancel pass without suppressing child .cancel/raise",
-      "2026-11-23 GPT-6: elementary promise resolve/reject call actual .schedule method and preserve first settlement; field/method dispatch and list clear corrected; 15 lifecycle tests pass"
+      "2026-11-23 GPT-6: elementary promise resolve/reject call actual .schedule method and preserve first settlement; field/method dispatch and list clear corrected; 15 lifecycle tests pass",
+      "2026-11-23 GPT-6: fixed promise-handler factory late binding, promise.then handler/next-promise registration, handler scheduling on source settlement and canonical postfix pending predicate; 17 green chain tests (3 stack return-depth checks included) including transformations, two-level chaining, late handlers, duplicate settlement"
     ],
     "known_remaining_defects": [
       "unbounded CSP growth during recursion can overwrite parser memory in the historical JS VM; separate general control-stack correctness fix needed",
-      "L9 actor, promise, scheduler and full inheritance semantics lack a dedicated end-to-end suite",
       "stdlib.nox is marked derived but no checked-in generator was found; regeneration needs a reproducible source",
       "zero-step range invalid input invokes the historical FATAL hook but its error diagnostics and nested-scope unwinding remain defective",
       "proper tail-call elimination/again is specified but not implemented; no recursion replaces the fixed loops",
       "task.resume invokes unresolved schedule task method (red diagnostic); actor scheduler remains incomplete",
       "Child task cancellation now reaches task.raise, whose exception propagation remains unfinished; do not claim child cascade is working",
-      "Promise then/handler chaining still fails at registration and callback propagation; root task.resume still lacks task scheduler"
+      "Promise callback exceptions are not translated into rejection of the next promise, and returned-promise adoption is not specified; pending exception path shared with task.raise",
+      "Actor/task scheduler, exception semantics and full inheritance still lack end-to-end validation"
     ],
     "runtime_implemented": true,
     "full_l9_completed": false,
@@ -84,9 +85,9 @@
       "next": "Design and test bounds/canary plus actor context switch and wake-up semantics, then select fail-early/refusal/separate handler policy; separately verify stack relocation mechanics. No exception path is implemented by this patch."
     }
   },
-  "next_packet_candidate": "Active FBF: task.raise/child cancellation, task.schedule/resume and promise.then callbacks. CSP overflow detection remains deferred.",
+  "next_packet_candidate": "Next FBF: child task.raise, task.schedule actor wakeup and promise callback error propagation; CSP overflow policy remains deferred.",
   "current_focus_2026_11_22": {
-    "priority": "L9 task lifecycle (cancel/resume), promise behavior and scheduling, not the deferred CSP overflow policy",
+    "priority": "L9 child cancellation/exception and task scheduler; local synchronous promise.then tested; CSP overflow work deferred",
     "historical_root_reproductions_now_fixed": [
       "INOX_WITH_L9=1 node bin/inox.js -e \"l9-root .label out\" -> FATAL run-super-method with void receiver; process may misleadingly exit 0.",
       "INOX_WITH_L9=1 node bin/inox.js -e \"to p _ false false make.task/ as-verb run. p\" -> FATAL Local variable it not found at lib/l9.nox:476.",
@@ -114,15 +115,15 @@
       "green_tests": "npm run test:l9-tasks: 29/29; node scripts/probe-l9-task-root.js: 3/3"
     },
     "known_current_failures": [
-      "Root cancellation now passes, and idempotence is tested; actual child cancellation reaches incomplete task.raise and remains red",
-      "Root resume calls task.schedule with no working scheduler; red",
-      "Promise then registration/callback propagation is incomplete and red"
+      "Actual child cancellation reaches unfinished task.raise and yields FATAL; root cancellation/idempotence works",
+      "Root resume reaches missing task.schedule; red",
+      "Promise callback FATAL cannot yet become rejection of the dependent promise; red"
     ],
     "next_actions": [
-      "Fix child task.raise exception/propagation semantics at their causal layer, not by suppressing child cancellation",
-      "Implement functioning task.schedule/actor scheduling and verify pause/resume",
-      "Define and test promise.then handler registration and callback propagation",
-      "Leave CSP overflow context-switch policy deferred until Principal resumes it"
+      "Identify correct L9 task.raise and actor exception contract; do not swallow child cancellation signal to greenwash the test",
+      "Implement true task.schedule semantics at proper scheduler boundary after identifying actor state and wakeup contract",
+      "Specify an exception-to-promise-rejection path shared with task.raise, including propagation and cleanup",
+      "Keep CSP context-switch overflow policy deferred until Principal resumes it"
     ],
     "deferred_packet": "CPKT-2026-11-22-INOX-CSP-CONTEXT-SWITCH",
     "lifecycle_basic_result_2026_11_23": {
@@ -130,6 +131,13 @@
       "tests": "npm run test:l9-lifecycle-basics: 15/15; npm run test:l9-tasks: 29/29; npm run test:l9: 22/22",
       "red_diagnostic": "node scripts/probe-l9-task-lifecycle.js: 0/3 intentionally red (child cancel exception, root resume scheduler, promise then registration)",
       "provenance": "GPT-6 coding agent under Jean Hugues Noel Robert, 2026-11-23"
+    },
+    "promise_chain_result_2026_11_23": {
+      "status": "verified_in_isolated_worktree_not_published",
+      "tests": "npm run test:l9-promise-chain: 17/17 including 3 return-control-stack invariants; broad regression tests passed in isolated worktree",
+      "contract": "then(on-resolve, on-reject) returns next promise; _ represents absent callback; local synchronous callback dispatch; first-settlement-wins; exception propagation not implemented",
+      "code": "lib/l9.nox, scripts/test-l9-promise-chain.js, scripts/probe-l9-task-lifecycle.js",
+      "provenance": "GPT-6 coding agent under Jean Hugues Noel Robert (2026-11-23)"
     }
   }
 }
