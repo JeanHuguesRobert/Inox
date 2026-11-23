@@ -1,0 +1,27 @@
+{
+  "id": "ctn_inox_csp_context_switch_policy_2026_11_22",
+  "packet_id": "CPKT-2026-11-22-INOX-CSP-CONTEXT-SWITCH",
+  "kind": "cognitive_packet_journey",
+  "subject": "inox_actor_control_stack_overflow_check_at_context_boundaries",
+  "status": "deferred_by_principal",
+  "date": "2026-11-22",
+  "principal": "Jean Hugues Noel Robert",
+  "priority_note": "Explicitly deferred by Principal: do not continue this line of work while debugging L9 task/promise behavior.",
+  "scope": "Investigate control-stack overflow/integrity validation at actor/task context save/switch and before wake-up, without per-call or per-defer checks in the execution hot path.",
+  "policy_options_to_study": [
+    "Fail early on compromised task/actor stack, potentially stopping the runtime (Erlang/OTP-inspired).",
+    "Refuse to awaken a task/actor whose stack is compromised.",
+    "Enter a recovery/exception handler on a separately validated intact stack."
+  ],
+  "unresolved_architecture_questions": [
+    "Memory may already have been overwritten before a context-switch integrity check; evaluate protection/canary/stack guard design.",
+    "actor_save_context has no directly observed call in the current implementation; switch-actor calls actor_restore_context directly.",
+    "After grow-control-stack relocates memory, actor object slots and control stack state must be updated/verified.",
+    "Define fail early vs quarantine semantics, owner of state, scheduler/wakeup lifecycle, and measured overhead."
+  ],
+  "implemented_now": false,
+  "other_completed_work": "The 80% arithmetic thresholds in data/control stack growers are independently corrected and covered by 16 isolated functional tests in the uncommitted Inox worktree.",
+  "code_todo": "lib/inox.ts near actor_save_context() and primitive_switch_actor(), GPT-6 attribution 2026-11-22",
+  "resume_condition": "Explicit Principal decision to resume this deferred CSP investigation after higher-priority L9 work.",
+  "next_current_focus": "CPKT-2026-11-22-INOX-L9-FBF: task root creation and task/promise functionality"
+}

@@ -258,19 +258,6 @@ to xor?  <> .
 ~~ ==========================================================================
 
 ~~ 2026-11-22: GPT-6 coding agent, under Jean Hugues Noel Robert.
-~~ LEGACY WORKAROUND, NOT A COMPLETE FIX: this recursive method helper was
-~~ introduced before the root loop bugs were repaired. from:to:do: now works
-~~ iteratively. The direct nested `it-method{ ... from: ... }` form still
-~~ fails in the compiler; investigate and repair that separate root cause.
-~~ No tail-call elimination is implemented for this recursion.
-to stdlib.times-loop
-  if: over 0 > then: {
-    duplicate run
-    swap 1 - swap
-    stdlib.times-loop
-  } else: { drop drop };.
-
-~~ 2026-11-22: GPT-6 coding agent, under Jean Hugues Noel Robert.
 ~~ At top level the generated `type/class{ ... }` forms were evaluating
 ~~ method bodies as ordinary code instead of registering them. Compile
 ~~ these forms inside a verb, as initialize-l9 already does; keep matching
@@ -291,7 +278,12 @@ to initialize-stdlib-classes
   abs/method{ abs }
   gcd/method{ gcd }
   lcm/method{ lcm }
-    times/it-method{ >blk it $blk stdlib.times-loop }
+    ~~ 2026-11-22: GPT-6 coding agent under Jean Hugues Noel Robert.
+    ~~ Direct iterative implementation; the infix from:/to:/do: form needs
+    ~~ a terminating semicolon before the enclosing method block closes.
+    ~~ $blk is the local executable block; bare blk/block is not its value.
+    ~~ Contract: executable block first, integer receiver second.
+    times/it-method{ >blk from: 1 to: it do: { $blk .run }; }
   }
 
   text/class{

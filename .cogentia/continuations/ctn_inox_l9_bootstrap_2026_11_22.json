@@ -5,7 +5,7 @@
   "subject": "inox_l9_bootstrap_repair_and_full_runtime_behavior_validation",
   "status": "in_progress",
   "created_at": "2026-11-22",
-  "updated_at": "2026-11-22",
+  "updated_at": "2026-11-23",
   "principal": "Jean Hugues Noel Robert",
   "authority_source": "Principal request to continue L9 debugging and finish putting it in working order; explicit FixBugsFirst doctrine and agent coding attribution requirement",
   "source_issue": "https://github.com/JeanHuguesRobert/Inox/issues/16",
@@ -19,16 +19,21 @@
     "lib/inox.ts",
     "lib/bootstrap.nox",
     "scripts/test-loop-control.js",
-    "AGENTS.md"
+    "AGENTS.md",
+    "scripts/test-stack-growth-threshold.js",
+    "lib/l9.nox",
+    "scripts/test-l9-task-structure.js",
+    "scripts/probe-l9-task-lifecycle.js",
+    "scripts/probe-l9-task-root.js"
   ],
   "checkpoint": {
-    "result": "L9 bootstrap remains successful. Root repairs to loop-while, loop-until and three range helpers pass 82 executable loop/stack-continuation tests across minimal and L9 modes. Iteration consumes constant control depth up to 1000 cycles; no recursive fallback was introduced. Full L9 actors/tasks/promises remain incomplete.",
+    "result": "L9 bootstrap is operational; fixed direct integer.times and 80% threshold predicates; real make.task/root and parent-child tasks now construct correctly. Core object and collection semantics repaired. 29 structural L9 tests and 22 L9 bootstrap tests pass; task cancellation/resume and promise/scheduler actor semantics remain incomplete.",
     "completed_repair_steps": [
       "class{ saves the outer code value before entering extend-class{ to avoid dynamic-scope self-recursion",
       "make.task stub explicitly supplies task/ receiver to make{",
       "multiline stdlib verb terminators are attached to the end of the preceding instruction, eliminating phantom missing-verb .",
       "stdlib class extensions are compiled inside initialize-stdlib-classes with matching brace indentation",
-      "integer.times is registered with a stack-only tail-recursive helper; direct nested from:to:do: is not presently reliable",
+      "Historical step (superseded 2026-11-22): integer.times used a stack-only recursive helper before the direct iterative syntax was corrected",
       "agent-authored .nox comments are ASCII-only because non-ASCII source comments cause text-cell assertions",
       "loop-while checker now continues only while condition is true, not false",
       "both while-checker and until-checker preserve their permanent CSP frames across all iterations",
@@ -36,20 +41,85 @@
       "loop-until no longer invokes debugger unconditionally",
       "three from:...:do: range helpers now use valid postfix comparisons, repaired iterative loops, inclusive bounds and signed steps",
       "82 regression cases validate loop behavior, resumption and 1000-iteration constant CSP depth in both minimal and L9 modes",
-      "Global root-cause-first/no-silent-workaround rule recorded in Cogentia engineering policy and specialized in Inox AGENTS.md"
+      "Global root-cause-first/no-silent-workaround rule recorded in Cogentia engineering policy and specialized in Inox AGENTS.md",
+      "2026-11-22 GPT-6: verified nested infix from:to:do: requires semicolon before the closing it-method block; corrected explicit block-local retrieval ($blk) in integer.times",
+      "Deleted obsolete recursive stdlib.times-loop workaround; added regression cases for negative/zero counts, 1000 iterations, nested calls, caller continuation and control-stack restoration",
+      "Corrected both data-stack and control-stack 80% threshold predicates; 16 focused isolated function boundary tests passed; no call/defer fast-path modification",
+      "2026-11-23 GPT-6: removed early make.task stub and bound real task maker after class registration, corrected 4-value maker receiver/argument stack contract, root + child/fork/spawn/ID/parent structure",
+      "2026-11-23 GPT-6: repaired extensible object.! validation and array.get, stack.push, stack.fetch, added array.each with native indices; 29 end-to-end L9 structural regression cases pass"
     ],
     "known_remaining_defects": [
-      "make.task still contains a visible stub and is not the full task maker",
       "unbounded CSP growth during recursion can overwrite parser memory in the historical JS VM; separate general control-stack correctness fix needed",
       "L9 actor, promise, scheduler and full inheritance semantics lack a dedicated end-to-end suite",
       "stdlib.nox is marked derived but no checked-in generator was found; regeneration needs a reproducible source",
-      "integer.times retains the former recursive workaround because direct nested it-method{ ... from: ... } compilation fails; this is a separate known compiler bug, not a repaired feature",
       "zero-step range invalid input invokes the historical FATAL hook but its error diagnostics and nested-scope unwinding remain defective",
-      "proper tail-call elimination/again is specified but not implemented; no recursion replaces the fixed loops"
+      "proper tail-call elimination/again is specified but not implemented; no recursion replaces the fixed loops",
+      "task.cancel still triggers scope-close/make.local assertion after subtask traversal and task-specific conditional logic (red diagnostic)",
+      "task.resume invokes unresolved schedule task method (red diagnostic); actor scheduler remains incomplete"
     ],
     "runtime_implemented": true,
     "full_l9_completed": false,
-    "deployed": false
+    "deployed": false,
+    "csp_investigation_2026_11_22": {
+      "status": "deferred_by_principal; threshold arithmetic corrected separately; no overflow policy implemented",
+      "threshold_root_cause": "Both primitive_grow_control_stack and primitive_grow_data_stack compared used < (capacity * 100)/80, i.e. 125%; now compare used < (capacity * 80)/100, i.e. 80%.",
+      "verification": "npm run test:stack-growth-threshold: 16 isolated VM-function cases with mocked stack allocator and exact 79/80 and odd-capacity boundaries. This checks arithmetic and mock relocation, not real actor relocation or overflow recovery.",
+      "principal_decision": "Do not add per-call/per-defer overflow checks to the fast path as an automatic fix. Prefer investigating detection during task/actor context save, switch and wake-up; first assess correctness and overhead.",
+      "proposed_reactions": [
+        "Erlang/OTP-inspired fail early, possibly terminating runtime",
+        "refuse to wake compromised task/actor",
+        "resume through an exception/recovery handler on a separately verified sound stack"
+      ],
+      "source_todo": "lib/inox.ts above actor_save_context(), GPT-6 attribution and 2026-11-22 date",
+      "material_constraints": [
+        "actor_save_context() currently has no direct caller; switch-actor currently calls actor_restore_context directly",
+        "boundary checks cannot necessarily undo memory overwritten before a switch; memory-integrity design must be established",
+        "growing a stack and relocating actor references/state is not demonstrated correct; an 80%-threshold fix alone does not solve that",
+        "call() and defer() left unchanged; no per-call overhead introduced"
+      ],
+      "next": "Design and test bounds/canary plus actor context switch and wake-up semantics, then select fail-early/refusal/separate handler policy; separately verify stack relocation mechanics. No exception path is implemented by this patch."
+    }
   },
-  "next_packet_candidate": "Fix the root cause of nested it-method{...from:...} compilation; fix FATAL scoped error propagation and CSP bounds checks in the core VM; then exercise full L9 task/promise/actor runtime under issue #16."
+  "next_packet_candidate": "Continue L9 proper cancellation/scheduling/promise lifecycle. Independent CSP overflow detection deferred by Principal; preserve hot call/defer path.",
+  "current_focus_2026_11_22": {
+    "priority": "L9 task lifecycle (cancel/resume), promise behavior and scheduling, not the deferred CSP overflow policy",
+    "historical_root_reproductions_now_fixed": [
+      "INOX_WITH_L9=1 node bin/inox.js -e \"l9-root .label out\" -> FATAL run-super-method with void receiver; process may misleadingly exit 0.",
+      "INOX_WITH_L9=1 node bin/inox.js -e \"to p _ false false make.task/ as-verb run. p\" -> FATAL Local variable it not found at lib/l9.nox:476.",
+      "Replacing it make{ with explicit task/ make{ progresses, but the original maker{ with ... parameters } then fails at scope-close or if-condition. Do not confuse partial progression with a fix.",
+      "A minimal attached maker body with explicit >spawn? >fork? >parent local bindings and task/ make{...} completes; the original with-parameters and implicit it must be examined for contract correctness.",
+      "The root init call inside initialize-l9 executes the old make.task stub, while dynamic lookup of make.task after load reaches the newer task.maker definition. Investigate compile-time binding vs runtime registration before changing root initialization.",
+      "The original four-binder maker{ with parent/ fork?/ spawn?/ it/ parameters } was tested, and fails with a void/tag assertion when its it reaches make{; blindly adding a fourth binding is not the correction.",
+      "An isolated maker{ >spawn? >fork? >parent task/ make{...} } does return normally; reproductions involving full parent/root handling still fail, so construction is not repaired.",
+      "A dedicated red diagnostic scripts/probe-l9-task-root.js reports 1/3 probes passing: low-level task object allocation passes; l9-root label and registered make.task factory fail (even when runtime exit code is 0).",
+      "The minimal change from it make{ to bare make{ reaches the constructor body and avoids Local variable it not found, supporting that maker{ already prefixes the class tag; original root-label assignment then fails at lib/l9.nox:503.",
+      "A minimal low-level task/ make{ \"root\" :label } construction followed by .label returns root; the full class-maker registration and root bootstrap path still require repairs. No unverified replacement factory was installed."
+    ],
+    "root_and_children_result_2026_11_23": {
+      "status": "fixed_in_isolated_worktree_pending_publication",
+      "source": "lib/l9.nox and core array/object/stack primitives in lib/inox.ts",
+      "causes_repaired": [
+        "Early make.task stub was compiled into initialize-l9 before actual registration; use late resolution after task/class{ registers the real maker.",
+        "maker{ attaches class tag after three user arguments; task maker now consumes class receiver + spawn/fork/parent in correct stack order.",
+        "object.! was asserting forwarding area payload length ==1 while valid extensible objects may contain allocator-padded length 2.",
+        "array.get copied then erased its value; stack.push overwrote the length cell and bypassed canonical stack_put/growth; stack.fetch indexed the header.",
+        "array.each{ was missing: indexed arrays need native length/get based iteration, distinct from object.each.",
+        "Child registration now retrieves actual parent subtasks/forks arrays and uses array.push with correct receiver/value order.",
+        "The task maker no longer hardcodes fork/spawn booleans, and id now has an explicit getter."
+      ],
+      "green_tests": "npm run test:l9-tasks: 29/29; node scripts/probe-l9-task-root.js: 3/3"
+    },
+    "known_current_failures": [
+      "node scripts/probe-l9-task-lifecycle.js: root cancel still asserts at make.local/scope-close when collection traversal precedes conditional task cancellation; 0/2 pending.",
+      "root resume invokes @schedule, which is not a working task scheduling method; output FATAL despite CLI sometimes exiting 0.",
+      "Promise/scheduler/actor lifecycle requires separate end-to-end execution tests."
+    ],
+    "next_actions": [
+      "Trace source of task.cancel scope-close/make.local failure without replacing propagation logic with a shortcut.",
+      "Design/repair task.schedule semantics at the correct scheduling layer, then verify pause/resume and the actor context transitions.",
+      "Exercise promise resolve/reject and handler propagation with real assertions.",
+      "Keep CSP overflow switching detection deferred unless Principal explicitly resumes it."
+    ],
+    "deferred_packet": "CPKT-2026-11-22-INOX-CSP-CONTEXT-SWITCH"
+  }
 }

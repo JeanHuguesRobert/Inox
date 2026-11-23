@@ -65,7 +65,8 @@ const resumptionProbes = [
 ];
 const prefixes = {
   minimal: 'cli-stdlib.nox (basic old-school) loaded',
-  l9: 'make.task stub (see task maker for real logic)',
+  // L9 now creates a real root task without the old diagnostic stub.
+  l9: '',
 };
 const errors = /\bFATAL\b|Assert failure|Invalid boolean value|missing-verb|Parser\. Undefined verb|AssertionError|bad type/;
 function invoke(program, mode){

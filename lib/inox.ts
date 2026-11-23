@@ -8841,6 +8841,26 @@ function make_actor( ip : Cell ) : Cell {
 }
 
 
+/*
+ * ToDo (2026-11-22): GPT-6 coding agent, under Jean Hugues Noel Robert.
+ * Investigate CONTROL STACK OVERFLOW DETECTION AT ACTOR/TASK SWITCHES.
+ * Principal's intentional performance tradeoff: do NOT add per-call or
+ * per-defer checks to the hot path solely to detect stack overflow.
+ * Instead, consider integrity validation on context save/suspend and before
+ * task/actor wake-up: compare saved/current CSP with the actor-owned control
+ * stack bounds and, if needed, design an integrity canary/sentinel.
+ * Response alternatives to evaluate under tests: (1) Erlang/OTP-style
+ * fail-early termination, possibly of the whole runtime; (2) refuse to
+ * resume the compromised task/actor; (3) enter a recovery/exception handler
+ * running on a separate verified, intact stack.
+ * IMPORTANT: switching actors must first save the outgoing context (currently
+ * actor_save_context() has no direct caller), and detecting an overflow at
+ * a boundary may be TOO LATE if other memory was already overwritten.
+ * Specify ownership, detection reliability, rollback/isolation and safe
+ * recovery before implementing. Existing grow-control-stack relocation and
+ * actor slot references need independent verification. The threshold repair
+ * below is NOT an implementation of this overflow policy.
+ */
 function actor_save_context(){
 // Save context (ip, tos, csp) of current actor
   check_de&&mand_actor( ACTOR );
@@ -9696,6 +9716,10 @@ primitive( "current-l9-task!", primitive_set_current_l9_task );
  */
 
 function primitive_switch_actor(){
+  // ToDo (2026-11-22, GPT-6 under Jean Hugues Noel Robert): see the
+  // actor_save_context() overflow policy above. Validate the incoming saved
+  // stack/context at this boundary, NOT on every call()/defer() hot path.
+  // No detection, quarantine or exception-stack recovery is implemented yet.
   actor_restore_context( pop_reference() );
 }
 primitive( "switch-actor", primitive_switch_actor );
@@ -16328,7 +16352,11 @@ function primitive_object_set(){
   const target = reference_of( obj_cell );
   let ptr = 0;
   if( type_of( target ) == type_reference ){
-    check_de&&mand_eq( area_length( target ), 1 );
+    // 2026-11-23 — GPT-6 coding agent under Jean Hugues Noel Robert.
+    // An extensible object's forwarding area can have allocator padding;
+    // requiring exactly one payload Cell rejects valid objects (observed 2).
+    // Match object_get(): accept a forwarding area with at least one cell.
+    check_de&&mand( area_length( target ) >= 1 );
     ptr = value_of( target );
   } else {
     ptr = target;
@@ -16406,13 +16434,12 @@ primitive( "stack.pop", primitive_stack_pop );
 
 function primitive_stack_push(){
   const value_cell = pop();
-  let target = pop_reference();
-  if( type_of( target ) == type_reference ){
-    target = reference_of( target );
-  }
-  const length = value_of( target );
-  move_cell( value_cell, target + length * ONE );
-  set_value( target, length + 1 );
+  const target = pop_reference();
+  // 2026-11-23 - GPT-6 coding agent under Jean Hugues Noel Robert.
+  // The former inline implementation wrote the first item into the length
+  // header (index 0) and bypassed capacity growth. stack_push() already
+  // implements indexed storage after the header and extension of the area.
+  stack_push( target, value_cell );
 }
 primitive( "stack.push", primitive_stack_push );
 
@@ -16478,7 +16505,9 @@ function primitive_stack_fetch(){
     FATAL( "stack.fetch, index out of range" );
     return;
   }
-  copy_cell( target + index * ONE, push() );
+  // 2026-11-23 - GPT-6 coding agent under Jean Hugues Noel Robert.
+  // Indexed items begin one cell after the stack length header.
+  copy_cell( target + ( index + 1 ) * ONE, push() );
 }
 primitive( "stack.fetch", primitive_stack_fetch );
 
@@ -16733,7 +16762,10 @@ function  primitive_grow_data_stack(){
   const length = ACTOR_data_stack_limit - ACTOR_data_stack;
   const current_length = TOS - ACTOR_data_stack;
   // If less than 80% full, do nothing
-  if( current_length < ( length * 100 ) / 80 ){
+  // 2026-11-22: GPT-6 coding agent under Jean Hugues Noel Robert.
+  // FBF: the former (length * 100) / 80 was 125% of capacity,
+  // not 80%. Do not conflate the threshold with overflow detection.
+  if( current_length < ( length * 80 ) / 100 ){
     return;
   }
   const new_length = length * 2;
@@ -16760,7 +16792,10 @@ function primitive_grow_control_stack(){
   const length = ACTOR_control_stack_limit - ACTOR_control_stack;
   const current_length = CSP - ACTOR_control_stack;
   // If less than 80% full, do nothing
-  if( current_length < ( length * 100 ) / 80 ){
+  // 2026-11-22: GPT-6 coding agent under Jean Hugues Noel Robert.
+  // FBF: the former (length * 100) / 80 was 125% of capacity,
+  // not 80%. Do not conflate the threshold with overflow detection.
+  if( current_length < ( length * 80 ) / 100 ){
     return;
   }
   const new_length = length * 2;
@@ -16945,10 +16980,14 @@ function primitive_array_get(){
     FATAL( "array.get, index out of range" );
     return;
   }
+  // 2026-11-23 - GPT-6 coding agent under Jean Hugues Noel Robert.
+  // The old code copied the item over the array reference, immediately
+  // cleared that result, then popped both inputs. Return the copied item
+  // in the index slot and release only the consumed array reference.
   reset( index_cell );
-  copy_cell( array + ( index + 1 ) * ONE, TOS );
-  clear_top();
-  TOS -= 2 * ONE;
+  copy_cell( array + ( index + 1 ) * ONE, index_cell );
+  clear( TOS );
+  TOS -= ONE;
 }
 primitive( "array.get", primitive_array_get );
 

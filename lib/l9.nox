@@ -90,6 +90,15 @@ to stack.each{  >coll, >code
     $code .run( ii $coll stack.fetch )
   }
 
+~~ 2026-11-23 - GPT-6 coding agent under Jean Hugues Noel Robert.
+~~ Array has its own length/get primitives. The generic object iterator
+~~ addresses named object fields, not the indexed payload of an array.
+~~ Needed by @subtasks.each{ .cancel } and @handlers.each{ .schedule }.
+to array.each{  >coll, >code
+  from: 0 to: $coll array.length - 1 do: {
+    $code .run( ii $coll array.get )
+  };
+
 to object.each-index( >code, >it
   this-it
   from: 0 to: @length - 1 do: {
@@ -352,28 +361,8 @@ initialize-classes
 global: l9-next-id/ is: 0;
 global: l9-root/    is: _;
 
-~~ #2026: make.task stub was added in 2026
-to make.task  >fork? >spawn? >parent
-  "make.task stub (see task maker for real logic)" out
-  ~~ 2026-11-22: GPT-6 coding agent, under Jean Hugues Noel Robert.
-  ~~ make{ requires a class tag receiver; the stub was missing task/.
-  task/ make{
-    $parent :parent
-    false :done?
-    false :canceled?
-    false :should-stop?
-    _ :result
-    _ :error
-    list[] :subtasks
-    list[] :forks
-    list[] :fork-results
-    0 :fork-parent-index
-    _ :actor   ~~ dummy
-    "" :label
-    true :paused?
-    false :a-fork?
-    false :a-spawn?
-  }
+~~ 2026-11-23 GPT-6 under Jean Hugues Noel Robert: no early make.task stub.
+~~ The actual task maker is registered by task/class{ during initialize-l9.
 
 to initialize-l9
 
@@ -467,20 +456,22 @@ to initialize-l9
     thing/superclass
     queue/class-attribute
     current/class-method{ l9 }
-    ~~ #2026: Old code was: maker{  with parent/ fork?/ spawn?/ it/ parameters
-    maker{  with parent/ fork?/ spawn?/ parameters
-      ~~ (removed "it/" to match the 3 args passed by the fork/spawn it-method
-      ~~ calls and the bottom make.task( _, false, false ); the "it" for
-      ~~ "it make{ " comes from the enclosing it-method receiver scope.)
+    ~~ 2026-11-23 - GPT-6 coding agent under Jean Hugues Noel Robert.
+    ~~ maker{ attaches the task-class tag AFTER the three actual arguments.
+    ~~ Bind that class tag first and pass it to make{ explicitly; neither a
+    ~~ dynamically scoped it nor the old with-parameters protocol is valid.
+    maker{ >task-class >spawn? >fork? >parent
       l9-next-id ++ l9-next-id!
-      it make{
+      $task-class make{
         $parent
         actor      :actor
         l9-next-id :id
         ""         :label
         true       :paused?
-        false      :a-fork?
-        false      :a-spawn?
+        ~~ 2026-11-23 - GPT-6 under Jean Hugues Noel Robert.
+        ~~ These flags belong to the constructor arguments, not constants.
+        $fork?     :a-fork?
+        $spawn?    :a-spawn?
         false      :done?
         false      :canceled?
         false      :should-stop?
@@ -493,9 +484,12 @@ to initialize-l9
         0          :fork-parent-index
       } >it
       if: $parent something? then: {
-        @parent.subtasks.push( it )
+        ~~ 2026-11-23 - GPT-6 under Jean Hugues Noel Robert.
+        ~~ Resolve the parent object attribute explicitly; the dotted
+        ~~ @parent.subtasks.push chain did not resolve a valid array receiver.
+        $parent subtasks/ object.@ it array.push
         if: $fork? then: {
-          @parent.forks.push( it )
+          $parent forks/ object.@ it array.push
         };
       } else: {
         it l9-root!
@@ -506,6 +500,9 @@ to initialize-l9
     }
     actor/attribute
     label/attribute
+    ~~ 2026-11-23 - GPT-6 under Jean Hugues Noel Robert.
+    ~~ The constructor stores :id, but task.id had no getter.
+    id/getter
     paused?/getter
     should-stop?/getter
     stopping?/it-method{ ( @should-stop? and not @done ) }
@@ -519,6 +516,10 @@ to initialize-l9
         @raise( /canceled )
       }
     }
+    ~~ ToDo 2026-11-23 - GPT-6 under Jean Hugues Noel Robert:
+    ~~ cancel/it-method{ above still triggers scope-close/make.local when
+    ~~ @subtasks.each{ .cancel } is followed by the conditional raise path.
+    ~~ The red lifecycle probe must pass before declaring cancel operational.
     canceled?/method{ .$canceled? }
     stop/method{ true swap .>should-stop?! }
     success?/it-method{ ( @done? and @error nothing? ) }
@@ -541,6 +542,9 @@ to initialize-l9
     control-stack/it-method{ @actor.control-stack }
     tos/it-method{ @actor.tos }
     csp/it-method{ @actor.csp }
+    ~~ ToDo 2026-11-23 - GPT-6 under Jean Hugues Noel Robert:
+    ~~ task.schedule is not implemented; pause/resume must not be declared
+    ~~ working based on a setter alone. See red probe-l9-task-lifecycle.js.
     pause/it-method{  true  @paused?!, @schedule }
     resume/it-method{ false @paused?!, @schedule }
     ~~ #2026: Old code had: await/it-method{  with condition/ parameters
@@ -579,8 +583,11 @@ to initialize-l9
     }
   }
 
-  ~~ #2026: Old code had a dot at the end: make.task( _, false, false ), drop.
-  make.task( _, false, false ), drop
+  ~~ 2026-11-23 - GPT-6 coding agent under Jean Hugues Noel Robert.
+  ~~ Class initialization registers the actual make.task dynamically.
+  ~~ Resolve the verb AFTER registration; an early compiled call to the
+  ~~ historical stub never produced a real root task.
+  _ false false make.task/ as-verb run, drop
 
 initialize-l9
 
