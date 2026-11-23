@@ -6,7 +6,7 @@ drafted_by: "OpenAI Codex (GPT-5)"
 principal: "Jean Hugues Noël Robert"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 date: "2026-07-16"
-last_modified_at: "2026-11-22"
+last_modified_at: "2026-11-23"
 status: "draft-for-human-review"
 version: "0.1.0-draft"
 license: "MIT (code examples) · CC BY-SA 4.0 (text)"
@@ -22,7 +22,8 @@ source_or_derived: "source-document"
 update_policy: "UP-DECISION-REVIEW"
 human_validation_required: true
 provenance:
-  origin_type: "conversation-and-repository-audit"
+  origin_type: "conversation"
+  origin_method: "conversation-and-repository-audit"
   origin_repository: "JeanHuguesRobert/Inox"
   origin_ref: "master@4177159e2096df1512b8001c09ba90e1d563c30c"
   origin_date: "2026-07-16"
@@ -88,6 +89,57 @@ A coding agent working from this contract MUST:
 
 This document is not a tutorial, a conversation transcript, or a promise of
 future functionality. It is the contract for a concrete experiment.
+
+### Open review conclusion — 2026-11-23 (microcontroller port deferred)
+
+**Priority decision.** ESP32-class deployment is **not a current priority**.
+Keep the existing experimental Micro v0 profile, conformance vectors and
+host-side .xnx image builder as historical/test evidence, without launching
+a native C++/ESP32 implementation or an ABI migration merely to resolve these
+differences. No Micro v0 ABI is approved as the future unique Inox machine
+format by this note.
+
+**Verified historical Inox semantics (see lib/inox.ts):**
+
+- Eight *valid* primary Cell types (0..7) fit in **three bits**;
+  type_invalid = 8 is an exclusive upper bound, not an encodable
+  ninth type. Text, ReactiveSets and future Slots can use
+  type_reference = 7 with a referenced subtype.
+- The historical pack(t,n) shifts the type by 29, while
+  unpack_name() masks 24 bits (0x00ffffff); the remaining bits must
+  not be silently reassigned by a different profile.
+- A compiled instruction with **zero info** denotes return, not a
+  general zero-valued data cell. set_return_cell() clears the Cell.
+  The historical debug path also recognizes a trailing return Cell
+  when optimizing verb-call return-frame handling.
+- Historical primitive dispatch uses the **name** field. The Micro v0
+  draft instead uses the value field and introduces primitive ID 3
+  for return. Its zero-VOID instruction acts as a no-op.
+
+**Consequence.** The 4+28 type/name packing, VOID no-op and
+value-dispatched primitive convention in the July 2026 draft do **not**
+establish a necessary small-machine optimization. They conflict with
+the historical execution format. Their written rationale treats the
+sentinel type_invalid as if it were a ninth Cell type. The current
+14-test host-only Micro image/delta fixture proves its *own* format
+but not compatibility with the historical Inox VM.
+
+**Open direction (not a finalized replacement ABI).** Prefer one
+semantic instruction and Cell contract anchored in the historical
+implementation, with distinct build/link/runtime profiles for constrained
+devices: precompiled immutable images, a reduced primitive/library set,
+flash-backed code, bounded RAM, portable logical references and
+serializable continuations. Whether the literal *binary* images can
+be identical across all targets requires further tests of handles,
+symbols, primitive binding, scope/return cleanup and relocation.
+Do not silently rewrite existing .xnx images or compliance vectors;
+any future correction needs an explicitly versioned format transition
+and differential tests against the historical VM.
+
+**Scheduling.** Put further Micro/ESP32 work on hold. Prioritize the
+Alan to Inox, Side-style slots and time-coherent resumable work
+experiment, in service of Cognitive Packet Switching. Preserve the
+original Micro design record for later reevaluation.
 
 ---
 
