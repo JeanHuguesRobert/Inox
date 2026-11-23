@@ -52,13 +52,21 @@ export class VM {
     return source.match(/"(?:\\.|[^"\\])*"|\S+/g) ?? [];
   }
   static literal(token) {
-    if (/^-?(?:\d+(?:\.\d*)?|\.\d+)$/.test(token))
-      return { name: '', type: 'literal', value: Number(token) };
+    // Minimal Inox subset: typed scalar literals, optionally named "x:42".
+    // Keep the name as Cell metadata, not as a JS closure/environment.
+    let name = '';
+    const match = /^([a-zA-Z_][a-zA-Z0-9_-]*):(.+)$/.exec(token);
+    if (match) { name = match[1]; token = match[2]; }
+    if (/^-?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(token)) {
+      const value = Number(token);
+      if (!Number.isFinite(value)) throw new SyntaxError('nonfinite number literal: ' + token);
+      return { name, type: 'literal', value };
+    }
     if (token === 'true' || token === 'false')
-      return { name: '', type: 'literal', value: token === 'true' };
-    if (token === 'null') return { name: '', type: 'literal', value: null };
+      return { name, type: 'literal', value: token === 'true' };
+    if (token === 'null') return { name, type: 'literal', value: null };
     if (token.startsWith('"') && token.endsWith('"')) {
-      try { return { name: '', type: 'literal', value: JSON.parse(token) }; }
+      try { return { name, type: 'literal', value: JSON.parse(token) }; }
       catch { throw new SyntaxError('bad string literal: ' + token); }
     }
     return null;
