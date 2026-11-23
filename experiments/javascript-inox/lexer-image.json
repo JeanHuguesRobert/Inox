@@ -1,0 +1,114 @@
+{
+  "format": "inox.stage1.definitions.v0",
+  "definitions": [
+    {
+      "name": "scan-token",
+      "cells": [
+        {
+          "type": "primitive",
+          "name": "source.peek"
+        },
+        {
+          "type": "primitive",
+          "name": "dup"
+        },
+        {
+          "type": "primitive",
+          "name": "char.space?"
+        },
+        {
+          "type": "literal",
+          "value": 15
+        },
+        {
+          "type": "primitive",
+          "name": "branch-relative-if"
+        },
+        {
+          "type": "primitive",
+          "name": "drop"
+        },
+        {
+          "type": "literal",
+          "value": ""
+        },
+        {
+          "type": "primitive",
+          "name": "source.peek"
+        },
+        {
+          "type": "primitive",
+          "name": "dup"
+        },
+        {
+          "type": "primitive",
+          "name": "char.end?"
+        },
+        {
+          "type": "literal",
+          "value": 12
+        },
+        {
+          "type": "primitive",
+          "name": "branch-relative-if"
+        },
+        {
+          "type": "primitive",
+          "name": "dup"
+        },
+        {
+          "type": "primitive",
+          "name": "char.space?"
+        },
+        {
+          "type": "literal",
+          "value": 8
+        },
+        {
+          "type": "primitive",
+          "name": "branch-relative-if"
+        },
+        {
+          "type": "primitive",
+          "name": "text.concat"
+        },
+        {
+          "type": "primitive",
+          "name": "source.consume"
+        },
+        {
+          "type": "literal",
+          "value": -13
+        },
+        {
+          "type": "primitive",
+          "name": "jump-relative"
+        },
+        {
+          "type": "primitive",
+          "name": "drop"
+        },
+        {
+          "type": "primitive",
+          "name": "source.consume"
+        },
+        {
+          "type": "literal",
+          "value": -24
+        },
+        {
+          "type": "primitive",
+          "name": "jump-relative"
+        },
+        {
+          "type": "primitive",
+          "name": "drop"
+        },
+        {
+          "type": "primitive",
+          "name": "text.empty-null"
+        }
+      ]
+    }
+  ]
+}
