@@ -1,0 +1,58 @@
+{
+  "format": "inox.stage1.definitions.v0",
+  "definitions": [
+    {
+      "name": "compile",
+      "cells": [
+        {
+          "type": "primitive",
+          "name": "next-token"
+        },
+        {
+          "type": "primitive",
+          "name": "def.begin"
+        },
+        {
+          "type": "primitive",
+          "name": "next-token"
+        },
+        {
+          "type": "primitive",
+          "name": "dup"
+        },
+        {
+          "type": "primitive",
+          "name": "token.end?"
+        },
+        {
+          "type": "literal",
+          "value": 3
+        },
+        {
+          "type": "primitive",
+          "name": "branch-relative-if"
+        },
+        {
+          "type": "primitive",
+          "name": "def.emit"
+        },
+        {
+          "type": "literal",
+          "value": -8
+        },
+        {
+          "type": "primitive",
+          "name": "jump-relative"
+        },
+        {
+          "type": "primitive",
+          "name": "drop"
+        },
+        {
+          "type": "primitive",
+          "name": "def.finish"
+        }
+      ]
+    }
+  ]
+}
