@@ -7,9 +7,10 @@ export const FORMAT = 'inox.stage1.definitions.v0';
 
 function scalar(x) {
   return x === null || typeof x === 'string' || typeof x === 'boolean'
-    || (typeof x === 'number' && Number.isFinite(x));
+    || (typeof x === 'number' && Number.isFinite(x) && !Object.is(x, -0));
 }
 function fail(message) { throw new Error('Inox image: ' + message); }
+function cellNameOk(name) { return typeof name === 'string' && !/[\s:]/u.test(name); }
 
 export function captureDefinitions(vm, names) {
   if (vm.IP !== null || vm.definition !== null) fail('VM is executing or defining');
@@ -31,7 +32,8 @@ export function captureDefinitions(vm, names) {
       if (cell.type === 'return') { terminated = true; break; }
       if (cell.type === 'literal') {
         if (!scalar(cell.value)) fail('nonportable literal in ' + name);
-        cells.push({ type: 'literal', value: cell.value });
+        if (!cellNameOk(cell.name)) fail('invalid literal Cell name');
+        cells.push({ type: 'literal', value: cell.value, ...(cell.name ? { name: cell.name } : {}) });
       } else if (cell.type === 'primitive') {
         if (!vm.primitiveEntries.has(vm.words.get(cell.name)))
           fail('unknown primitive import: ' + cell.name);
@@ -68,6 +70,7 @@ export function loadDefinitions(vm, image) {
     if (!c || typeof c !== 'object') fail('invalid Cell');
     if (c.type === 'literal') {
       if (!scalar(c.value)) fail('nonportable literal');
+      if (c.name !== undefined && !cellNameOk(c.name)) fail('invalid literal Cell name');
     } else if (c.type === 'primitive') {
       if (typeof c.name !== 'string' || !vm.primitiveEntries.has(vm.words.get(c.name)))
         fail('missing primitive import: ' + c.name);
@@ -87,7 +90,7 @@ export function loadDefinitions(vm, image) {
   // Link symbolic calls to the current runner's native primitive functions.
   for (const d of definitions) {
     for (const c of d.cells) {
-      if (c.type === 'literal') vm.alloc({ name: '', type: 'literal', value: c.value });
+      if (c.type === 'literal') vm.alloc({ name: c.name ?? '', type: 'literal', value: c.value });
       else if (c.type === 'primitive') {
         const host = vm.cells[vm.words.get(c.name)];
         vm.alloc({ name: c.name, type: 'primitive', value: host.value });
