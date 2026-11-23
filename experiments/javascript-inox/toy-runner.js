@@ -14,6 +14,9 @@ export class VM {
     this.control = []; // addresses of return-address Cells
     this.data = []; // addresses of value Cells
     this.tokens = [];
+    this.sourceText = "";
+    this.sourceOffset = 0;
+    this.lexWithInox = false;
     this.cursor = 0;
     this.definition = null;
     this.maxSteps = maxSteps;
@@ -126,7 +129,17 @@ export class VM {
     }
   }
   evaluate(source) {
-    this.tokens = VM.lex(source);
+    if (this.lexWithInox) {
+      this.sourceText = source;
+      this.sourceOffset = 0;
+      this.tokens = [];
+      while (true) {
+        this.invoke('scan-token');
+        const token = this.pop().value;
+        if (token === null) break;
+        this.tokens.push(token);
+      }
+    } else this.tokens = VM.lex(source);
     this.cursor = 0;
     while (this.cursor < this.tokens.length) {
       const token = this.nextToken();
@@ -191,6 +204,28 @@ export class VM {
       const offset = vm.pop().value;
       if (!Number.isInteger(offset)) throw new Error('non-integer jump offset');
       vm.IP += offset;
+    });
+    // Stage-3 host boundary: raw character access; lexical loop runs in Inox.
+    p('source.peek', vm => vm.push({
+      name: '', type: 'literal', value:
+        vm.sourceOffset < vm.sourceText.length ? vm.sourceText[vm.sourceOffset] : null
+    }));
+    p('source.consume', vm => { if (vm.sourceOffset < vm.sourceText.length) vm.sourceOffset++; });
+    p('char.space?', vm => {
+      const c = vm.pop().value;
+      vm.push({ name: '', type: 'literal', value:
+        typeof c === 'string' && /\s/u.test(c) });
+    });
+    p('char.end?', vm => vm.push({
+      name: '', type: 'literal', value: vm.pop().value === null
+    }));
+    p('text.concat', vm => {
+      const c = vm.pop().value, a = vm.pop().value;
+      vm.push({ name: '', type: 'literal', value: a + c });
+    });
+    p('text.empty-null', vm => {
+      const text = vm.pop().value;
+      vm.push({ name: '', type: 'literal', value: text === '' ? null : text });
     });
     if (!this.bootstrapCompiler) return;
     // Stage-0 assembles only 'to': its compile loop EXECUTES inside the VM.
