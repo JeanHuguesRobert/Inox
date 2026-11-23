@@ -1,0 +1,3 @@
+to scan-token
+  source.peek dup char.space? 15 branch-relative-if drop "" source.peek dup char.end? 12 branch-relative-if dup char.space? 8 branch-relative-if text.concat source.consume -13 jump-relative drop source.consume -24 jump-relative drop text.empty-null
+.
