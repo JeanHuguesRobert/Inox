@@ -645,32 +645,55 @@ to initialize-l9
     }
   }
 
+  ~~ 2026-11-24: GPT-6 under JHR, #42; port of corrected L8 semaphore.
+  ~~ Each acquisition has its own promise. Reserve resource before callback.
   semaphore/class{
-    maker{
-      make{
-        0       :count
+    maker{ >class >count
+      $class make{
+        $count  :count
         queue[] :waiters
         false   :closed?
       }
     }
     count/attribute
-    wait/it-method{
-      @count -- @count!
-      return-if( @count > 0 )
-      make.promise @waiters.enqueue
-      @pause
+    closed?/getter
+    promise/it-method{
+      make.promise/ as-verb run >pending
+      if: @closed? then: { /closed $pending .reject } else: {
+        if: ( @count > 0 ) then: {
+          @count -- @count!
+          it $pending .resolve
+        } else: { @waiters $pending queue.enqueue };
+      };
+      $pending
     }
-    signal/it-method{
-      @count ++ @count!
-      @schedule
+    then/it-method{ >on-reject >on-resolve
+      $on-resolve $on-reject it .promise .then
     }
-    schedule/it-method{
-      loop{
-        break-if( @count <= 0 )
-        @count -- @count!
-        break-if( @waiters.empty? )
-        /signal @waiters.dequeue .resolve
-      }
+    release/it-method{
+      if: @closed? not then: {
+        @count ++ @count!
+        if: ( @count > 0 ) then: {
+          if: ( @waiters queue.length > 0 ) then: {
+            @waiters queue.pull >pending
+            @count -- @count!
+            it $pending .resolve
+          };
+        };
+      };
+      it
+    }
+    signal/it-method{ it .release }
+    close/it-method{
+      if: @closed? not then: {
+        true @closed?!
+        @waiters >pending-list
+        queue[] @waiters!
+        while: { $pending-list queue.length 0 > } do: {
+          /closed $pending-list queue.pull .reject
+        };
+      };
+      it
     }
   }
 

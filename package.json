@@ -32,6 +32,7 @@
     "test:stack-growth-threshold": "node scripts/test-stack-growth-threshold.js",
     "test:l9-tasks": "node scripts/test-l9-task-structure.js",
     "test:l9-lifecycle-basics": "node scripts/test-l9-lifecycle-basics.js",
+    "test:l9-semaphore": "node scripts/test-l9-semaphore.js",
     "test:l9-signal": "node scripts/test-l9-signal.js",
     "test:l9-promise-chain": "node scripts/test-l9-promise-chain.js",
     "test:l9-actor-layout": "node scripts/test-l9-actor-layout.js",
