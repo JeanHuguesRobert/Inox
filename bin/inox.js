@@ -56,7 +56,7 @@ if ( has_flag( "--version" ) || has_flag( "-v" ) ) {
   process.exit( 0 );
 }
 
-const expr = flag_value( "-e" ) || flag_value( "--eval" );
+const expr = flag_value( "-e" ) ?? flag_value( "--eval" );
 const file_arg = args.find( ( a, i ) => !a.startsWith( "-" ) && args[ i - 1 ] !== "-e" && args[ i - 1 ] !== "--eval" );
 const file_abs = file_arg ? path.resolve( file_arg ) : null;
 
@@ -82,9 +82,9 @@ if ( original_write ) {
 const I = inox();
 
 if ( expr !== null ) {
-  // One liner: use processor for sync behaviour consistent with file runs.
-  // (evaluate also works but the new run path is preferred for CLI.)
-  const code = "~~\n" + expr;  // literate friendly
+  // One-shot compilation uses the same policy as the direct runtime CLI.
+  // REPL and file execution deliberately retain their own semantics.
+  const code = I.cli_eval_source( expr );
   I.processor( "{}", "{}", code );
   // 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
   // Respect a VM FATAL's process.exitCode; an explicit exit(0) overwrote it.

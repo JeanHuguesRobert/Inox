@@ -109,3 +109,9 @@ This document is the primary codification of the user's idea.
 - [Inox: Two Versions — Scripting (Obvious for Agents) vs System Programming (l9 + COP)](../docs/two-versions-scripting-vs-system.md)
 - [Research Index — Inox](index.md)
 <!-- END_AUTO: backlinks -->
+
+### One-shot CLI expression versus interactive evaluation (2026-11-24)
+
+Principal decision: compile `-e` / `--eval` expressions into a temporary verb and invoke it, since the process terminates immediately. Explicit source programs containing definitions retain their existing path. The two JS CLI entry points share this policy; the REPL and file execution are unchanged.
+
+Separate open parser/REPL problem ([#34](https://github.com/JeanHuguesRobert/Inox/issues/34)): direct top-level `1 2 + out` and `1 + 2 out` can leave a pending infix context at EOF and assert `proxy/reference` during parser cleanup. Reproduced on Linux/Node 26 and Windows/Node 24 at `7cf6071`. Compiled `to p 1 2 + out. p` works. Do not treat per-input permanent verb creation as the interactive solution; investigate operator disambiguation and parser-state recovery independently.

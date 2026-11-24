@@ -26,6 +26,7 @@
     "test:session": "node scripts/test-session-packets.js",
     "test:shutdown": "node scripts/test-pool-shutdown.js",
     "test:micro:host-image": "node --test tools/inox-image/test.mjs",
+    "test:cli-eval": "node scripts/test-cli-eval.js",
     "test:l9": "node scripts/test-l9-bootstrap.js",
     "test:loop-control": "node scripts/test-loop-control.js",
     "test:stack-growth-threshold": "node scripts/test-stack-growth-threshold.js",

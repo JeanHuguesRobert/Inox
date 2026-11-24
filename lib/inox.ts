@@ -25902,12 +25902,53 @@ function signal( event : TxtC ){
 
 /*ts{*/
 
+// 2026-11-24: GPT-6 under Jean Hugues Noel Robert's direction.
+// A one-shot CLI expression is compiled as a verb: the interpreter's
+// top-level infix handling is incomplete, while compiled expressions work.
+// Its definition dies with the process. Do not apply this to the REPL,
+// where definitions and evaluation state must survive successive inputs.
+// Preserve the historical -e entry for programs with explicit definitions.
+function cli_eval_source( source : string ) : string {
+  const program = "~~\n" + source;
+  tokenizer_restart( program );
+  let has_code = false;
+  let last_word = "";
+  const text_ranges : [number, number][] = [];
+  while( true ){
+    next_token();
+    if( token_type == token_type_eof || token_type == token_type_error )break;
+    if( token_type == token_type_word && token_text == "to" )return program;
+    if( token_type == token_type_text ){
+      text_ranges.push( [toker_start_index - 3, toker_next_index - 3] );
+    }
+    if( token_type != token_type_comment && token_type != token_comment_multiline
+    &&  token_type != token_type_indentation ){
+      has_code = true;
+      last_word = token_type == token_type_word ? token_text : "";
+    }
+  }
+  if( !has_code )return program;
+  let name = "cli-eval-expression";
+  while( verb_exists( name ) || source.includes( name ) )name += "-";
+  // Indent the body so multiline expressions do not end the definition.
+  // Never insert indentation into a multiline text literal.
+  let body = "  ";
+  for( let i = 0; i < source.length; i++ ){
+    body += source[i];
+    if( source[i] == "\n" && !text_ranges.some( ([start,end]) => start <= i && i < end ) )body += "  ";
+  }
+  // Explicit terminator stays indented; a newline ends trailing comments.
+  // Do not emit a second terminator if the caller already supplied one.
+  return "~~\nto " + name + "\n" + body + (last_word == "." ? "" : "\n  .") + "\n" + name;
+}
+
 const inox_exports = {
   inox,
   fun,
   primitive,
   evaluate,
   processor,
+  cli_eval_source,
   signal,
   on,
   // ToDo: to_genotype(), from_genotype(), to build & use precompiled species
@@ -26305,8 +26346,8 @@ See examples/hello.nox and examples/factorial.nox (use postfix if needed).
     current_eval_file    = tag( "-e" );
     debug_info_file      = current_eval_file;
     current_eval_content = eval_code;
-    I.processor( "{}", "{}", eval_code );
-    process.exit( 0 );
+    I.processor( "{}", "{}", cli_eval_source( eval_code ) );
+    process.exit( process.exitCode || 0 );
   }
 
   // If a file was given, run it (minimal core was already selected early if
