@@ -59,6 +59,7 @@ The corpus's **Rossignol criterion** — a dispositif is a valid procedural stab
 - [`research/index.md`](research/index.md) — generated document catalog
 - [`research/corpus-status.md`](research/corpus-status.md) — generated status, backlinks, and navigation checks
 - [`research/inox-spec.md`](research/inox-spec.md) — language-design reference
+- [`research/histoire-du-developpement-inox-l9.md`](research/histoire-du-developpement-inox-l9.md) — chronologie vérifiable d’Inox et de L9, avant et après les agents de coding
 - [`examples/hello.nox`](examples/hello.nox) — smallest working entry point on the default CLI path
 
 ---
