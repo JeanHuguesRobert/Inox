@@ -147,12 +147,38 @@ to parameter  parameters. inline
 to define-method  with class/ method/ code/ parameters
   define-verb( method-name( $class, $method ), $code )
 
+~~ 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+~~ Resolve a method through the canonical class/superclass metadata, without
+~~ invoking its body. Used both by fallback dispatch and `understand?`.
+~~ A subclass method takes precedence; a missing root method yields void.
+to resolve-method-name  >method >class
+  $class >cursor
+  _ >resolved-name
+  while: { $cursor something? } do: {
+    method-name( $cursor, $method ) >candidate
+    if: verb.exist?( $candidate ) then: {
+      $candidate >resolved-name!
+      break
+    };
+    $cursor classes.get >meta
+    break-if( $meta nothing? )
+    superclass-name/ $meta object.?@ >parent-name
+    break-if( $parent-name nothing? )
+    break-if( $parent-name = $cursor )
+    $parent-name >cursor!
+  };
+  $resolved-name
+
+~~ 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+~~ The *same* resolver serves dispatch and reflection: do not execute a
+~~ candidate method just to answer `understand?`.
 to understand?  >method >target
   class-of( $target ) >class-name
-  tag.run( $class-name, $method, $class-name ) >method-definition
-  $method-definition something?
+  resolve-method-name( $class-name, $method ) something?
 
-to thing.understand?  understand?
+~~ Method dispatch places the receiver last; the standalone helper accepts
+~~ (target, method). Reorder only at this method adapter.
+to thing.understand?  swap understand?
 
 to make{ >make-code >it
   with
@@ -166,13 +192,22 @@ to make{ >make-code >it
   with-length{ make.object( it rename ) duplicate extend-object }
 
 to make.metaclass  >class-name
+  ~~ 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+  ~~ update-class() rebuilds metaclasses. Preserve the declared superclass
+  ~~ rather than silently resetting every class to /thing on each refresh.
+  $class-name classes.get >previous-meta
+  /thing >parent-tag
+  if: $previous-meta something? then: {
+    superclass-name/ $previous-meta object.?@ >existing-parent
+    if: $existing-parent something? then: { $existing-parent >parent-tag! };
+  };
   metaclass/make{
     $class-name :name
     map[]       :definitions
     map[]       :class-definitions
     map[]       :attributes
     /metaclass  :class
-    /thing      :superclass-name
+    $parent-tag :superclass-name
   } >metaclass
   ~~ #2026: Old code was: $metaclass $class-name classes debugger .!
   $metaclass $class-name classes .!
@@ -209,8 +244,17 @@ to extend-class{  with class-name/ code/ parameters
   if: verb.exist?( $class-name ) then: {
     $class-name >it
     _ >class-superclass
-    if: ( it in? classes ) then: {
+    ~~ 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+    ~~ A pre-existing verb can be the implementation of a class (thing, map)
+    ~~ without an entry in the classes registry. `in? classes` performs
+    ~~ dynamic method dispatch and is not a reliable existence probe here.
+    ~~ Register its metaclass without replacing the pre-existing verb.
+    if: ( it classes.get something? ) then: {
       update-class( it )
+      $code .run
+      update-class( it )
+    } else: {
+      make.metaclass( it ) drop
       $code .run
       update-class( it )
     };
@@ -260,7 +304,11 @@ to class{  with class-name/ code/ parameters
     update-class(  it )
   };
 
-to superclass  classes.get >class-superclass!
+to superclass  >parent-tag
+  ~~ 2026-11-24: GPT-6 under Jean Hugues Noel Robert. Both the active
+  ~~ class builder and its persisted metaclass must agree on inheritance.
+  $parent-tag classes.get >class-superclass!
+  $parent-tag it classes.get superclass-name/ object.!
 
 to maker{  >code
   define-method( make/, it, attach( it, $code ) )
@@ -289,38 +337,21 @@ to attribute  >name
 to getter  attribute
 to setter  attribute
 
-to thing  >method >class ~~ class method -- class method definition
-~~ get the method definition from the superclass or void
-  ~~ restore eaten parameters
-  $class $method
-  ~~ classes.$class.superclass.definitions.$method
-  $class       classes map.?@
-  superclass/  swap    object.?@
-  definitions/ swap    map.?@
-  $method      swap    map.?@
-  if: top something? then: {
-    top >definition
-    update-method-cache( $class, $method, $definition )
+~~ Synchronous fallback for methods not defined on the receiver class.
+~~ Cache the inherited definition for future dispatch, and execute it before
+~~ returning to the caller (not via a delayed post-caller continuation).
+to thing  >method >class
+  resolve-method-name( $class, $method ) >resolved-name
+  if: $resolved-name something? then: {
+    $resolved-name as-verb definition >definition-address
+    update-method-cache( $class, $method, $definition-address )
+    $resolved-name as-verb run
   } else: {
-    method-name( $class, $method ) >full-name
-    if: verb.exist?( $full-name ) then: {
-      drop
-      $full-name as-verb definition
-      top >definition
-      update-method-cache( $class, $method, $definition )
-      ~~ On the fly addition to the class
-      if: verb.exist?( $class ) then: {
-        $class extend-class{
-          $method $definition method/ tag.run
-        }
-      } else: {
-        verb.exist?( class/ ) then{
-          $class class{
-            $method $definition method/ tag.run
-          }
-        }
-      };
-    };
+    ~~ Keep absent methods observable rather than silently succeeding.
+    ~~ ToDo (2026-11-24, GPT-6): the legacy missing-method hook can emit
+    ~~ a nested-scope Invalid boolean assertion after its useful diagnostic.
+    ~~ Repair that general error-unwind mechanism separately.
+    method-text-name( $class, $method ) missing-method
   };
 
 to map  thing
@@ -367,8 +398,107 @@ to initialize-classes
 initialize-classes
 
 
-global: l9-next-id/ is: 0;
-global: l9-root/    is: _;
+global: l9-next-id/      is: 0;
+global: l9-root/         is: _;
+~~ 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+~~ The VM-local registry OWNS task references; actor slot #7 contains only
+~~ the immutable task id. The task owns its actor. This breaks the actor/task
+~~ reference cycle and avoids raw weak pointers to movable/freed VM cells.
+~~ Terminal tasks are unregistered on normal exit/failure; parent retains
+~~ completed children for join/introspection. Later supervision must define
+~~ when/how to release those parent-owned histories.
+global: l9-task-registry/ is: array[];
+~~ The ready queue is local to THIS interpreter/VM, not a global COP queue.
+global: l9-ready-queue/   is: queue[];
+
+~~ 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+~~ One canonical registry release operation shared by both normal completion
+~~ and fail-early task delivery. Stable task IDs remain; entries become void.
+to l9-unregister-task  >task-id
+  l9-task-registry $task-id 1 - _ array.put
+
+~~ Full-L9 public task lookup shadows the VM's raw slot-reader primitive.
+~~ actor is a typed, owning reference; stack index 6 is payload slot #7.
+to l9
+  6 actor stack.fetch >task-id
+  if: ( $task-id > 0 ) then: {
+    $task-id 1 - l9-task-registry array.get
+  } else: { _ };
+
+~~ 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+~~ FIFO dispatcher-selection boundary: pick the oldest eligible task, discard
+~~ stale paused/canceled/done entries. Dequeue clears queued? before return.
+~~ This DOES NOT switch the VM registers. task.yield/context switching is a
+~~ separate boundary, verified only when two real actors can execute.
+to l9-next-ready
+  _ >selected
+  while: { l9-ready-queue queue.length 0 > } do: {
+    l9-ready-queue queue.pull >candidate
+    false $candidate queued?/ object.!
+    ~~ Pending failures are handled by the local scheduler, not by resuming
+    ~~ the target actor's normal instruction stream on a compromised state.
+    if: ( $candidate pending-error?/ object.@ ) then: {
+      $candidate .deliver-error
+    } else: {
+      if: ( $candidate paused?/ object.@ not ) then: {
+        if: ( $candidate done?/ object.@ not ) then: {
+          if: ( $candidate canceled?/ object.@ not ) then: {
+            $candidate >selected!
+            break
+          };
+        };
+      };
+    };
+  };
+  $selected
+
+~~ 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+~~ Cooperative dispatch boundary: obtain the next eligible ready task and
+~~ switch the actual VM actor (IP, data stack, control stack). The running
+~~ task must explicitly yield/reschedule itself if it wants another turn.
+~~ There is no background preemption; no central COP scheduler is involved.
+to l9-dispatch-next
+  ~~ When another task is ready, a runnable current task yields its turn but
+  ~~ stays eligible for a future turn. Paused/done tasks are not requeued.
+  if: ( l9-ready-queue queue.length 0 > ) then: {
+    l9 >current-task
+    ~~ A terminating actor is unregistered before dispatch and has no task
+    ~~ object in the active registry. Do not invoke .schedule on void.
+    if: $current-task something? then: { $current-task .schedule };
+  };
+  l9-next-ready >next-task
+  return-if( $next-task nothing? )
+  $next-task .actor switch-actor
+
+~~ 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+~~ Called only by the initial control-stack return sentinel of an actor with
+~~ a real entry IP. Mark completion, release registry ownership (the parent
+~~ retains completed children for join/introspection) and switch to the next
+~~ ready actor. If nobody is ready, return to the VM host without process.exit.
+to l9-actor-finish
+  l9 >finished
+  true $finished done?/ object.!
+  true $finished paused?/ object.!
+  false $finished queued?/ object.!
+  $finished .id l9-unregister-task
+  l9-dispatch-next
+  halt-actor
+
+~~ 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+~~ This is the VM entry point after an unhandled language-level vm-raise in
+~~ a child actor. The VM has abandoned only that actor's broken continuation
+~~ and left its reason as the sole data-stack argument. The task's existing
+~~ raise/deliver-error path owns notification and registry cleanup. An error
+~~ here is a hard failure, not another recursive attempt to deliver it.
+to l9-uncaught-error
+  >reason
+  l9 >failed-task
+  if: $failed-task something? then: {
+    $reason $failed-task .raise
+    l9-dispatch-next
+    halt-actor
+  };
+  $reason FATAL
 
 ~~ 2026-11-23 GPT-6 under Jean Hugues Noel Robert: no early make.task stub.
 ~~ The actual task maker is registered by task/class{ during initialize-l9.
@@ -386,18 +516,26 @@ to initialize-l9
     ~~ 2026-11-23: GPT-6 coding agent under Jean Hugues Noel Robert.
     ~~ Deliver the settled source to the handler; settle the *next* promise
     ~~ with the returned callback value or propagate unchanged if absent.
-    ~~ Exception-to-rejection translation remains a separate L9 contract.
+    ~~ 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+    ~~ The VM's actor-local run-guarded boundary now translates callback
+    ~~ language errors into rejections of the dependent promise. The same
+    ~~ vm-raise mechanism is reusable for task/step exception delivery.
+    ~~ Non-callback pass-through keeps the original settlement semantics.
     schedule/it-method{ >source
       @next-promise >next
       if: $source .resolved? then: {
         if: @on-resolve something? then: {
-          @on-resolve .run( $source resolve-value/ object.@ ) $next .resolve
+          { @on-resolve .run( $source resolve-value/ object.@ ) $next .resolve }
+          { >failure $failure $next .reject }
+          run-guarded
         } else: {
           $source resolve-value/ object.@ $next .resolve
         };
       } else: {
         if: @on-reject something? then: {
-          @on-reject .run( $source reject-reason/ object.@ ) $next .resolve
+          { @on-reject .run( $source reject-reason/ object.@ ) $next .resolve }
+          { >failure $failure $next .reject }
+          run-guarded
         } else: {
           $source reject-reason/ object.@ $next .reject
         };
@@ -437,8 +575,9 @@ to initialize-l9
     ~~ 2026-11-23: GPT-6 under Jean Hugues Noel Robert. Register a real
     ~~ handler (late-bound maker); return its next promise immediately.
     ~~ Both callbacks are explicitly supplied, using _ when absent.
-    ~~ Current L9 settlement is synchronous. Exception-to-rejection and
-    ~~ returned-promise assimilation await real L9 exception/actor semantics.
+    ~~ Current L9 settlement is synchronous. Language-level callback
+    ~~ exceptions now reject the dependent promise via the common VM guard.
+    ~~ Returned-promise assimilation remains a separate future contract.
     then/it-method{ >on-reject >on-resolve
       make.promise-handler/ as-verb run >handler
       $on-resolve $handler on-resolve/ object.!
@@ -501,16 +640,22 @@ to initialize-l9
     maker{ >task-class >spawn? >fork? >parent
       l9-next-id ++ l9-next-id!
       $task-class make{
-        $parent
+        ~~ 2026-11-24: GPT-6 under Jean Hugues Noel Robert. Parent links
+        ~~ must be non-owning ids. Parent owns its children in :subtasks.
+        ~~ A strong :parent reference forms a cycle with those arrays.
+        0          :parent-id
         actor      :actor
         l9-next-id :id
         ""         :label
         true       :paused?
+        false      :queued?
         ~~ 2026-11-23 - GPT-6 under Jean Hugues Noel Robert.
         ~~ These flags belong to the constructor arguments, not constants.
         $fork?     :a-fork?
         $spawn?    :a-spawn?
         false      :done?
+        false      :pending-error?
+        array[]    :failed-children
         false      :canceled?
         false      :should-stop?
         _          :result
@@ -521,7 +666,11 @@ to initialize-l9
         array[]    :fork-results
         0          :fork-parent-index
       } >it
+      ~~ Task ids are monotonic (1-based), registry indices are 0-based.
+      ~~ Register before publishing a root or attaching child actor handles.
+      l9-task-registry it array.push
       if: $parent something? then: {
+        $parent id/ object.@ it parent-id/ object.!
         ~~ 2026-11-23 - GPT-6 under Jean Hugues Noel Robert.
         ~~ Resolve the parent object attribute explicitly; the dotted
         ~~ @parent.subtasks.push chain did not resolve a valid array receiver.
@@ -531,20 +680,33 @@ to initialize-l9
         };
       } else: {
         it l9-root!
-        it current-l9-task!
+        l9-next-id current-l9-task!
+        ~~ The root is already executing the CLI. Starting it paused was
+        ~~ inconsistent and prevented cooperative yield/automatic resumption.
+        false @paused?!
         "root" @label!
       };
       it
     }
     actor/attribute
+    ~~ Weak parent ID is resolved to the owning task object while registered.
+    parent-id/getter
+    parent/it-method{
+      @parent-id >parent-id-value
+      if: ( $parent-id-value > 0 ) then: {
+        $parent-id-value 1 - l9-task-registry array.get
+      } else: { _ };
+    }
     label/attribute
     ~~ 2026-11-23 - GPT-6 under Jean Hugues Noel Robert.
     ~~ The constructor stores :id, but task.id had no getter.
     id/getter
     paused?/getter
+    queued?/getter
     should-stop?/getter
     stopping?/it-method{ ( @should-stop? and not @done ) }
     done?/getter
+    pending-error?/getter
     stopped?/method{ .$done? }
     cancel/it-method{
       return-if( @done? or @canceled? )
@@ -553,7 +715,7 @@ to initialize-l9
       ~~ Separate attribute lookup from the each{ method invocation.
       @subtasks .each{ .cancel }
       ( it not= l9 ) then{
-        @raise( /canceled )
+        /canceled it .raise
       }
     }
     ~~ ToDo 2026-11-23 - GPT-6 under Jean Hugues Noel Robert:
@@ -574,7 +736,7 @@ to initialize-l9
       list[] >parents
       while: { it something? } do: {
         it $parents .push
-        @parent it!
+        it .parent it!
       };
       $parents
     }
@@ -583,23 +745,54 @@ to initialize-l9
     control-stack/it-method{ @actor.control-stack }
     tos/it-method{ @actor.tos }
     csp/it-method{ @actor.csp }
-    ~~ ToDo 2026-11-23 - GPT-6 under Jean Hugues Noel Robert:
-    ~~ task.schedule is not implemented; pause/resume must not be declared
-    ~~ working based on a setter alone. See red probe-l9-task-lifecycle.js.
-    pause/it-method{  true  @paused?!, @schedule }
-    resume/it-method{ false @paused?!, @schedule }
+    ~~ 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+    ~~ The local FIFO owns ready tasks while queued. A wake is idempotent;
+    ~~ paused/canceled/done tasks do not enter the queue, and dequeue clears
+    ~~ queued? before the next dispatch. No actor context switch here.
+    schedule/it-method{
+      return-if( @done? )
+      ~~ Error events bypass pause/cancel so the scheduler can retire the task.
+      return-if( @canceled? @pending-error? not and )
+      return-if( @paused? @pending-error? not and )
+      return-if( @queued? )
+      true @queued?!
+      l9-ready-queue it queue.enqueue
+    }
+    pause/it-method{ true @paused?! }
+    resume/it-method{ false @paused?! it .schedule }
     ~~ #2026: Old code had: await/it-method{  with condition/ parameters
     await/it-method{  with condition/ parameter
     }
     ~~ #2026: Old code had: signal/it-method{  with result/ parameters
     signal/it-method{  with result/ parameter
     }
-    ~~ #2026: Old code had: raise/it-method{ with reason/ parameters
-    ~~ ToDo 2026-11-23 - GPT-6 under Jean Hugues Noel Robert:
-    ~~ This is a declaration scaffold, NOT an implemented exception path.
-    ~~ Define supervised task error propagation and actor wakeup/failure
-    ~~ semantics before implementing it; no silent swallowing or fake state.
-    raise/it-method{ with reason/ parameter
+    ~~ 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+    ~~ Raise is an asynchronous FAIL-EARLY event. The target is not resumed
+    ~~ normally: its next scheduler turn finalizes the failure and publishes
+    ~~ an event to its parent. No user catch/recovery handler exists yet.
+    raise/it-method{ >reason
+      return-if( @done? )
+      return-if( @pending-error? )
+      $reason @error!
+      true @pending-error?!
+      true @should-stop?!
+      false @paused?!
+      it .schedule
+    }
+    deliver-error/it-method{
+      return-if( @done? )
+      return-unless( @pending-error? )
+      false @pending-error?!
+      true @done?!
+      true @paused?!
+      it .parent >parent-task
+      if: $parent-task something? then: {
+        ~~ array.push takes (array, value), not (value, array).
+        $parent-task failed-children/ object.@ it array.push
+      };
+      ~~ Remove scheduler-registry ownership: parent retains the result,
+      ~~ including its error, for supervision, joining or introspection.
+      @id l9-unregister-task
     }
     setup-stacks/it-method{  with data-stack/ control-stack/ parameters
       $data-stack @actor         .>data-stack!
@@ -607,14 +800,23 @@ to initialize-l9
       $control-stack @actor      .>control-stack!
       $control-stack .top @actor .>csp!
     }
+    ~~ 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+    ~~ A class method is compiled before task.maker has registered make.task.
+    ~~ Resolve the actual maker at runtime (as in initialize-l9), rather
+    ~~ than invoking its unbound compile-time form.
     fork/it-method{  >ip
-      make.task( it, true, false ) it!
+      it true false make.task/ as-verb run it!
       make.actor( $ip ) @actor!
+      ~~ 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+      ~~ The newborn actor carries a non-owning task ID in payload #7
+      ~~ (stack index 6). A strong reference would create a task/actor cycle.
+      it .id :l9-task 6 @actor stack.put
       it
     }
     spawn/it-method{ >ip
-      make.task( it, false, true ) it!
+      it false true make.task/ as-verb run it!
       make.actor( $ip ) @actor!
+      it .id :l9-task 6 @actor stack.put
       it
     }
     ~~ #2026: Old code had: join/it-method{  with result/ parameters

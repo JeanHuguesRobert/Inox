@@ -61,12 +61,28 @@ to in-range><?    top <  and{ >  }
 
 to clear-stacks   clear-data clear-control
 
-to missing-verb     "missing-verb "     over join out clear-stacks
-to missing-method   "missing-method "   over join out clear-stacks
-to missing-operator "missing-operator " over join out clear-stacks
-
-to FATAL-hook    "FATAL" out debugger clear-stacks
+~~ 2026-11-24 - GPT-6 coding agent under Jean Hugues Noel Robert.
+~~ Language errors use the common actor-local VM exception boundary.
+~~ Without a registered handler, vm-raise still fails explicitly through
+~~ FATAL; it must not turn an unhandled exception into a success.
+to FATAL-hook    vm-raise
 to FATAL         /FATAL-hook tag.run
+~~ An ordinary language-level raise may be recovered by the nearest catch.
+~~ Keep FATAL's fail-fast fallback when no handler exists.
+to raise         vm-raise
+
+~~ Ordinary language lookup failures must respect the same exception and
+~~ finally contract as explicit raise. The old clear-stacks handlers removed
+~~ the caller's control frames, silently skipping on-return and corrupting
+~~ nested method dispatch when called within an exception boundary.
+to missing-verb     "missing-verb "     over join FATAL
+to missing-method   "missing-method "   over join FATAL
+to missing-operator "missing-operator " over join FATAL
+
+~~ VM-resume continuations for the guard's normal/exceptional branches.
+~~ The VM owns the control/data-stack cleanup and the block references.
+to guard-success       guard-success-primitive
+to guard-catch-finish  guard-catch-finish-primitive
 
 to ASSERT-hook   "ASSERT" out debugger clear-stacks
 to ASSERT        /ASSERT-hook tag.run
@@ -244,30 +260,31 @@ to from:to:by:do:
 ~~ to #[     with
 ~~ to    ]#  inox-make.with-array
 
-to try-run  ToDo( "Implement inox-try-run" )
+~~ 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+~~ Complete the 2023 try-run and try/catch/finally family in Inox itself.
+~~ The VM provides only the general actor-local exception boundary and
+~~ nonlocal scope unwind. Without catch, try-run has no guard overhead.
+~~ `scope` creates the control-stack scope for the on-return continuation.
+~~ Important FBF: `with` is a formal-parameter marker and is NOT a scope;
+~~ using it here left one unwanted data-stack tag per call.
+~~ Finalizers run on normal and exceptional exits, including errors raised
+~~ by a catch handler. The cleanup block is run exactly once.
+to try-run  .run. inline
+to try      try-run. inline
 
-to try
-  inox-try/sentinel
-    try-run
-  inox-try/long-jump
+to try:catch: run-guarded. inline
 
-to try:catch:
-  >inox-try:catch
-  try
-  inox-try:catch/forget
+to try:finally: >cleanup-block >try-block
+  { scope
+      $cleanup-block on-return
+      $try-block .run
+  } .run. inline
 
-to try:catch:finally:
-  >inox-try:catch:finally
-  >inox-try:catch
-  try
-  inox-try:catch:finally> .run()
-  inox-try:catch:finaly/forget
-
-to try:finally:
-  >inox-try:finally
-  try-run
-  inox-try:finally> .run()
-  inox-try:finaly/forget
+to try:catch:finally: >cleanup-block >catch-block >try-block
+  { scope
+      $cleanup-block on-return
+      $try-block $catch-block run-guarded
+  } .run. inline
 
 
 ~~ text class

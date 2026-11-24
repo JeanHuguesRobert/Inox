@@ -86,13 +86,15 @@ if ( expr !== null ) {
   // (evaluate also works but the new run path is preferred for CLI.)
   const code = "~~\n" + expr;  // literate friendly
   I.processor( "{}", "{}", code );
-  process.exit( 0 );
+  // 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+  // Respect a VM FATAL's process.exitCode; an explicit exit(0) overwrote it.
+  process.exit( process.exitCode || 0 );
 }
 
 if ( file_abs ) {
   const src = fs.readFileSync( file_abs, "utf8" );
   I.processor( "{}", "{}", src );
-  process.exit( 0 );
+  process.exit( process.exitCode || 0 );
 }
 
 // No target: minimal REPL.

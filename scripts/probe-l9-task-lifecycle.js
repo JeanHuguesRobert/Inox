@@ -13,6 +13,7 @@ const tests=[
   ['child cancellation propagation and exception', 'to p l9-root false false make.task/ as-verb run >kid l9-root .cancel $kid .canceled? out. p', '1'],
   ['root resume and status', 'to p l9-root .resume l9-root .paused? out. p', '0'],
   ['promise callback failure becomes rejection', 'to p make.promise >v { >x "BROKEN" FATAL } _ $v .then >next 7 $v .resolve $next .rejected? out. p', '1'],
+  ['actor top-level return completes task and wakes parent', 'to a "W" out. to p l9-root .spawn( a/ as-verb definition ) >kid $kid .resume l9-dispatch-next $kid .done? out. p', 'W1'],
 ];
 let passed=0;
 for(const [name,program,expected] of tests){

@@ -15,7 +15,7 @@ const cases = [
   ['root is an object reference', 'l9-root type-of out', 'reference'],
   ['root has correct label', 'l9-root .label out', 'root'],
   ['root has id 1', 'l9-root .id out', '1'],
-  ['root begins paused', 'l9-root .paused? out', '1'],
+  ['root is running rather than falsely paused', 'l9-root .paused? out', '0'],
   ['root begins unfinished', 'l9-root .done? out', '0'],
   ['root begins uncanceled', 'l9-root .canceled? out', '0'],
   ['root is current L9 task', 'to p l9-root l9 = out. p', '1'],
@@ -23,13 +23,28 @@ const cases = [
   ['registered maker constructs a root', 'to p _ false false make.task/ as-verb run .label out. p', 'root'],
   ['registered maker returns reference', 'to p _ false false make.task/ as-verb run type-of out. p', 'reference'],
   ['child receives id 2', 'to p l9-root false false make.task/ as-verb run .id out. p', '2'],
-  ['child parent points to root', 'to p l9-root true false make.task/ as-verb run parent/ object.@ l9-root = out. p', '1'],
+  ['child parent resolves weak ID through local registry', 'to p l9-root true false make.task/ as-verb run .parent l9-root = out. p', '1'],
+  ['child parent field is weak numeric id', 'to p l9-root true false make.task/ as-verb run parent-id/ object.@ type-of out. p', 'integer'],
+  ['child parent ID agrees with root ID', 'to p l9-root true false make.task/ as-verb run parent-id/ object.@ l9-root .id = out. p', '1'],
   ['child is registered in subtasks', 'to p l9-root false false make.task/ as-verb run drop l9-root .tasks array.length out. p', '1'],
   ['fork flags are not hardcoded', 'to p l9-root true false make.task/ as-verb run .a-fork? out. p', '1'],
   ['spawn flags are not hardcoded', 'to p l9-root false true make.task/ as-verb run .a-spawn? out. p', '1'],
   ['ordinary task is not spawned', 'to p l9-root false false make.task/ as-verb run .a-spawn? out. p', '0'],
   ['fork also registers in forks array', 'to p l9-root true false make.task/ as-verb run drop l9-root .tasks array.length out l9-root forks/ object.@ array.length out. p', '11'],
   ['spawn not registered as fork', 'to p l9-root false true make.task/ as-verb run drop l9-root .tasks array.length out l9-root forks/ object.@ array.length out. p', '10'],
+  // 2026-11-24: GPT-6 under Jean Hugues Noel Robert.
+  // Actual fork/spawn methods must use the registered maker; raw make.task
+  // compiled before registration is not acceptable.
+  ['fork method creates child task', 'to p l9-root .fork( 0 ) .a-fork? out. p', '1'],
+  ['spawn method creates child task', 'to p l9-root .spawn( 0 ) .a-spawn? out. p', '1'],
+  ['fork method registers in parent', 'to p l9-root .fork( 0 ) drop l9-root forks/ object.@ array.length out. p', '1'],
+  ['spawn method attaches a distinct actor', 'to p l9-root .spawn( 0 ) .actor type-of out. p', 'reference'],
+  ['fork actor identifies its task without strong back-reference', 'to p l9-root .fork( 0 ) >kid 6 $kid .actor stack.fetch $kid .id = out. p', '1'],
+  ['spawn actor identifies its task without strong back-reference', 'to p l9-root .spawn( 0 ) >kid 6 $kid .actor stack.fetch $kid .id = out. p', '1'],
+  ['spawn actor retains l9-task slot name', 'to p l9-root .spawn( 0 ) >kid 6 $kid .actor stack.fetch name-of as-text out. p', 'l9-task'],
+  ['registry resolves child to owning task', 'to p l9-root .spawn( 0 ) >kid $kid .id 1 - l9-task-registry array.get $kid = out. p', '1'],
+
+
   ['extensible object setter', 'to p task/ make{ "root" :label } >v "OK" $v .label! $v .label out. p', 'OK'],
   ['direct object setter', 'to p task/ make{ "root" :label } >v "OK" $v label/ object.! $v .label out. p', 'OK'],
   ['array push stores length', 'to p array[] >xs $xs 1 array.push $xs 2 array.push $xs array.length out. p', '2'],
@@ -40,6 +55,15 @@ const cases = [
   ['stack fetch uses index after header', 'to p stack[] >xs $xs 5 stack.push $xs 7 stack.push 0 $xs stack.fetch out 1 $xs stack.fetch out. p', '57'],
   ['array grows to 100 elements', 'to p array[] >xs from: 1 to: 100 do: { $xs ii array.push }; 0 $xs array.get out 99 $xs array.get out $xs array.length out. p', '1100100'],
   ['stack grows to 100 elements', 'to p stack[] >xs from: 1 to: 100 do: { $xs ii stack.push }; 0 $xs stack.fetch out 99 $xs stack.fetch out $xs stack.length out. p', '1100100'],
+  // 2026-11-24: scheduling relies on queue.pull preserving both FIFO order
+  // and the original stack/reference ownership, even for a sole-owner queue.
+  ['queue pull FIFO keeps remaining queue valid', 'to p queue[] >q $q 7 queue.enqueue $q 8 queue.enqueue $q queue.pull out $q queue.pull out $q queue.length out. p', '780'],
+  ['queue pull a sole-owned queue', 'to p queue[] >q $q 9 queue.enqueue $q queue.pull out. p', '9'],
+  ['array.put replaces element in extensible array', 'to p array[] >xs $xs 5 array.push $xs 0 7 array.put 0 $xs array.get out. p', '7'],
+  ['array.put can release a referenced value', 'to p array[] >xs $xs l9-root array.push $xs 0 _ array.put 0 $xs array.get type-of out. p', 'void'],
+  ['array.put preserves subsequent elements', 'to p array[] >xs $xs 5 array.push $xs 8 array.push $xs 0 7 array.put 0 $xs array.get out 1 $xs array.get out. p', '78'],
+
+
 ];
 const diagnostics=/FATAL:|Assert failure|missing-verb|AssertionError|Cannot compile block|Invalid return/;
 let passed=0;

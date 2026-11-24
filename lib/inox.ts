@@ -8764,6 +8764,11 @@ function data_stack_is_empty() : boolean {
 }
 
 
+// 2026-11-24: GPT-6 coding agent, under Jean Hugues Noel Robert.
+// Header at +0, seven payload slots at +1..+7. Saved CSP is +6;
+// the task reference is +7. Keep this layout explicit for actor restore.
+const tag_l9_task = tag( "l9-task" );
+
 function mand_actor( actor : Cell ) : boolean {
 
   check_de&&mand_named( actor + 0 * ONE, tag_actor   );
@@ -8774,6 +8779,7 @@ function mand_actor( actor : Cell ) : boolean {
   de&&mand_named( actor + 4 * ONE, tag_ip            );
   de&&mand_named( actor + 5 * ONE, tag_tos           );
   de&&mand_named( actor + 6 * ONE, tag_csp           );
+  de&&mand_named( actor + 7 * ONE, tag_l9_task       );
   de&&mand_integer(   actor + 0 * ONE );
   de&&mand_reference( actor + 1 * ONE );
   de&&mand_reference( actor + 2 * ONE );
@@ -8781,14 +8787,24 @@ function mand_actor( actor : Cell ) : boolean {
   de&&mand_integer(   actor + 4 * ONE );
   de&&mand_integer(   actor + 5 * ONE );
   de&&mand_integer(   actor + 6 * ONE );
+  // 2026-11-24, GPT-6 under Jean Hugues Noel Robert: the task reverse link
+  // is a non-owning id, never an owning reference back to the task object.
+  de&&mand( type_of( actor + 7 * ONE ) == type_void
+           || type_of( actor + 7 * ONE ) == type_integer );
 
   return true;
 
 }
 
 
-const tag_l9_task = tag( "l9-task" );
 
+
+
+// 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+// Full-L9 actor entry code returns to a per-actor finalization continuation.
+// Root VM (ip=0) has no such continuation. The symbol is resolved when the
+// child actor is created, after L9 finishes registering its definitions.
+const tag_l9_actor_finish = tag( "l9-actor-finish" );
 
 function make_actor( ip : Cell ) : Cell {
 
@@ -8835,6 +8851,15 @@ function make_actor( ip : Cell ) : Cell {
   set( the_tmp_cell, type_void, tag_l9_task, 0 );
   stack_push( actor, the_tmp_cell );   // slot 6, /l9-task
 
+  // A child with real code must return to L9's task-finalization boundary,
+  // not pop an empty control stack. The frame is an initial return IP.
+  const finish_ip = get_definition( tag_l9_actor_finish );
+  if( ip != 0 && finish_ip != 0 ){
+    set( the_tmp_cell, type_ip, tag_l9_actor_finish, finish_ip );
+    stack_push( cstk, the_tmp_cell );
+    set_value( actor + 6 * ONE, cstk + ONE );
+  }
+
   de&&mand_actor( actor );
 
   return actor;
@@ -8853,9 +8878,9 @@ function make_actor( ip : Cell ) : Cell {
  * fail-early termination, possibly of the whole runtime; (2) refuse to
  * resume the compromised task/actor; (3) enter a recovery/exception handler
  * running on a separate verified, intact stack.
- * IMPORTANT: switching actors must first save the outgoing context (currently
- * actor_save_context() has no direct caller), and detecting an overflow at
- * a boundary may be TOO LATE if other memory was already overwritten.
+ * IMPORTANT: primitive_switch_actor() now saves the outgoing context,
+ * but overflow detection at a boundary may be TOO LATE if other memory
+ * was already overwritten. Detection/recovery remains explicitly deferred.
  * Specify ownership, detection reliability, rollback/isolation and safe
  * recovery before implementing. Existing grow-control-stack relocation and
  * actor slot references need independent verification. The threshold repair
@@ -9682,7 +9707,12 @@ function trace_context( msg : TxtC ){
 
 
 function primitive_actor(){
-  push_integer( ACTOR ); // ToDo: push_reference()?
+  // 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+  // The VM pins one owning reference to ACTOR. Each exposed actor value
+  // must acquire its OWN reference, just like make.actor returns. Returning
+  // a bare memory address is unsafe and prevents typed actor switching.
+  area_lock( ACTOR );
+  push_reference( ACTOR );
   set_tos_name( tag_actor );
 }
 primitive( "actor", primitive_actor );
@@ -9693,9 +9723,11 @@ primitive( "actor", primitive_actor );
  */
 
 function primitive_l9(){
-  // The l9 task property is the 7th property of the actor
+  // 2026-11-24: GPT-6 under Jean Hugues Noel Robert.
+  // Low-level read of the actor's non-owning task id. Full L9 overrides
+  // `l9` with a registry-backed task-object lookup, avoiding strong cycles.
   push();
-  copy_cell( ACTOR + 6 * ONE, TOS );
+  copy_cell( ACTOR + 7 * ONE, TOS );
 }
 primitive( "l9", primitive_l9 );
 
@@ -9705,8 +9737,13 @@ primitive( "l9", primitive_l9 );
  */
 
 function primitive_set_current_l9_task(){
-  // The l9 task property is the 7th property of the actor
-  move_cell( pop(), ACTOR + 6 * ONE );
+  // 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+  // The actor slot +7 holds a stable, NON-OWNING task id. Its owner is the
+  // L9 task registry; storing the task reference would create a strong cycle
+  // between task.actor and actor.l9-task under reference counting.
+  const task_id = pop_integer();
+  check_de&&mand( task_id > 0 );
+  set( ACTOR + 7 * ONE, type_integer, tag_l9_task, task_id );
 }
 primitive( "current-l9-task!", primitive_set_current_l9_task );
 
@@ -9716,13 +9753,31 @@ primitive( "current-l9-task!", primitive_set_current_l9_task );
  */
 
 function primitive_switch_actor(){
+  // 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+  // A switch is not just a restore. Pop the target actor FIRST so the
+  // outgoing data-stack cursor excludes that call argument, then persist
+  // IP/TOS/CSP in the source actor before restoring the destination actor.
+  // This fixes loss of the outgoing continuation; it is not a scheduler.
   // ToDo (2026-11-22, GPT-6 under Jean Hugues Noel Robert): see the
   // actor_save_context() overflow policy above. Validate the incoming saved
   // stack/context at this boundary, NOT on every call()/defer() hot path.
   // No detection, quarantine or exception-stack recovery is implemented yet.
-  actor_restore_context( pop_reference() );
+  const next_actor = pop_reference(); // transfer the stack-owned actor pin
+  const previous_actor = ACTOR;
+  actor_save_context();
+  actor_restore_context( next_actor );
+  // 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+  // Release the outgoing VM pin only AFTER its state was saved. The task
+  // and ready queue retain their own pins for a suspended live actor.
+  area_free( previous_actor );
 }
 primitive( "switch-actor", primitive_switch_actor );
+
+// 2026-11-24: GPT-6 under Jean Hugues Noel Robert. Yield a quiescent VM
+// back to its host when no ready actor remains; do not terminate the host
+// process (which can be the long-lived Inox sidecar).
+function primitive_halt_actor(){ IP = 0; }
+primitive( "halt-actor", primitive_halt_actor );
 
 
 /*
@@ -10305,7 +10360,9 @@ primitive( "pick", primitive_pick );
 const tag_depth = tag( "depth" );
 
 function primitive_data_depth(){
-  const depth = ( ACTOR_data_stack - TOS ) / ONE;
+  // 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+  // TOS advances above the data-stack base; depth must be nonnegative.
+  const depth = ( TOS - ACTOR_data_stack ) / ONE;
   de&&mand( depth >= 0 );
   set( push(), type_integer, tag_depth, depth );
 }
@@ -10317,7 +10374,9 @@ primitive( "data-depth", primitive_data_depth );
  */
 
 function primitive_clear_data(){
-  const depth = ( ACTOR_data_stack - TOS ) / ONE;
+  // 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+  // TOS advances above the data-stack base; depth must be nonnegative.
+  const depth = ( TOS - ACTOR_data_stack ) / ONE;
   // ToDo: should take the opportunity to check the stack boundaries?
   legacy_de&&mand( depth >= 0 );
   let ii;
@@ -10334,7 +10393,9 @@ primitive( "clear-data", primitive_clear_data );
 
 function primitive_data_dump(){
   let auto_ = S() + "DATA STACK";
-  const depth = ( ACTOR_data_stack - TOS ) / ONE;
+  // 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+  // TOS advances above the data-stack base; depth must be nonnegative.
+  const depth = ( TOS - ACTOR_data_stack ) / ONE;
   de&&mand( depth >= 0 );
   let ii;
   for( ii = 0 ; ii < depth ; ++ii ){
@@ -10412,6 +10473,11 @@ function FATAL( message : TxtC ) : boolean {
   + ":" + N( traced_column );
   trace_context( auto_ );
   debugger;
+  // 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+  // An UNHANDLED root failure is not a successful CLI execution. Mark the
+  // host exit status without calling process.exit(), so long-lived hosts
+  // can still complete their own cleanup and the VM can report the fault.
+  /**/ if( typeof process !== "undefined" ){ process.exitCode = 1; }
   // Clear stack & get back to eval loop
   primitive_clear_data();
   primitive_clear_control();
@@ -12592,6 +12658,42 @@ function lookup_sentinel( csp : Cell, tag : Tag ) : Cell {
 
 
 /*
+ *  Nonlocal scope exit, honoring on-return/finally continuations.
+ *
+ *  2026-11-24 — GPT-6 coding agent under Jean Hugues Noel Robert.
+ *  Both break and long-jump must execute finalizers for discarded scopes,
+ *  just as vm-raise does. These scans occur only for nonlocal exits and
+ *  do not alter the ordinary call/defer execution path.
+ */
+const tag_jump_pending = tag( "nonlocal-pending-jump" );
+const tag_jump_resume = tag( "nonlocal-resume-jump" );
+
+function jump_to_control_sentinel( target : Cell ){
+  for( let frame = CSP; frame > target; frame -= ONE ){
+    if( name_of( frame ) != tag_on_return || type_of( frame ) != type_verb ){
+      continue;
+    }
+    const cleanup_ip = value_of( frame );
+    while( CSP > frame )drop_control();
+    reset( CSP );
+    set( CSP, type_integer, tag_jump_pending, target );
+    defer( tag_jump_resume, definition_of( tag_jump_resume ) );
+    IP = cleanup_ip;
+    return;
+  }
+  IP = value_of( target );
+  while( CSP >= target )drop_control();
+}
+
+function primitive_resume_nonlocal_jump(){
+  check_de&&mand_named( CSP, tag_jump_pending );
+  const target = get_integer( CSP );
+  raw_drop_control();
+  jump_to_control_sentinel( target );
+}
+primitive( "nonlocal-resume-jump", primitive_resume_nonlocal_jump );
+
+/*
  *  break - exit loop
  */
 
@@ -12603,12 +12705,7 @@ function primitive_break(){
     FATAL( "break sentinel is missing" );
     return;
   }
-  // Return to IP previously saved in break sentinel
-  IP = value_of( sentinel_csp );
-  // Clear control stack down to sentinel included
-  while( CSP >= sentinel_csp ){
-    drop_control();
-  }
+  jump_to_control_sentinel( sentinel_csp );
 }
 primitive( "break", primitive_break );
 
@@ -12664,12 +12761,8 @@ function primitive_long_jump(){
     );
     return;
   }
-  // The sentinel holds a valid return address
-  IP = eat_ip( CSP );
-  // Clear control stack up to sentinel included
-  while( CSP >= sentinel_csp ){
-    drop_control();
-  }
+  // The target address belongs to the located sentinel, not to CSP.
+  jump_to_control_sentinel( sentinel_csp );
 }
 primitive( "long-jump", primitive_long_jump );
 
@@ -16256,13 +16349,15 @@ function primitive_object_nice_at(){
 
   ptr = object_get( ptr, value_of( key ) );
 
+  // 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+  // pop() leaves obj one cell ABOVE TOS: the surviving result cell is key.
+  // Copy the found value before releasing the object, or a sole owner may
+  // free the backing memory while ptr still points into it.
   clear( key );
-  clear( obj );
-
-  if( ptr == 0 ){
-    return;
+  if( ptr != 0 ){
+    copy_cell( ptr, key );
   }
-  copy_cell( ptr, obj );
+  clear( obj );
 
 }
 primitive( "object.?@", primitive_object_nice_at );
@@ -16849,9 +16944,14 @@ primitive( "queue.length", primitive_queue_length );
 function primitive_queue_pull(){
 
   check_de&&mand_reference( TOS );
-  const queue = value_of( TOS );
-  clear_top();
-  pop();
+  // 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+  // Keep the queue reference live until AFTER moving the oldest element and
+  // shifting the rest. Former clear_top()+pop() released that reference
+  // prematurely (possibly the sole owner), then read freed queue memory.
+  const queue_cell = TOS;
+  // queue[] is extensible; dereference its forwarding area before reading
+  // the length or indexed entries, exactly as stack helpers do.
+  const queue = dereference_top();
   const queue_length = value_of( queue );
 // #2026: Old code was:
 //   if( queue_length + 1 >= to_cell( area_size( queue ) ) ){
@@ -16862,8 +16962,10 @@ function primitive_queue_pull(){
   }
 // #2026: Old code was:
 //   // Make room for new element
-  // Move out the oldest element (at index 1) to the data stack
-  move_cell( queue + ONE, push() );
+  // Move out the oldest element (at index 1) into a temporary stack slot.
+  // The queue reference below remains intact until the operation finishes.
+  const result_cell = push();
+  move_cell( queue + ONE, result_cell );
   // Shift remaining elements left (down in index)
   let ii;
 // #2026: Old code was:
@@ -16877,8 +16979,10 @@ function primitive_queue_pull(){
 //   move_cell( pop(), queue + ONE );
   // Clear the now-empty slot at the end
   reset( queue + queue_length * ONE );
-  // Decrement queue length
+  // Decrement queue length, then replace the queue operand with the result.
   set_value( queue, queue_length - 1 );
+  move_cell( result_cell, queue_cell );
+  TOS -= ONE;
 }
 primitive( "queue.pull", primitive_queue_pull );
 // #2026: This was added in 2026:
@@ -16939,9 +17043,15 @@ function primitive_array_put(){
   let   index = value_of( index_cell );
   const array_cell = TOS - 2 * ONE;
   check_de&&mand_reference( array_cell );
-  const array = value_of( array_cell );
+  // 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+  // array[] is a forwarding (extensible) reference to its actual elements.
+  // The former code wrote to the one-cell forwarding area instead of the
+  // backing array, so array.put silently failed and damaged the wrapper.
+  const outer = reference_of( array_cell );
+  const array = type_of( outer ) == type_reference
+    ? reference_of( outer ) : outer;
   const array_length = value_of( array );
-  const array_capacity = to_cell( area_size( array ) );
+  const array_capacity = to_cell( area_size( array ) ) - 1; // header excluded
   // Handle negative indices
   if( index < 0 ){
     index += array_length;
@@ -18084,9 +18194,12 @@ function run_class_method_on_target( target_class : Tag, target : Cell, name : T
   }
 
   // Delegate to the class of the target, each class may have such a verb
+  // 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+  // The fallback class verb performs inherited dispatch synchronously.
+  // The previous deferred run-super-method executed AFTER the caller's next
+  // instruction, leaking the raw method-definition address to user code.
   push_tag( target_class );
   push_tag( name );
-  defer( tag_run_super_method, run_super_method_definition );
   if( definition_exists( target_class ) ){
     call_verb( target_class );
   }else{
@@ -19826,6 +19939,184 @@ function primitive_scope_close(){
 }
 primitive( "scope-close", primitive_scope_close );
 
+
+/*
+ *  Inox actor-local exception boundaries.
+ *
+ *  2026-11-24 - GPT-6 coding agent, under Jean Hugues Noel Robert.
+ *  Language-level errors must not call clear-stacks in the middle of an
+ *  active callback. A guard lives on the actor's OWN control stack, so a
+ *  cooperative switch naturally saves/restores the handler with its actor.
+ *  This is a VM-level mechanism, not a JS try/catch or a promise-specific
+ *  escape hatch. No per-call/defer checks are introduced.
+ *
+ *  Layout above the previous CSP:
+ *    +1 return IP, +2 saved data-stack top, +3 handler cell,
+ *    +4 body cell, +5 guarded-body return IP.
+ *  Handler/body cells own their targets only when represented as references;
+ *  immediate integer code pointers remain ordinary VM values.
+ *  The normal and exceptional paths consume exactly these five frames.
+ */
+const tag_guard_return = tag( "guard-return" );
+const tag_guard_top = tag( "guard-top" );
+const tag_guard_handler = tag( "guard-handler" );
+const tag_guard_body = tag( "guard-body" );
+const tag_guard_success = tag( "guard-success" );
+const tag_guard_catch_finish = tag( "guard-catch-finish" );
+const tag_guard_pending_raise = tag( "guard-pending-raise" );
+const tag_guard_resume_raise = tag( "guard-resume-raise" );
+const tag_l9_uncaught_error = tag( "l9-uncaught-error" );
+const tag_l9_uncaught_dispatch = tag( "l9-uncaught-dispatch" );
+
+function primitive_run_guarded(){
+  // Source blocks may be immediate integer IPs or owned block references.
+  check_de&&mand( type_of( TOS ) == type_integer
+               || type_of( TOS ) == type_reference );
+  const handler_cell = pop();
+  check_de&&mand( type_of( TOS ) == type_integer
+               || type_of( TOS ) == type_reference );
+  const body_cell = pop();
+  const body_ip = value_of( body_cell );
+  const saved_top = TOS;
+
+  defer( tag_guard_return, IP );
+  CSP += ONE;
+  set( CSP, type_integer, tag_guard_top, saved_top );
+  CSP += ONE;
+  move_cell( handler_cell, CSP );
+  set_name( CSP, tag_guard_handler );
+  CSP += ONE;
+  move_cell( body_cell, CSP );
+  set_name( CSP, tag_guard_body );
+  CSP += ONE;
+  set( CSP, type_verb, tag_guard_success, definition_of( tag_guard_success ) );
+  IP = body_ip;
+}
+primitive( "run-guarded", primitive_run_guarded );
+
+function primitive_guard_success(){
+  check_de&&mand_named( CSP, tag_guard_body );
+  drop_control();
+  check_de&&mand_named( CSP, tag_guard_handler );
+  drop_control();
+  check_de&&mand_named( CSP, tag_guard_top );
+  raw_drop_control();
+  check_de&&mand_named( CSP, tag_guard_return );
+  pop_ip();
+}
+primitive( "guard-success-primitive", primitive_guard_success );
+
+function primitive_guard_catch_finish(){
+  check_de&&mand_named( CSP, tag_guard_handler );
+  drop_control();
+  check_de&&mand_named( CSP, tag_guard_return );
+  pop_ip();
+}
+primitive( "guard-catch-finish-primitive", primitive_guard_catch_finish );
+
+// 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
+// On an exceptional exit, on-return/finally blocks must run in LIFO order,
+// while their surrounding named locals are still alive. An error is pinned
+// in an owned control cell until the cleanup block returns, then the same
+// primitive resumes unwinding. This adds no normal call/defer hot-path check.
+function primitive_guard_resume_raise(){
+  check_de&&mand_named( CSP, tag_guard_pending_raise );
+  move_cell( CSP, push() );
+  CSP -= ONE;
+  primitive_vm_raise();
+}
+primitive( "guard-resume-raise", primitive_guard_resume_raise );
+
+function primitive_vm_raise(){
+  // The error reason is owned by the caller's top-of-stack cell.
+  const reason_cell = TOS;
+  check_de&&mand( TOS > ACTOR_data_stack );
+  let handler = 0;
+  for( let frame = CSP; frame > ACTOR_control_stack + 2 * ONE; frame -= ONE ){
+    if( name_of( frame ) == tag_guard_handler
+    && ( type_of( frame ) == type_reference
+      || type_of( frame ) == type_integer )
+    && name_of( frame - ONE ) == tag_guard_top
+    && name_of( frame - 2 * ONE ) == tag_guard_return ){
+      handler = frame;
+      break;
+    }
+  }
+  // Perform deferred finalizers before the catch handler, or before task
+  // termination if there is no catch. Scan only during an actual raise.
+  const bottom = handler == 0 ? ACTOR_control_stack : handler;
+  for( let frame = CSP; frame > bottom; frame -= ONE ){
+    if( name_of( frame ) != tag_on_return || type_of( frame ) != type_verb ){
+      continue;
+    }
+    const cleanup_ip = value_of( frame );
+    while( CSP > frame )drop_control();
+    reset( CSP );
+    move_cell( pop(), CSP );
+    set_name( CSP, tag_guard_pending_raise );
+    defer( tag_guard_resume_raise, definition_of( tag_guard_resume_raise ) );
+    IP = cleanup_ip;
+    return;
+  }
+
+  if( handler == 0 ){
+    // 2026-11-24: GPT-6 under Jean Hugues Noel Robert.
+    // An unhandled LANGUAGE error in a child actor goes through the same
+    // task.raise / local scheduler failure-delivery path as explicit errors.
+    // FATAL inside the dispatcher itself remains a hard VM failure.
+    const text = cell_as_text( reason_cell );
+    const task_id = type_of( ACTOR + 7 * ONE ) == type_integer
+                  ? get_integer( ACTOR + 7 * ONE ) : 0;
+    let already_dispatching = false;
+    for( let frame = CSP; frame > ACTOR_control_stack; frame -= ONE ){
+      if( name_of( frame ) == tag_l9_uncaught_dispatch ){
+        already_dispatching = true;
+        break;
+      }
+    }
+    if( task_id > 1 && ! already_dispatching
+    && definition_exists( tag_l9_uncaught_error ) ){
+      // Irreversibly abandon the broken child call chain, not the host VM.
+      // Clear only this actor's frames; all other actors keep their stacks.
+      while( TOS > ACTOR_data_stack )drop();
+      while( CSP > ACTOR_control_stack )drop_control();
+      CSP += ONE;
+      set( CSP, type_integer, tag_l9_uncaught_dispatch, task_id );
+      push_text( text );
+      IP = get_definition( tag_l9_uncaught_error );
+      return;
+    }
+    drop();
+    FATAL( text );
+    return;
+  }
+
+  const saved_top = get_integer( handler - ONE );
+  if( TOS <= saved_top ){
+    // A damaged data-stack boundary is NOT a catchable application error.
+    FATAL( "run-guarded: error stack below the saved boundary" );
+    return;
+  }
+
+  // Remove nested locals and callback frames, including the owned body.
+  // The handler remains pinned at the nearest active guard marker.
+  while( CSP > handler )drop_control();
+  move_cell( pop(), handler + ONE );
+  while( TOS > saved_top )drop();
+
+  const handler_ip = value_of( handler );
+  reset( handler - ONE );
+  move_cell( handler, handler - ONE );
+  set_name( handler - ONE, tag_guard_handler );
+  // Hand the error to the catch block. Its returned value/side effects are
+  // delivered to the caller; the handler reference is released on return.
+  move_cell( handler + ONE, push() );
+  set( handler, type_verb, tag_guard_catch_finish,
+       definition_of( tag_guard_catch_finish ) );
+  CSP = handler;
+  IP = handler_ip;
+}
+primitive( "vm-raise", primitive_vm_raise );
 
 /*
  *  run - depending on type, run a definition, a primitive or do nothing

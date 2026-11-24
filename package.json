@@ -31,7 +31,14 @@
     "test:stack-growth-threshold": "node scripts/test-stack-growth-threshold.js",
     "test:l9-tasks": "node scripts/test-l9-task-structure.js",
     "test:l9-lifecycle-basics": "node scripts/test-l9-lifecycle-basics.js",
-    "test:l9-promise-chain": "node scripts/test-l9-promise-chain.js"
+    "test:l9-promise-chain": "node scripts/test-l9-promise-chain.js",
+    "test:l9-actor-layout": "node scripts/test-l9-actor-layout.js",
+    "test:l9-actor-switch": "node scripts/test-l9-actor-switch.js",
+    "test:l9-object-core": "node scripts/test-l9-object-core.js",
+    "test:l9-ready-queue": "node scripts/test-l9-ready-queue.js",
+    "test:l9-error-delivery": "node scripts/test-l9-error-delivery.js",
+    "test:inox-guarded-exceptions": "node scripts/test-inox-guarded-exceptions.js",
+    "test:inox-try-finally": "node scripts/test-inox-try-finally.js"
   },
   "repository": {
     "type": "git",
