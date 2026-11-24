@@ -600,6 +600,51 @@ to initialize-l9
     }
   }
 
+  ~~ 2026-11-24: GPT-6 under Jean Hugues Noel Robert, Inox #42.
+  ~~ Port of virteal/l8 lib/signal.js (d3dc0840). No event buffering.
+  ~~ An absent next-promise represents the initial inactive detector.
+  ~~ Keep the settled generation until the next observer rearms it.
+  ~~ Unlike the historical typo, inactive? is the inverse of active?.
+  signal/class{
+    maker{
+      make{
+        _     :next-promise
+        false :closed?
+      }
+    }
+    closed?/getter
+    active?/it-method{
+      if: @closed? then: { false } else: {
+        if: @next-promise something? then: {
+          @next-promise .resolved? @next-promise .rejected? or not
+        } else: { false };
+      };
+    }
+    inactive?/it-method{ it .active? not }
+    promise/it-method{
+      if: @closed? then: { } else: {
+        if: it .inactive? then: { make.promise/ as-verb run @next-promise! };
+      };
+      @next-promise
+    }
+    then/it-method{ >on-reject >on-resolve
+      $on-resolve $on-reject it .promise .then
+    }
+    signal/it-method{ >value
+      if: it .active? then: { $value @next-promise .resolve };
+      it
+    }
+    close/it-method{
+      if: @closed? then: { } else: {
+        ~~ Install the terminal state BEFORE invoking synchronous callbacks.
+        if: it .inactive? then: { make.promise/ as-verb run @next-promise! };
+        true @closed?!
+        /closed @next-promise .reject
+      };
+      it
+    }
+  }
+
   semaphore/class{
     maker{
       make{
