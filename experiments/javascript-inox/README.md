@@ -50,3 +50,55 @@ the existing historical CLI, both JavascriptInox bootstraps, and image replay.
 This remains a subset: top-level block expressions, specialized scoped blocks
 (`>{ ... }`, `/{ ... }`), other runnable types and full grammar are not yet
 implemented. The binary Cell ABI is intentionally not a compatibility goal.
+
+### 2026-11-26: incremental source convergence policy
+
+Principal's decision: implement primitives in response to actual needs, not
+from an exhaustive porting inventory. At each such need, prefer an Inox
+definition when the execution time, memory and complexity are reasonable;
+otherwise use a native JavaScript implementation. Keep the working historical
+TypeScript implementation intact except in specifically justified cases.
+Converge on source syntax and semantics, not on the concrete binary Cell ABI.
+A distinction between abstract language operations, representation-specific
+mechanisms and Inox libraries is useful, but does not mandate a rewrite.
+
+Retrospective review of the existing experiment:
+
+- Keep native stack operations, scalar arithmetic/comparison/boolean
+  operations, instruction dispatch, branches, frame/local storage, block
+  invocation, compiler storage and source character access. These touch the
+  representation or are small hot-path operations. In particular, the
+  native `over` avoids the extra literal and stack operation of `1 pick`.
+- Keep native object projection, regular expression matching, whitespace
+  classification, text concatenation and error construction for now; these
+  delegate to inexpensive host mechanisms. Their source-language contracts
+  still require differential verification where a historical equivalent exists.
+- `token.end?`, `char.end?`, `char.quote?`, `char.backslash?`,
+  `text.empty-null` can be expressed in Inox, but are lexer/compiler hot
+  paths. Retain for now rather than incur additional instructions and
+  allocations merely to reduce the JS line count.
+- Structured syntax lowering in `emitSourceToken` is language policy rather
+  than representation. Consider moving individual rules into Inox as they
+  are next needed, keeping low-level emission/linking native. Do not make
+  wholesale migration a prerequisite for source convergence.
+- ZeroBrowser's `count` and `field` are host adapters. Legacy `eq`, `lt`,
+  `secret?` are retained for the first experimental image; newer recipes
+  already use the generic comparison primitives and Inox selection policy.
+
+Measured on Fracta2, Node v26.13.1: 10,000 iterations of identical loops
+using `over` versus `1 pick` executed 180,013 versus 190,013 instructions,
+and retained 100,009 versus 110,009 new Cells. Native `token.end?`,
+inline `"." equal?`, and a called Inox verb containing that expression
+executed respectively 170,013, 180,013 and 200,013 instructions and retained
+100,009, 110,009 and 120,009 new Cells. Wall-clock samples for over/pick
+were noisy and do not establish a timing advantage.
+
+**Measured implementation defect to address before performance-based
+library placement decisions:** transient data and return-address Cells are
+currently retained by the append-only logical address space. A simple
+10,000-iteration loop leaves 80,009 extra Cells even after DSP and CSP return
+to zero (809 after 100 iterations; 8,009 after 1,000). The bounded control
+stack tests do not demonstrate bounded live memory. Next FBF checkpoint:
+make transient stack/return Cells reclaimable without invalidating code
+addresses, retained values or block references; add a bounded-memory
+regression. Reassess the measured costs after that correction.
