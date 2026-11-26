@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /*
  * 2026-11-24 — GPT-6 coding agent under Jean Hugues Noel Robert.
- * Verify scheduler-mediated fail-early error events for L9 tasks. No catch/
- * recovery semantics and no promise FATAL-to-rejection semantics claimed.
+ * Verify scheduler-mediated exceptional delivery for L9 tasks. Selecting a
+ * task is pure; a real actor dispatch injects the error into its VM context.
+ * Ordinary catch/finally semantics are tested separately.
  */
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
@@ -12,15 +13,15 @@ const cwd=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const cases=[
  ['raise stores pending failure without prematurely finishing', 'to t l9-root .spawn( 0 ) >kid /problem $kid .raise $kid pending-error?/ object.@ out $kid .done? out. t','10'],
  ['raised task enters ready queue even if initially paused', 'to t l9-root .spawn( 0 ) >kid /problem $kid .raise l9-ready-queue queue.length out. t','1'],
- ['failure delivered at next scheduler selection', 'to t l9-root .spawn( 0 ) >kid /problem $kid .raise l9-next-ready drop $kid .done? out $kid .failure? out. t','11'],
- ['failed task keeps its reason', 'to t l9-root .spawn( 0 ) >kid /problem $kid .raise l9-next-ready drop $kid .error out. t','problem'],
- ['parent receives failure event', 'to t l9-root .spawn( 0 ) >kid /problem $kid .raise l9-next-ready drop l9-root failed-children/ object.@ array.length out. t','1'],
- ['parent event identifies failed child', 'to t l9-root .spawn( 0 ) >kid /problem $kid .raise l9-next-ready drop 0 l9-root failed-children/ object.@ array.get $kid = out. t','1'],
- ['failure clears registry owner on termination', 'to t l9-root .spawn( 0 ) >kid $kid .id >id /problem $kid .raise l9-next-ready drop $id 1 - l9-task-registry array.get type-of out. t','void'],
- ['failure event delivered exactly once', 'to t l9-root .spawn( 0 ) >kid /problem $kid .raise /again $kid .raise l9-next-ready drop l9-next-ready drop l9-root failed-children/ object.@ array.length out. t','1'],
+ ['failure delivered when scheduler activates target actor', 'to t l9-root .spawn( 0 ) >kid /problem $kid .raise l9-dispatch-next $kid .done? out $kid .failure? out. t','11'],
+ ['failed task keeps its reason', 'to t l9-root .spawn( 0 ) >kid /problem $kid .raise l9-dispatch-next $kid .error out. t','problem'],
+ ['parent receives failure event', 'to t l9-root .spawn( 0 ) >kid /problem $kid .raise l9-dispatch-next l9-root failed-children/ object.@ array.length out. t','1'],
+ ['parent event identifies failed child', 'to t l9-root .spawn( 0 ) >kid /problem $kid .raise l9-dispatch-next 0 l9-root failed-children/ object.@ array.get $kid = out. t','1'],
+ ['failure clears registry owner on termination', 'to t l9-root .spawn( 0 ) >kid $kid .id >id /problem $kid .raise l9-dispatch-next $id 1 - l9-task-registry array.get type-of out. t','void'],
+ ['failure event delivered exactly once', 'to t l9-root .spawn( 0 ) >kid /problem $kid .raise /again $kid .raise l9-dispatch-next l9-dispatch-next l9-root failed-children/ object.@ array.length out. t','1'],
  ['cancellation propagates an error event to child', 'to t l9-root .spawn( 0 ) >kid l9-root .cancel $kid .canceled? out $kid pending-error?/ object.@ out. t','11'],
- ['canceled child is marked done when delivered', 'to t l9-root .spawn( 0 ) >kid $kid .cancel l9-next-ready drop $kid .done? out $kid .canceled? out. t','11'],
- ['raising failure does not execute child normal IP','to work "BAD" out. to t l9-root .spawn( work/ as-verb definition ) >kid /problem $kid .raise l9-next-ready drop $kid .done? out. t','1'],
+ ['canceled child is marked done when delivered', 'to t l9-root .spawn( 0 ) >kid $kid .cancel l9-dispatch-next $kid .done? out $kid .canceled? out. t','11'],
+ ['raising failure does not execute child normal IP','to work "BAD" out. to t l9-root .spawn( work/ as-verb definition ) >kid /problem $kid .raise l9-dispatch-next $kid .done? out. t','1'],
  ['failed task does not block runnable sibling', 'to a "BAD" out. to b "GOOD" out. to p l9-root .spawn( a/ as-verb definition ) >bad l9-root .spawn( b/ as-verb definition ) >good /problem $bad .raise $good .resume l9-dispatch-next "R" out $bad .failure? out $good .done? out. p', 'GOODR11'],
  // 2026-11-24: GPT-6 under Jean Hugues Noel Robert.
  // VM language exceptions without an immediate guard must use the same

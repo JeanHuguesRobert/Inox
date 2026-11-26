@@ -435,14 +435,26 @@ to l9-next-ready
   while: { l9-ready-queue queue.length 0 > } do: {
     l9-ready-queue queue.pull >candidate
     false $candidate queued?/ object.!
-    ~~ Pending failures are handled by the local scheduler, not by resuming
-    ~~ the target actor's normal instruction stream on a compromised state.
+    ~~ Pending exceptions are selected even when the actor is paused or
+    ~~ canceled. Selection itself does NOT complete the task or discard its
+    ~~ finalizers; l9-dispatch-next restores its own VM context before raising.
     if: ( $candidate pending-error?/ object.@ ) then: {
-      $candidate .deliver-error
+      $candidate >selected!
+      break
     } else: {
       if: ( $candidate paused?/ object.@ not ) then: {
         if: ( $candidate done?/ object.@ not ) then: {
-          if: ( $candidate canceled?/ object.@ not ) then: {
+          if: ( $candidate canceled?/ object.@ ) then: {
+            if: ( $candidate unwinding?/ object.@ ) then: {
+              $candidate >selected!
+              break
+            } else: {
+              if: ( $candidate joining?/ object.@ ) then: {
+                $candidate >selected!
+                break
+              };
+            };
+          } else: {
             $candidate >selected!
             break
           };
@@ -453,9 +465,9 @@ to l9-next-ready
   $selected
 
 ~~ 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
-~~ Cooperative dispatch boundary: obtain the next eligible ready task and
-~~ switch the actual VM actor (IP, data stack, control stack). The running
-~~ task must explicitly yield/reschedule itself if it wants another turn.
+~~ Cooperative dispatch boundary: select the next task and switch IP/TOS/CSP.
+~~ Pending exceptions enter the target actor's own VM guard/finally machinery.
+~~ The running task must yield/reschedule explicitly for another turn.
 ~~ There is no background preemption; no central COP scheduler is involved.
 to l9-dispatch-next
   ~~ When another task is ready, a runnable current task yields its turn but
@@ -468,33 +480,134 @@ to l9-dispatch-next
   };
   l9-next-ready >next-task
   return-if( $next-task nothing? )
-  $next-task .actor switch-actor
+  if: ( $next-task .pending-error? ) then: {
+    $next-task .error >reason
+    _ $next-task error/ object.!
+    false $next-task pending-error?/ object.!
+    true $next-task unwinding?/ object.!
+    $reason $next-task .actor switch-actor-raise
+  } else: {
+    $next-task .actor switch-actor
+  };
 
-~~ 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
-~~ Called only by the initial control-stack return sentinel of an actor with
-~~ a real entry IP. Mark completion, release registry ownership (the parent
-~~ retains completed children for join/introspection) and switch to the next
-~~ ready actor. If nobody is ready, return to the VM host without process.exit.
-to l9-actor-finish
+~~ 2026-11-24: GPT-6 under Jean Hugues Robert. Shared terminal lifecycle.
+~~ Reached from the actor's initial return sentinel or from an unhandled
+~~ language exception after the VM has unwound all active scope finalizers.
+~~ This is NOT a public Task method: only the owning actor calls it after
+~~ ordinary return or a VM-level unhandled exception has unwound its scopes.
+~~ All callbacks run with the Task's actor and VM pin still alive. They may
+~~ yield; only after their return do we mark done and detach the actor.
+to l9-complete-current
   l9 >finished
+  return-if( $finished nothing? )
+  return-if( $finished done?/ object.@ )
+  return-if( $finished finalizing?/ object.@ )
+  true $finished finalizing?/ object.!
+  true $finished defer-phase?/ object.!
+  $finished deferred-task-hooks/ object.@ >deferred
+  while: { $deferred array.length 0 > } do: {
+    $deferred array.pop >cleanup
+    { $cleanup .run }
+    { >reason $reason $finished error/ object.! }
+    run-guarded
+  };
+  false $finished defer-phase?/ object.!
+  $finished error/ object.@ >failure-reason
+  if: $failure-reason something? then: {
+    $finished failure-hook/ object.@ >hook
+    if: $hook something? then: {
+      { $hook .run( $finished error/ object.@ )
+        _ $finished error/ object.!
+      }
+      { >reason $reason $finished error/ object.! }
+      run-guarded
+    };
+  } else: {
+    $finished success-hook/ object.@ >hook
+    if: $hook something? then: {
+      { $hook .run( $finished result/ object.@ ) }
+      { >reason $reason $finished error/ object.! }
+      run-guarded
+    };
+  };
+  $finished final-hook/ object.@ >hook
+  if: $hook something? then: {
+    { $hook .run( $finished error/ object.@ $finished result/ object.@ ) }
+    { >reason $reason $finished error/ object.! }
+    run-guarded
+  };
+  ~~ Drop callback-owning references: the parent may keep this Task for
+  ~~ joining/introspection, but that must not retain captured resources.
+  _ $finished deferred-task-hooks/ object.!
+  _ $finished failure-hook/ object.!
+  _ $finished success-hook/ object.!
+  _ $finished final-hook/ object.!
+  ~~ A callback may have yielded; keep these state transitions LAST.
   true $finished done?/ object.!
+  false $finished finalizing?/ object.!
+  false $finished pending-error?/ object.!
+  false $finished exiting?/ object.!
+  false $finished unwinding?/ object.!
   true $finished paused?/ object.!
   false $finished queued?/ object.!
+  $finished .parent >parent-task
+  if: $parent-task something? then: {
+    ~~ A completed parent may leave live descendants. Transfer ownership and
+    ~~ active-child accounting to the grandparent before declaring it done.
+    $finished subtasks/ object.@ >descendants
+    0 >idx
+    while: { $idx $descendants array.length < } do: {
+      $idx $descendants array.get >descendant
+      $parent-task subtasks/ object.@ $descendant array.push
+      $parent-task .id $descendant parent-id/ object.!
+      if: ( $descendant done?/ object.@ not ) then: {
+        $parent-task pending-children/ object.@ 1 + $parent-task pending-children/ object.!
+      };
+      if: ( $descendant a-fork?/ object.@ ) then: {
+        $parent-task forks/ object.@ $descendant array.push
+      };
+      $idx 1 + >idx!
+    };
+    array[] $finished subtasks/ object.!
+    array[] $finished forks/ object.!
+    array[] $finished failed-children/ object.!
+    if: ( $finished error/ object.@ something? ) then: {
+      $parent-task failed-children/ object.@ $finished array.push
+    };
+    $parent-task pending-children/ object.@ 1 - $parent-task pending-children/ object.!
+    if: ( $parent-task joining?/ object.@ ) then: {
+      if: ( $parent-task pending-children/ object.@ 0 = ) then: {
+        ~~ Keep joining? set until the awakened parent resumes its join
+        ~~ continuation; canceled parents must remain scheduler-eligible.
+        $parent-task .resume
+      };
+    };
+  };
+  ~~ Task.result/error/history survive; the actor and both stacks do not.
+  ~~ ACTOR has its own temporary VM pin until the following switch.
+  _ $finished actor/ object.!
   $finished .id l9-unregister-task
+
+to l9-actor-finish
+  l9-complete-current
   l9-dispatch-next
   halt-actor
 
 ~~ 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
-~~ This is the VM entry point after an unhandled language-level vm-raise in
-~~ a child actor. The VM has abandoned only that actor's broken continuation
-~~ and left its reason as the sole data-stack argument. The task's existing
-~~ raise/deliver-error path owns notification and registry cleanup. An error
-~~ here is a hard failure, not another recursive attempt to deliver it.
+~~ VM entry after an unhandled language error in a child actor. Its control
+~~ frames and finalizers have ALREADY been unwound; the original typed reason
+~~ is the sole data-stack argument. Record this terminal failure exactly once,
+~~ notify the parent, unregister the task, then dispatch another actor. Do NOT
+~~ inject the same error again into the exhausted child continuation.
 to l9-uncaught-error
   >reason
   l9 >failed-task
   if: $failed-task something? then: {
-    $reason $failed-task .raise
+    $reason $failed-task error/ object.!
+    ~~ The exception has already entered the actor. Do not leave its
+    ~~ transport flag set while failure/final callbacks may yield.
+    false $failed-task pending-error?/ object.!
+    l9-complete-current
     l9-dispatch-next
     halt-actor
   };
@@ -798,15 +911,26 @@ to initialize-l9
         $spawn?    :a-spawn?
         false      :done?
         false      :pending-error?
+        false      :unwinding?
         array[]    :failed-children
         false      :canceled?
         false      :should-stop?
+        _          :stop-reason
         _          :result
         _          :error
         _          :promise
         array[]    :subtasks
         array[]    :forks
         array[]    :fork-results
+        array[]    :deferred-task-hooks
+        _          :failure-hook
+        _          :success-hook
+        _          :final-hook
+        false      :finalizing?
+        false      :defer-phase?
+        false      :exiting?
+        0          :pending-children
+        false      :joining?
         0          :fork-parent-index
       } >it
       ~~ Task ids are monotonic (1-based), registry indices are 0-based.
@@ -818,6 +942,7 @@ to initialize-l9
         ~~ Resolve the parent object attribute explicitly; the dotted
         ~~ @parent.subtasks.push chain did not resolve a valid array receiver.
         $parent subtasks/ object.@ it array.push
+        $parent pending-children/ object.@ 1 + $parent pending-children/ object.!
         if: $fork? then: {
           $parent forks/ object.@ it array.push
         };
@@ -847,19 +972,28 @@ to initialize-l9
     paused?/getter
     queued?/getter
     should-stop?/getter
-    stopping?/it-method{ ( @should-stop? and not @done ) }
+    stop-reason/getter
+    stopping?/it-method{ @should-stop? @done? not and }
     done?/getter
+    pending-children/getter
+    joining?/getter
     pending-error?/getter
-    stopped?/method{ .$done? }
+    unwinding?/getter
+    stopped?/it-method{ @should-stop? @done? and }
+    ~~ Cancel propagates to children; an active child injects in its own VM,
+    ~~ while an external cancellation is delivered on the next scheduler turn.
+    ~~ The long-lived root remains special and is not forcibly terminated.
     cancel/it-method{
-      return-if( @done? or @canceled? )
+      return-if( @done? @canceled? or @finalizing? or @exiting? or )
       true @canceled?!
       ~~ 2026-11-23: GPT-6 coding agent, under Jean Hugues Noel Robert.
       ~~ Separate attribute lookup from the each{ method invocation.
       @subtasks .each{ .cancel }
-      ( it not= l9 ) then{
+      if: ( it = l9 ) then: {
+        if: ( it not= l9-root ) then: { /canceled raise };
+      } else: {
         /canceled it .raise
-      }
+      };
     }
     ~~ ToDo 2026-11-23 - GPT-6 under Jean Hugues Noel Robert:
     ~~ Root cancel and .each{ are now verified. A child cancel reaches the
@@ -867,11 +1001,41 @@ to initialize-l9
     ~~ Do not omit that raise or mark child cancellation complete until the
     ~~ actor/task exception delivery contract and red probe are repaired.
     canceled?/method{ .$canceled? }
-    stop/method{ true swap .>should-stop?! }
+    ~~ 2026-11-24: GPT-6 under Jean Hugues Robert. Cooperative stop requests.
+    ~~ stop has no argument; stop-because consumes one reason value.
+    ~~ First request wins (including false or void); neither raises nor cancels.
+    stop-because/it-method{ >reason
+      return-if( @should-stop? or @done? or @exiting? )
+      $reason @stop-reason!
+      true @should-stop?!
+    }
+    stop/it-method{ true it .stop-because }
     success?/it-method{ ( @done? and @error nothing? ) }
     failure?/it-method{ ( @done? and @error something? ) }
-    result/getter
+    ~~ The result is an explicitly owned Cell, not an implicit snapshot of
+    ~~ all remaining data stack values. An array can hold multiple results.
+    ~~ Example inside a worker: 42 l9 .>result!
+    result/attribute
     error/getter
+    ~~ L8-style task-level finalizers, distinct from VM control-stack defer.
+    ~~ Blocks are ordinary Inox code Cells, executed in the Task's actor.
+    defer/it-method{ >code
+      return-if( @done? )
+      if: @finalizing? then: { return-unless( @defer-phase? ) };
+      @deferred-task-hooks $code array.push
+    }
+    failure/it-method{ >code
+      return-if( @done? or @finalizing? )
+      $code @failure-hook!
+    }
+    success/it-method{ >code
+      return-if( @done? or @finalizing? )
+      $code @success-hook!
+    }
+    final/it-method{ >code
+      return-if( @done? or @finalizing? )
+      $code @final-hook!
+    }
     a-fork?/getter
     a-spawn?/getter
     tasks/method{ .$subtasks }
@@ -883,19 +1047,29 @@ to initialize-l9
       };
       $parents
     }
-    ip/it-method{ @actor.ip }
-    data-stack/it-method{ @actor.data-stack }
-    control-stack/it-method{ @actor.control-stack }
-    tos/it-method{ @actor.tos }
-    csp/it-method{ @actor.csp }
+    ~~ Actor is a structured stack, not an extensible object. Access its
+    ~~ canonical slots; saved registers describe the latest suspension.
+    ~~ A completed Task has no actor, so introspection returns void.
+    ip/it-method{ if: @actor something? then: { 3 @actor stack.fetch } else: { _ }; }
+    data-stack/it-method{ if: @actor something? then: { 0 @actor stack.fetch } else: { _ }; }
+    control-stack/it-method{ if: @actor something? then: { 1 @actor stack.fetch } else: { _ }; }
+    tos/it-method{ if: @actor something? then: { 4 @actor stack.fetch } else: { _ }; }
+    csp/it-method{ if: @actor something? then: { 5 @actor stack.fetch } else: { _ }; }
     ~~ 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
     ~~ The local FIFO owns ready tasks while queued. A wake is idempotent;
     ~~ paused/canceled/done tasks do not enter the queue, and dequeue clears
     ~~ queued? before the next dispatch. No actor context switch here.
     schedule/it-method{
       return-if( @done? )
-      ~~ Error events bypass pause/cancel so the scheduler can retire the task.
-      return-if( @canceled? @pending-error? not and )
+      ~~ Pending exceptions are dispatched even when canceled/paused. Once
+      ~~ injected, a canceled actor is still eligible while its finalizers run
+      ~~ (they may themselves yield and later resume).
+      if: @canceled? then: {
+        if: @pending-error? then: { false } else: {
+          if: @joining? then: { false } else: { @unwinding? not };
+        };
+      } else: { false };
+      return-if
       return-if( @paused? @pending-error? not and )
       return-if( @queued? )
       true @queued?!
@@ -910,33 +1084,25 @@ to initialize-l9
     signal/it-method{  with result/ parameter
     }
     ~~ 2026-11-24: GPT-6 coding agent under Jean Hugues Noel Robert.
-    ~~ Raise is an asynchronous FAIL-EARLY event. The target is not resumed
-    ~~ normally: its next scheduler turn finalizes the failure and publishes
-    ~~ an event to its parent. No user catch/recovery handler exists yet.
+    ~~ Self-directed raises use the current actor's VM guard immediately;
+    ~~ external raises are queued for injection at the next actor dispatch.
+    ~~ Ignore subsequent external raises during an already active unwind.
     raise/it-method{ >reason
       return-if( @done? )
+      ~~ Self-directed raise remains a real exception, even inside a
+      ~~ finally/defer callback. Only EXTERNAL raises are deduplicated while
+      ~~ terminal cleanup or an early exit is already active.
+      if: ( it = l9 ) then: { $reason raise };
+      return-if( @unwinding? @finalizing? or @exiting? or )
       return-if( @pending-error? )
       $reason @error!
       true @pending-error?!
-      true @should-stop?!
       false @paused?!
       it .schedule
     }
-    deliver-error/it-method{
-      return-if( @done? )
-      return-unless( @pending-error? )
-      false @pending-error?!
-      true @done?!
-      true @paused?!
-      it .parent >parent-task
-      if: $parent-task something? then: {
-        ~~ array.push takes (array, value), not (value, array).
-        $parent-task failed-children/ object.@ it array.push
-      };
-      ~~ Remove scheduler-registry ownership: parent retains the result,
-      ~~ including its error, for supervision, joining or introspection.
-      @id l9-unregister-task
-    }
+    ~~ The earlier Task.deliver-error method has been removed. An external
+    ~~ caller must not directly retire a live actor; only the owning VM
+    ~~ reaches l9-complete-current after actual control-stack unwind.
     setup-stacks/it-method{  with data-stack/ control-stack/ parameters
       $data-stack @actor         .>data-stack!
       $data-stack .top @actor    .>tos!
@@ -962,11 +1128,43 @@ to initialize-l9
       it .id :l9-task 6 @actor stack.put
       it
     }
-    ~~ #2026: Old code had: join/it-method{  with result/ parameters
-    join/it-method{  with result/ parameter
+    ~~ 2026-11-24: GPT-6 under Jean Hugues Robert. Event-driven join.
+    ~~ Wait for all children, then transfer ownership of their completed
+    ~~ Task records (results/errors) to the caller. Nothing is polled.
+    ~~ In quiescence without a runnable actor, report blockage explicitly.
+    join/it-method{
+      it >joining-task
+      if: ( $joining-task not= l9 ) then: { /join-of-other-task raise };
+      while: { $joining-task pending-children/ object.@ 0 > } do: {
+        if: ( l9-ready-queue queue.length 0 = ) then: {
+          false $joining-task joining?/ object.!
+          false $joining-task paused?/ object.!
+          /join-no-runnable-child raise
+        };
+        true $joining-task joining?/ object.!
+        true $joining-task paused?/ object.!
+        l9-dispatch-next
+      };
+      false $joining-task joining?/ object.!
+      $joining-task subtasks/ object.@ >completed
+      array[] $joining-task subtasks/ object.!
+      array[] $joining-task forks/ object.!
+      array[] $joining-task failed-children/ object.!
+      $completed
     }
-    ~~ #2026: Old code had: exit/it-method{  with result/ parameters
-    exit/it-method{  with result/ parameter
+    ~~ Explicit early completion of the current actor, not a remote kill.
+    ~~ The initial actor's l9-actor-finish continuation is a VM sentinel.
+    ~~ long-jump runs scope on-return/finally before reaching task hooks.
+    exit/it-method{ >result
+      return-if( @done? or @finalizing? or @exiting? )
+      if: ( it = l9 ) then: {
+        if: ( it = l9-root ) then: { /root-task-cannot-exit raise };
+        $result @result!
+        true @exiting?!
+        /l9-actor-finish long-jump
+      } else: {
+        /exit-of-other-task raise
+      };
     }
     ~~ #2026: Old code had: sleep/it-method{  with milliseconds/ parameters
     sleep/it-method{  with milliseconds/ parameter

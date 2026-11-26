@@ -9773,6 +9773,25 @@ function primitive_switch_actor(){
 }
 primitive( "switch-actor", primitive_switch_actor );
 
+// 2026-11-24: GPT-6 coding agent under Jean Hugues Robert's direction.
+// Deliver an exception at an actor-switch boundary, not in its sender's VM
+// context. Preserve owned reason Cells while transferring both VM pins.
+// Stack arguments, bottom to top: reason, actor.
+function primitive_switch_actor_raise(){
+  const next_actor = pop_reference();
+  const reason_cell = pop();
+  const previous_actor = ACTOR;
+  actor_save_context();
+  actor_restore_context( next_actor );
+  const new_top = push();
+  // Self-directed events reuse the same data stack; avoid moving a Cell
+  // onto itself (which would clear its owning reference).
+  if( reason_cell != new_top )move_cell( reason_cell, new_top );
+  area_free( previous_actor );
+  primitive_vm_raise();
+}
+primitive( "switch-actor-raise", primitive_switch_actor_raise );
+
 // 2026-11-24: GPT-6 under Jean Hugues Noel Robert. Yield a quiescent VM
 // back to its host when no ready actor remains; do not terminate the host
 // process (which can be the long-lived Inox sidecar).
@@ -20076,13 +20095,19 @@ function primitive_vm_raise(){
     }
     if( task_id > 1 && ! already_dispatching
     && definition_exists( tag_l9_uncaught_error ) ){
-      // Irreversibly abandon the broken child call chain, not the host VM.
-      // Clear only this actor's frames; all other actors keep their stacks.
+      // Irreversibly abandon only this actor's call chain. Preserve the
+      // original typed, owned error Cell (including reference ownership)
+      // while clearing the remaining data and control frames.
+      const owned_reason = pop();
       while( TOS > ACTOR_data_stack )drop();
       while( CSP > ACTOR_control_stack )drop_control();
+      const reason_slot = ACTOR_data_stack + ONE;
+      if( owned_reason != reason_slot ){
+        move_cell( owned_reason, reason_slot );
+      }
+      TOS = reason_slot;
       CSP += ONE;
       set( CSP, type_integer, tag_l9_uncaught_dispatch, task_id );
-      push_text( text );
       IP = get_definition( tag_l9_uncaught_error );
       return;
     }

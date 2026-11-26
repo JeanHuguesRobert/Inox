@@ -41,6 +41,7 @@
     "test:l9-object-core": "node scripts/test-l9-object-core.js",
     "test:l9-ready-queue": "node scripts/test-l9-ready-queue.js",
     "test:l9-error-delivery": "node scripts/test-l9-error-delivery.js",
+    "test:l9-join": "node scripts/test-l9-join.js",
     "test:inox-guarded-exceptions": "node scripts/test-inox-guarded-exceptions.js",
     "test:inox-try-finally": "node scripts/test-inox-try-finally.js"
   },
