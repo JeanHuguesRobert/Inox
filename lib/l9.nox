@@ -616,6 +616,15 @@ to l9-uncaught-error
 ~~ 2026-11-23 GPT-6 under Jean Hugues Noel Robert: no early make.task stub.
 ~~ The actual task maker is registered by task/class{ during initialize-l9.
 
+~~ Shallow snapshot of the result vector, not of its payload objects.
+to outcome-copy-values
+  >source array[] >copy 0 >idx
+  while: { $idx $source array.length < } do: {
+    $copy $idx $source array.get array.push
+    $idx ++ >idx!
+  };
+  $copy
+
 to initialize-l9
 
   promise-handler/class{
@@ -711,6 +720,183 @@ to initialize-l9
       @handlers .each{ >handler $source $handler .schedule }
       @handlers .clear
     }
+  }
+
+  ~~ 2026-11-26: GPT-6.2 under JHR, #42. First Boxon/Moxon layer.
+  ~~ Fixed arity Inox interface: a typed outcome and explicit callback context.
+  ~~ Failure is a separate bit, so a false or void rejection remains a failure.
+  outcome/class{
+    maker{ >class >values >error >failed
+      $class make{ $failed :failed? $error :error $values outcome-copy-values :values }
+    }
+    failed?/getter
+    error/getter
+    values/it-method{ @values outcome-copy-values }
+    value/it-method{
+      if: @failed? then: { @error raise } else: {
+        if: ( @values array.length 0 = ) then: { _ } else: {
+          if: ( @values array.length 1 = ) then: { 0 @values array.get } else: { it .values };
+        };
+      };
+    }
+  }
+
+  boxon-observer/class{
+    maker{ >class >default? >context >callback
+      $class make{ $callback :callback $context :context $default? :default? }
+    }
+    callback/getter
+    context/getter
+    context-for/it-method{ >box
+      if: @default? then: { $box } else: { @context };
+    }
+    deliver/it-method{ >box >event
+      @callback .run( $event $box it .context-for )
+    }
+  }
+
+  boxon-registration/class{
+    maker{ >class >observer >box
+      $class make{ $box :box $observer .callback :callback $box $observer .context-for :context }
+    }
+    box/getter
+    callback/getter
+    context/getter
+  }
+
+  boxon/class{
+    maker{ >class
+      $class make{ _ :outcome make.promise/ as-verb run :promise queue[] :observers queue[] :internal-observers false :multiple? }
+    }
+    outcome/getter
+    promise/getter
+    settled?/it-method{ if: @outcome something? then: { true } else: { false }; }
+    value/it-method{
+      if: it .settled? then: { @outcome .value } else: { _ };
+    }
+    settle/it-method{ >event
+      if: it .settled? not then: {
+        $event @outcome!
+        @observers >pending
+        queue[] @observers!
+        @internal-observers >internal
+        queue[] @internal-observers!
+        if: $event .failed? then: {
+          $event .error @promise .reject
+        } else: { $event .value @promise .resolve };
+        ~~ Detach both queues first. A failing callback cannot starve the rest.
+        false >failed?
+        _ >failure
+        while: { $internal queue.length 0 > } do: {
+          try: { $event it $internal queue.pull .deliver } catch: {
+            >reason if: $failed? not then: { $reason >failure! true >failed?! };
+          };
+        };
+        while: { $pending queue.length 0 > } do: {
+          try: { $event it $pending queue.pull .deliver } catch: {
+            >reason if: $failed? not then: { $reason >failure! true >failed?! };
+          };
+        };
+        if: $failed? then: { $failure raise };
+      };
+      it
+    }
+    resolve/it-method{ >value
+      array[] >values
+      $values $value array.push
+      false _ $values make.outcome/ as-verb run it .settle
+    }
+    complete/it-method{ false _ array[] make.outcome/ as-verb run it .settle }
+    reject/it-method{ >reason
+      true $reason array[] make.outcome/ as-verb run it .settle
+    }
+    register/it-method{ >default? >context >callback
+      $callback $context $default? make.boxon-observer/ as-verb run >observer
+      if: it .settled? then: {
+        @outcome it $observer .deliver
+      } else: {
+        if: ( @multiple? @observers queue.length 0 = or ) then: {
+          @observers $observer queue.enqueue
+        } else: {
+          ~~ The first Boxon observer receives a registration event, not settlement.
+          it $observer make.boxon-registration/ as-verb run >registration
+          true $registration array[] make.outcome/ as-verb run >event
+          @observers queue.pull >first
+          @observers $first queue.enqueue
+          $event it $first .deliver
+        };
+      };
+      it
+    }
+    ~~ Independent settlement observers, not a second public Boxon callback.
+    observe/it-method{ >callback
+      $callback _ true make.boxon-observer/ as-verb run >observer
+      if: it .settled? then: { @outcome it $observer .deliver } else: {
+        @internal-observers $observer queue.enqueue
+      };
+      it
+    }
+    on-context/it-method{ >context >callback $callback $context false it .register }
+    on/it-method{ >callback $callback _ true it .register }
+    then/it-method{ >on-reject >on-resolve
+      $on-resolve $on-reject @promise .then
+    }
+  }
+  moxon/class{
+    boxon/superclass
+    maker{ >class
+      $class make{ _ :outcome make.promise/ as-verb run :promise queue[] :observers queue[] :internal-observers true :multiple? }
+    }
+  }
+
+  ~~ Forward an already typed Outcome without losing its result vector.
+  boxon-forwarder/class{
+    maker{ >class >target $class make{ $target :target } }
+    run/it-method{ >source >event $event @target .settle drop }
+  }
+  ~~ Promise callbacks may be objects implementing run, not only code blocks.
+  boxon-promise-adapter/class{
+    maker{ >class >failed? >target
+      $class make{ $target :target $failed? :failed? }
+    }
+    run/it-method{ >value
+      if: @failed? then: { $value @target .reject drop } else: {
+        $value @target .resolve drop
+      };
+      _
+    }
+  }
+
+  boxon-collection/class{
+    maker{ >class >race? >count
+      array[] >items 0 >idx
+      while: { $idx $count < } do: { $items _ array.push $idx ++ >idx! };
+      $class make{
+        make.boxon/ as-verb run :output
+        $items :items
+        $count :remaining
+        $race? :race?
+      }
+    }
+    output/getter
+    record/it-method{ >idx >source
+      if: @output .settled? not then: {
+        if: @race? then: { $source @output .resolve drop } else: {
+          @items $idx $source array.put
+          @remaining -- @remaining!
+          if: ( @remaining 0 = ) then: {
+            @items >results array[] @items!
+            $results @output .resolve drop
+          };
+        };
+      };
+    }
+  }
+  boxon-collection-observer/class{
+    maker{ >class >idx >collection
+      $class make{ $collection :collection $idx :idx }
+    }
+    run/it-method{ >source >event $source @idx @collection .record }
   }
 
   ~~ 2026-11-24: GPT-6 under Jean Hugues Noel Robert, Inox #42.
@@ -1217,6 +1403,47 @@ to initialize-l9
   _ false false make.task/ as-verb run, drop
 
 initialize-l9
+
+~~ Core Inox adapters: explicit operations instead of JavaScript callable objects.
+to boxon?
+  .class >kind
+  $kind /boxon = $kind /moxon = or
+
+to boxon-cast
+  >source make.boxon >target
+  if: $source boxon? then: {
+    $target make.boxon-forwarder $source .observe drop
+  } else: {
+    if: ( $source .class /promise = ) then: {
+      $target false make.boxon-promise-adapter
+      $target true make.boxon-promise-adapter
+      $source .then drop
+    } else: { $source $target .resolve drop };
+  };
+  $target
+
+to boxon-normalize
+  >source if: $source boxon? then: { $source } else: { $source boxon-cast };
+
+to boxon-collect
+  >race? >inputs
+  $inputs array.length >count
+  $count $race? make.boxon-collection >collection
+  $collection .output >output
+  if: ( $count 0 = ) then: {
+    if: $race? not then: { array[] $output .resolve drop };
+  };
+  0 >idx
+  while: { if: ( $idx $count < ) then: { $output .settled? not } else: { false }; } do: {
+    $idx $inputs array.get boxon-normalize >source
+    $collection $idx make.boxon-collection-observer
+    $source .observe drop
+    $idx ++ >idx!
+  };
+  $output
+
+to boxon-all false boxon-collect
+to boxon-race true boxon-collect
 
 ~~ #2026: Selective testing explanation and diagnostics were added in 2026.
 ~~ Selective testing / bypassing full l9 for class hierarchy debug:
