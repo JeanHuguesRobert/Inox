@@ -72,12 +72,18 @@ export class VM {
     }
     return null;
   }
+  static sourceTag(token) {
+    if(token==='with')return 'with';
+    const match=/^\/([A-Za-z_][A-Za-z0-9_-]*)$/.exec(token)
+      || /^([A-Za-z_][A-Za-z0-9_-]*)\/$/.exec(token);
+    return match?match[1]:null;
+  }
   // Shared punctuation normalization for both experimental readers.
   // This is a deliberately bounded subset of the historical tokenizer.
   static normalizeTokens(tokens) {
     return tokens.flatMap(token => {
       if (VM.literal(token) || token.startsWith('"')) return [token];
-      return token.split(/(>\{|[{};])/u).filter(Boolean).flatMap(part =>
+      return token.split(/([>/]\{|[{};])/u).filter(Boolean).flatMap(part =>
         part.length > 1 && part.endsWith('.') && !VM.literal(part)
           ? [part.slice(0,-1), '.'] : [part]);
     });
@@ -163,11 +169,11 @@ export class VM {
       if(skip!==null)patch(skip,body.length);
       return;
     }
-    if(token==='{' || token==='>{') {
+    if(token==='{' || token==='>{' || token==='/{') {
       // Retain inline lowering of immediate conditionals to support loop breaks.
       let depth=1, end=this.cursor;
       for(;end<this.tokens.length && depth;end++){
-        if(this.tokens[end]==='{' || this.tokens[end]==='>{')depth++;
+        if(['{','>{','/{'].includes(this.tokens[end]))depth++;
         else if(this.tokens[end]==='}')depth--;
       }
       if(depth)throw new SyntaxError('unterminated block');
@@ -190,6 +196,12 @@ export class VM {
       d.loops=oldLoops;d.scopeDepth=oldDepth;
       patch(skip,body.length);
       if(token==='>{')emit('run-with-it');
+      if(token==='/{')emit('run-with-parameters');
+      return;
+    }
+    const tag = VM.sourceTag(token);
+    if(tag!==null){
+      emit(JSON.stringify(tag));emit('tag.literal');
       return;
     }
     const local=/^>([A-Za-z_][A-Za-z0-9_-]*)(!)?$/.exec(token);
@@ -316,7 +328,11 @@ export class VM {
       const token = this.nextToken();
       const lit = VM.literal(token);
       if (lit) this.push(lit);
-      else this.invoke(token);
+      else {
+        const tag=VM.sourceTag(token);
+        if(tag!==null)this.push({name:tag,type:'tag',value:tag});
+        else this.invoke(token);
+      }
     }
     if (this.definition !== null) throw new Error('unfinished definition');
     return this.values();
@@ -373,6 +389,38 @@ export class VM {
       const block=vm.pop(),target=vm.pop();
       runBlock(vm,block);
       vm.scopes().at(-1).set('it',{...target,name:'it'});
+    });
+    // The image stores scalar names plus a symbolic primitive, not native
+    // tags or binary Cells. At runtime tags carry their own name.
+    p('tag.literal',vm=>{
+      const name=vm.pop().value;
+      if(typeof name!=='string'||!name)throw Error('expected tag name');
+      vm.push({name,type:'tag',value:name});
+    });
+    p('run-with-parameters',vm=>{
+      // Reuse dynamic call frames. The sentinel scan is part of the protocol;
+      // no fixed arity limit or additional walk to count actual arguments.
+      const block=vm.peek();
+      if(block.type!=='block'||!Number.isInteger(block.value))throw Error('expected block');
+      const at=i=>vm.cells[vm.data[i]];
+      const end=vm.DSP-1;
+      let sentinel=end-1;
+      while(sentinel>=0){
+        const cell=at(sentinel);
+        if(cell.type!=='tag')throw Error('expected formal parameter tag or with');
+        if(cell.name==='with'&&cell.value==='with')break;
+        sentinel--;
+      }
+      if(sentinel<0)throw Error('missing with sentinel');
+      const count=end-sentinel-1, first=sentinel-count;
+      if(first<0)throw Error('insufficient actual arguments');
+      runBlock(vm,block);
+      const locals=vm.scopes().at(-1);
+      for(let i=0;i<count;i++){
+        const name=at(sentinel+1+i).name;
+        locals.set(name,{...at(first+i),name});
+      }
+      vm.data.length=first;vm.DSP=first;
     });
     p('it',vm=>vm.push(vm.findLocal('it').get('it')));
     p('it!',vm=>vm.findLocal('it').set('it',{...vm.pop(),name:'it'}));

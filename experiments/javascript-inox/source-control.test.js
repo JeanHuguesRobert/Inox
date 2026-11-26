@@ -44,6 +44,19 @@ const cases=[
  ['nested target restoration','7 >{ it out 8 >{ it out } it }','787'],
  ['resume after target block','7 >{ it out } 9','79'],
  ['target scope inside conditional','7 true { >{ it } } if','7'],
+ ['named parameters','7 8 with /left /right /{ $left out $right out } 9','789'],
+ ['named parameters suffix','7 8 with a/ b/ /{ $a out $b out } 9','789'],
+ ['explicit sentinel and invocation','7 8 /with /a /b { $a out $b out } run-with-parameters 9','789'],
+ ['empty parameter list','with /{ 7 out } 9','79'],
+ ['single parameter','7 with /x /{ $x }','7'],
+ ['three parameters','1 2 3 with /x /y /z /{ $x out $y out $z out } 9','1239'],
+ ['nested parameters','7 with /a /{ $a out 8 with /a /{ $a out } $a out } 9','7879'],
+ ['duplicate parameter shadow','7 8 with /x /x /{ $x out } 9','89'],
+ ['parameter update','7 with /a /{ 9 >a! $a out } 8','98'],
+ ['parameter text values','"left" "right" with /first /second /{ $first out $second out } "!"','leftright!'],
+ ['preserve caller data','4 7 8 with /a /b /{ $a $b + } +','19'],
+ ['parameters inside conditional','7 true { with /a /{ $a } } if','7'],
+ ['eleven parameters','1 2 3 4 5 6 7 8 9 10 11 with /a /b /c /d /e /f /g /h /i /j /k /{ $a $k + }','12'],
  ['stored block conditional','3 { 2 + } >b true $b if','5'],
  ['nested scope break','7 >x 0 while: { dup 3 < } do: { 8 >x if: true then: { 9 >x break }; 1 + }; drop $x','7'],
  ['stored block reused','{ 7 out } >b $b run $b run 0','770'],
@@ -104,4 +117,18 @@ test('local scope and call frames are cleaned after a failed invocation',()=>{
  assert.throws(()=>vm.invoke('p'),/undefined local/);
  assert.equal(vm.frames.size,0);assert.equal(vm.CSP,0);
  assert.deepEqual(vm.evaluate('to q 9 >x $x. q'),[9]);
+});
+
+test('invalid parameter calls do not enter body or leave frames',()=>{
+ for(const [body,error] of [
+  ['7 with /a /b /{ 99 out }',/insufficient actual arguments/],
+  ['7 /a /{ 99 out }',/missing with sentinel|expected formal/],
+  ['7 with 8 /{ 99 out }',/expected formal/],
+ ]){
+  const vm=fresh(),output=[];
+  vm.primitive('out',v=>output.push(v.pop().value));
+  vm.evaluate('to p '+body+' .');
+  assert.throws(()=>vm.invoke('p'),error);
+  assert.deepEqual(output,[]);assert.equal(vm.CSP,0);assert.equal(vm.frames.size,0);
+ }
 });

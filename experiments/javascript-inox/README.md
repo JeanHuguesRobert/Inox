@@ -141,3 +141,23 @@ invocation and continuation after the block. Historical `/{ ... }`
 parameter binding and `.{ ... }` syntax are deferred: probes of the
 existing CLI did not establish expected continuation behavior.
 No memory allocator changes.
+
+### Named parameter blocks (2026-11-26)
+
+After fixing the historical runtime (Inox d0445e2), the experiment now
+supports `actuals with /a /b /{ ... }`, suffix tags `a/ b/`,
+the explicit `/with` sentinel, and `{ ... } run-with-parameters`.
+The compiler lowers the special block to an ordinary relocatable block
+and the frame-binding primitive. Tags use native Cells with string
+names/values; the image still contains only scalar literals and symbolic
+imports (`tag.literal` constructs the runtime tag). No binary ABI change.
+
+The parameter primitive scans the formal tags to the sentinel, derives
+the actual argument boundary from the count, and binds the existing
+dynamic frame. Return restores the caller. No arbitrary arity limit.
+The existing JS experiment retains its checked-mode validation; no
+extra fast-mode architecture is introduced. Invalid calls fail before
+entering the block. This is the needed tag subset, not a general
+implementation of tag operations, `as-tag`, or method dispatch.
+Thirteen new source-differential cases exercise parameter binding,
+including eleven arguments, shadowing, nested calls and image relocation.
