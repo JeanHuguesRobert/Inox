@@ -832,21 +832,28 @@ to initialize-l9
     entered?/getter
     owner-id/getter
     closed?/getter
+    ~~ Acquisition hooks establish state before synchronous settlement.
+    grant/it-method{ >pending >requester
+      true @entered?!
+      $requester @owner-id!
+      it $pending .resolve
+    }
+    reacquire/it-method{ >pending /mutex-already-entered $pending .reject }
+    release-ready?/it-method{ true }
+    clear-owner/it-method{ false @entered?! 0 @owner-id! }
     promise/it-method{
       make.promise/ as-verb run >pending
       l9 .id >requester
       if: @closed? then: { /closed $pending .reject } else: {
         if: @entered? then: {
           if: ( @owner-id $requester = ) then: {
-            /mutex-already-entered $pending .reject
+            $pending it .reacquire
           } else: {
             $requester $pending make.mutex-waiter/ as-verb run >waiter
             @waiters $waiter queue.enqueue
           };
         } else: {
-          true @entered?!
-          $requester @owner-id!
-          it $pending .resolve
+          $requester $pending it .grant
         };
       };
       $pending
@@ -856,14 +863,12 @@ to initialize-l9
     }
     release/it-method{
       if: @closed? not then: {
-        if: @entered? then: {
+        if: ( @entered? and{ it .release-ready? } ) then: {
           if: ( @waiters queue.length > 0 ) then: {
             @waiters queue.pull >waiter
-            $waiter .owner-id @owner-id!
-            it $waiter .promise .resolve
+            $waiter .owner-id $waiter .promise it .grant
           } else: {
-            false @entered?!
-            0 @owner-id!
+            it .clear-owner
           };
         };
       };
@@ -873,8 +878,7 @@ to initialize-l9
     close/it-method{
       if: @closed? not then: {
         true @closed?!
-        false @entered?!
-        0 @owner-id!
+        it .clear-owner
         @waiters >pending-list
         queue[] @waiters!
         while: { $pending-list queue.length 0 > } do: {
@@ -883,6 +887,39 @@ to initialize-l9
       };
       it
     }
+  }
+
+  ~~ 2026-11-26: #42. Reentrant L8 Lock, sharing Mutex FIFO and close.
+  lock/class{
+    mutex/superclass
+    maker{ >class >depth
+      ( $depth > 0 ) >held?
+      0 >owner
+      if: $held? then: { l9 .id >owner! };
+      $class make{
+        $held?     :entered?
+        $owner     :owner-id
+        false      :closed?
+        queue[]    :waiters
+        $depth     :count
+      }
+    }
+    count/getter
+    grant/it-method{ >pending >requester
+      1 @count!
+      true @entered?!
+      $requester @owner-id!
+      it $pending .resolve
+    }
+    reacquire/it-method{ >pending
+      @count ++ @count!
+      it $pending .resolve
+    }
+    release-ready?/it-method{
+      if: ( @count > 0 ) then: { @count -- @count! };
+      @count 0 =
+    }
+    clear-owner/it-method{ 0 @count! false @entered?! 0 @owner-id! }
   }
 
   task/class{

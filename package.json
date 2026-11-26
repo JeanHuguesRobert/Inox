@@ -33,6 +33,7 @@
     "test:l9-tasks": "node scripts/test-l9-task-structure.js",
     "test:l9-lifecycle-basics": "node scripts/test-l9-lifecycle-basics.js",
     "test:l9-mutex": "node scripts/test-l9-mutex.js",
+    "test:l9-lock": "node scripts/test-l9-lock.js",
     "test:l9-semaphore": "node scripts/test-l9-semaphore.js",
     "test:l9-signal": "node scripts/test-l9-signal.js",
     "test:l9-promise-chain": "node scripts/test-l9-promise-chain.js",
