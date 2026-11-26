@@ -15,6 +15,7 @@ export class VM {
     this.frames = new Map(); // locals by control-frame address
     this.data = []; // addresses of value Cells
     this.tokens = [];
+    this.tokenPositions = [];
     this.sourceText = "";
     this.sourceOffset = 0;
     this.lexWithInox = false;
@@ -44,8 +45,15 @@ export class VM {
     return this.cells[this.data[this.DSP - 1]];
   }
   values() { return this.data.map(address => this.cells[address].value); }
-  nextToken() {
+  nextToken({definitionBoundary=false} = {}) {
     if (this.cursor >= this.tokens.length) throw new Error('unexpected end of definition');
+    const token=this.tokens[this.cursor];
+    // Only the outer compile loop may synthesize a terminator. Nested
+    // structured syntax still consumes its explicit closing punctuation.
+    if(definitionBoundary && this.definition?.body.length && token!=='.'){
+      const pos=this.tokenPositions[this.cursor];
+      if(pos?.columnOne && (pos.dedent || token==='to'))return '.';
+    }
     return this.tokens[this.cursor++];
   }
   static lex(source) {
@@ -82,11 +90,39 @@ export class VM {
   // This is a deliberately bounded subset of the historical tokenizer.
   static normalizeTokens(tokens) {
     return tokens.flatMap(token => {
+      // A final dot is a delimiter, even after a numeric literal.
+      // Internal decimal points and dots in names are not delimiters.
+      if (token.length>1 && token.endsWith('.') && !token.endsWith('..')
+          && !token.startsWith('"')) {
+        return [...VM.normalizeTokens([token.slice(0,-1)]),'.'];
+      }
       if (VM.literal(token) || token.startsWith('"')) return [token];
-      return token.split(/([>/]\{|[{};])/u).filter(Boolean).flatMap(part =>
-        part.length > 1 && part.endsWith('.') && !VM.literal(part)
-          ? [part.slice(0,-1), '.'] : [part]);
+      return token.split(/([>/]\{|[{};])/u).filter(Boolean);
     });
+  }
+  // The two scanners already supply token boundaries. Recover only source
+  // coordinates from the intervening whitespace, not a second lexical scan.
+  setSourceTokens(raw,source) {
+    this.tokens=[];this.tokenPositions=[];
+    let end=0, lineStart=0, indent=null;
+    for(const token of raw){
+      const start=source.indexOf(token,end);
+      if(start<0)throw Error('scanner token has no source span');
+      const gap=source.slice(end,start);
+      const newline=Math.max(gap.lastIndexOf('\n'),gap.lastIndexOf('\r'));
+      const nextLineStart=newline<0?lineStart:end+newline+1;
+      const first=indent===null||nextLineStart!==lineStart;
+      const column=start-nextLineStart;
+      const dedent=first&&column===0&&indent!==null&&indent>0;
+      if(first){indent=column;lineStart=nextLineStart;}
+      let consumed=0;
+      for(const piece of VM.normalizeTokens([token])){
+        this.tokens.push(piece);
+        this.tokenPositions.push({columnOne:consumed===0&&column===0,dedent:consumed===0&&dedent});
+        consumed+=piece.length;
+      }
+      end=start+token.length;
+    }
   }
   // Structured control lowers to the existing relocatable branch primitives.
   // The compiler is still VM-invoked through def.emit. No JS runtime recursion.
@@ -322,7 +358,7 @@ export class VM {
         this.tokens.push(token);
       }
     } else this.tokens = VM.lex(source);
-    this.tokens = VM.normalizeTokens(this.tokens);
+    this.setSourceTokens(this.tokens,source);
     this.cursor = 0;
     while (this.cursor < this.tokens.length) {
       const token = this.nextToken();
@@ -496,7 +532,7 @@ export class VM {
       vm.push({ name: '', type: 'literal', value: a * b });
     });
     p('next-token', vm =>
-      vm.push({ name: '', type: 'literal', value: vm.nextToken() }));
+      vm.push({ name: '', type: 'literal', value: vm.nextToken({definitionBoundary:true}) }));
     p('def.begin', vm => {
       if (vm.definition) throw new Error('nested definition not supported');
       const name = vm.pop().value;

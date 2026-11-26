@@ -183,6 +183,27 @@ multi-definition cases, including late versus bound redefinition.
 Scope remains incremental: generic non-text conversion, integer-address
 execution, named/renamed symbolic verb metadata (the historical engine
 can lose the symbolic name when creating a local), full tag interning,
-and object/method dispatch are not established by this subset. A space
-before the final period after a numeric literal is still needed by the
-experimental lexer (e.g. `to q 7 .`).
+and object/method dispatch are not established by this subset. The attached numeric terminal dot is addressed in the next section.
+
+### Definition termination and indentation (2026-11-26)
+
+Both experimental readers now retain token source positions and accept
+an attached terminal dot (including after an integer), implicit
+termination at a new column-one `to`, and dedent from an indented
+body back to column one. The outer compiler's existing `next-token`
+primitive supplies a synthetic dot without consuming the following
+token; explicit nested blocks keep their own punctuation. EOF alone
+does not publish an unfinished definition. Internal dots in names and
+decimal literals are preserved. The position pass examines spans of
+already-scanned tokens and intervening whitespace, not a second lexer.
+
+Eleven source cases checked against the historical runtime cover
+attached dots, successive definitions, indentation, blank lines,
+nested indentation and block bodies. Both bootstrap and image-loaded
+readers pass. The experiment continues to accept a redundant explicit
+dot at column one after dedent (used by existing experimental sources,
+although the historical engine treats it as a top-level missing verb).
+The experiment's decimal arithmetic is not claimed to match the
+historical integer parser. No general indentation-sensitive block
+grammar or full historical tokenizer is introduced. Compiler and
+lexer image contents remain unchanged.

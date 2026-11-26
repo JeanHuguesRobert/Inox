@@ -172,3 +172,41 @@ test('dynamic invocation resolves current or captured definition, including relo
  target.invoke('p');assert.deepEqual(output,[8]);
  assert.equal(target.CSP,0);assert.equal(target.DSP,0);
 });
+
+test('historical definition delimiters: attached dot and implicit column-one termination',()=>{
+ const cases=[
+  ['to q 7. q out','7'],
+  ['to q -7. q out','-7'],
+  ['to q "hello". q out','hello'],
+  ['to q 7 out. q','7'],
+  ['to q 7.\nq out','7'],
+  ['to q 7\nto p q out.\np','7'],
+  ['to q\n  7\nq out','7'],
+  ['to q\n  7\n    8 +\n  2 +\nq out','17'],
+  ['to double\n  2 *\n\nto quadruple\n  double double\n\n7 quadruple out','28'],
+  ['to foo.bar 7\nto p /foo.bar run out.\np','7'],
+  ['to p\n  true { 7 out } if\n  8 out\np','78'],
+  ['to q\n  7\n  .\nq out','7'],
+ ];
+ for(const [source,expected] of cases){
+  assert.equal(historical(source),expected,source);
+  for(const imageReader of [false,true]){
+   const vm=fresh(imageReader),output=[];
+   vm.primitive('out',v=>output.push(String(v.pop().value)));
+   vm.evaluate(source);assert.equal(output.join(''),expected,source);
+   assert.equal(vm.CSP,0);assert.equal(vm.DSP,0);assert.equal(vm.frames.size,0);
+  }
+ }
+});
+test('definition boundaries preserve decimal literals and reject unfinished definitions',()=>{
+ for(const imageReader of [false,true]){
+  const vm=fresh(imageReader);
+  assert.deepEqual(vm.evaluate('to q 7.5. q'),[7.5]);
+  assert.deepEqual(vm.evaluate('to p\n  1.25\n.\np'),[7.5,1.25]);
+  for(const source of ['to unfinished\n  7','to unfinished\n  7\n','to unfinished 7\nunknown']){
+   assert.throws(()=>vm.evaluate(source));
+   assert.equal(vm.words.has('unfinished'),false);
+   assert.equal(vm.CSP,0);assert.equal(vm.IP,null);
+  }
+ }
+});
