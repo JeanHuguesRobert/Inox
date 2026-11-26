@@ -1007,7 +1007,7 @@ function debug(){
 // Maximum debug level
   can_log = true;
   // Enable checks at the very low level of memory management
-  /**/ de = mem_de = alloc_de = true;
+  /**/ de = mem_de = alloc_de = check_de = true;
   // Verbose word compilation, evaluation and running
   /**/ warn_de = true;
   /**/ token_de = parse_de = eval_de = run_de = verbose_stack_de = true;
@@ -15346,33 +15346,20 @@ const tag_forget_parameters = tag( "forget-parameters" );
 const tag_rest  = tag( "rest" );
 
 function primitive_forget_parameters(){
-
-  // ToDo: the limit should be the base of the control stack
-  let limit = 0;
-  if( check_de ){
-    limit = ACTOR_control_stack;
-  }
-
-// #2026: Old code was:
-//   while( is_with( CSP ) ){
-  // Drop parameter cells until we reach the /with sentinel, then drop the
-  // sentinel below. The previous `while( is_with(CSP) )` never entered the
-  // body for a typical parameter frame and left the stack misaligned for pop_ip.
+  // 2026-11-26: GPT-6 under Jean Hugues Noel Robert's direction.
+  // The stack base is clamped by drop_control(), so "< base" cannot
+  // detect a missing sentinel. Keep this diagnostic in checked mode.
   while( ! is_with( CSP ) ){
-    drop_control();
-    if( check_de && CSP < limit ){
+    if( check_de && CSP <= ACTOR_control_stack ){
       FATAL( "/with sentinel out of reach" );
-      debugger;
+      return;
     }
+    drop_control();
   }
-
-  // Clear the sentinel
   raw_drop_control();
-
-  // Jump to the return address
   pop_ip();
-
 }
+
 primitive( "forget-parameters", primitive_forget_parameters );
 
 
@@ -15388,114 +15375,44 @@ let forget_parameters_definition = 0;
 
 
 function primitive_run_with_parameters(){
-// Create variables in the control stack for verbs with formal parameters.
-// Up to with sentinel. Usage : with a/ b/ { xxx } run-with-parameters
-
-  if( ! reserve_actor_stack( true, actor_stack_batch_spare + 14 ) )return;
+// Create local variables for a block: actuals with a/ b/ { ... } run-with-parameters.
+// 2026-11-26: GPT-6 under Jean Hugues Noel Robert's direction.
+// Validate only in checked mode; never build a partial frame.
   const block = pop_block();
-  call( tag_run_with_parameters, block );
-
-  let new_tos = TOS;
-
-  // Count formal parameters up to /with sentinel included
+  let sentinel_tos = TOS;
   let count = 0;
-  let parameter_name;
-  while( true ){
-    parameter_name = name_of( new_tos );
+  while( ! is_with( sentinel_tos ) ){
+    if( check_de ){
+      mand( sentinel_tos > ACTOR_data_stack );
+      mand_tag( sentinel_tos );
+    }
+    // ToDo: /rest parameter should make a list of remaining arguments.
     count++;
-    if( parameter_name == tag_rest ){
-      // ToDo: special /rest parameter should make a list object with the rest
-    }
-    if( is_with( new_tos ) )break;
-    if( count > 10 ){
-      bug( "Too many parameters, more then ten" );
-      debugger;
-      break;
-    }
-    new_tos -= ONE;
+    sentinel_tos -= ONE;
   }
+  let source_argument_cell = sentinel_tos - count * ONE;
+  check_de&&mand( source_argument_cell > ACTOR_data_stack );
+  if( ! reserve_actor_stack( true, actor_stack_batch_spare + count + 3 ) )return;
 
-  // Set value of parameters using values from the data stack
-  let copy_count = 0;
-  let n;
-
-  // Go from sentinel argument back to tos, push each actual parameter
-  const sentinel_tos = new_tos;
-  let actual_argument_cell  = CSP;
-  let formal_parameter_cell = new_tos;
-  let source_argument_cell  = new_tos - ( count - 1 ) * ONE;
-
-  de&&mand_named( sentinel_tos, tag_with );
-  de&&mand_tag( sentinel_tos );
-
-  while( copy_count < count ){
-
-    // Process sentinel cell, actual argument is number of formal parameters
-    if( copy_count == 0 ){
-      de&&mand_named( formal_parameter_cell, tag_with );
-      set( actual_argument_cell, type_integer, tag_with, count - 1 );
-      clear( formal_parameter_cell ); // ToDo: raw?
-      actual_argument_cell  += ONE;
-      formal_parameter_cell += ONE;
-      de&&mand_name( value_of( formal_parameter_cell ), tag( "a") );
-      de&&mand_name( name_of(  formal_parameter_cell ), tag( "a") );
-      copy_count++;
-      continue;
-    }
-
-    if( copy_count == 1 ){
-      mand_name( value_of( formal_parameter_cell ), tag( "a" ) );
-      mand_name( name_of(  formal_parameter_cell ), tag( "a" ) );
-    }
-    if( copy_count == 2 ){
-      mand_name( name_of( formal_parameter_cell ), tag( "b" ) );
-    }
-
-    n = name_of( formal_parameter_cell );
-    clear( formal_parameter_cell ); // ToDo: raw?
+  call( tag_run_with_parameters, block );
+  // Preserve the return address and use the same sentinel as is_with().
+  CSP += ONE;
+  set( CSP, type_tag, tag_with, tag_with );
+  reset( sentinel_tos );
+  let formal_parameter_cell = sentinel_tos + ONE;
+  for( let ii = 0 ; ii < count ; ii++ ){
+    const name = name_of( formal_parameter_cell );
+    reset( formal_parameter_cell );
+    CSP += ONE;
+    move_cell( source_argument_cell, CSP );
+    set_name( CSP, name );
     formal_parameter_cell += ONE;
-
-    move_cell( source_argument_cell, actual_argument_cell );
-    set_name( actual_argument_cell, n );
-
-    actual_argument_cell  += ONE;
-    source_argument_cell  += ONE;
-
-    if( copy_count == 1 ){
-      mand_name( n, tag( "a" ) );
-    }
-    if( copy_count == 2 ){
-      mand_name( n, tag( "b" ) );
-    }
-    copy_count++;
+    source_argument_cell += ONE;
   }
-
-// #2026: Old code was:
-//   // Skip actual arguments and formal parameters in data stack
-//   TOS = TOS - ( ( count * 2 ) - 1 ) * ONE;
-// 
-//   CSP = actual_argument_cell - ONE;
-// 
-//   // Schedule call to the parameters remover
-//   defer( tag_forget_parameters, forget_parameters_definition );
-  // Skip actual arguments and formal parameters in data stack.
-  // Guard to avoid underflow/TOS below base at def/compile time of it-method{
-  // / maker{ / class{ etc (similar to parameters primitive fix above; at def
-  // time no actuals, direct assign would set TOS low, leaving 0 :data-stack
-  // sentinel, causing later underflow in if/pop_block, dirty, bad eqs, IP0,
-  // alloc recursion). Only skip (and defer) if it won't underflow (i.e. call
-  // time with real actuals provided).
-  const skip = ( ( count * 2 ) - 1 ) * ONE;
-  if( TOS - skip >= ACTOR_data_stack ){
-    TOS = TOS - skip;
-    CSP = actual_argument_cell - ONE;
-    defer( tag_forget_parameters, forget_parameters_definition );
-  } else {
-    // def time: still set CSP to the param area (for scope), but no skip/defer
-    CSP = actual_argument_cell - ONE;
-  }
-
+  TOS = sentinel_tos - ( count + 1 ) * ONE;
+  defer( tag_forget_parameters, forget_parameters_definition );
 }
+
 primitive( "run-with-parameters", primitive_run_with_parameters );
 
 
@@ -19040,7 +18957,7 @@ function run(){
             IP += ONE;
             // CSP = fast_csp;
             // TOS = fast_tos;
-            get_primitive( name_of( i ) )();
+            get_primitive( unpack_name( i ) )();
             // fast_ip  = IP;
             // fast_csp = CSP;
             // fast_tos = TOS;
