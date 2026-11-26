@@ -6,7 +6,7 @@ drafted_by: "OpenAI Codex (GPT-5)"
 principal: "Jean Hugues Noël Robert"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 date: "2026-07-16"
-last_modified_at: "2026-11-23"
+last_modified_at: "2026-11-26"
 status: "draft-for-human-review"
 version: "0.1.0-draft"
 license: "MIT (code examples) · CC BY-SA 4.0 (text)"
@@ -140,6 +140,39 @@ and differential tests against the historical VM.
 Alan to Inox, Side-style slots and time-coherent resumable work
 experiment, in service of Cognitive Packet Switching. Preserve the
 original Micro design record for later reevaluation.
+
+### Principal's materialization research direction — 2026-11-26
+
+Preserve AbstractInox semantics, not a universal physical Cell width. The
+historical 64-bit Cell (32-bit value, 24-bit name, 3-bit type, five other
+bits) is a current sweet spot; a 32-bit logical Cell address is not a
+full native pointer. Its theoretical unsigned 8-byte Cell-address range
+is 32 GiB, not a demonstrated historical VM capacity. Explore wider and
+narrower layouts when useful, including the heavily constrained possibility
+of 16-bit Cells on 8-bit targets. No new packing or Micro ABI is selected.
+Assess usable symbol/address ranges, indirections, cache locality, memory
+footprint and representative execution cost, rather than nominal bits alone.
+
+Retain the historical LeanString reference design (lib/inox.ts): a two-Cell
+reference-count/size header, contiguous bytes, trailing NUL, O(1) byte
+length, shared empty singleton and reference sharing. The nominal area
+cost for an 8-byte Cell is 16 + 8*ceil((byte_length+1)/8), before referring
+Cells and allocator overhead. The C++ wrapper contains one char pointer;
+the historical TS boundary encodes UTF-8. Compare selective interning,
+small inline text, variable-size headers (Redis SDS), shared substrings
+and ropes only with measured workloads. Dense Cells, adjacent metadata
+and contiguous text should improve spatial locality; confirm with cache
+miss counters when available, not a claimed benchmark. JavascriptInox
+may keep native JS strings.
+
+[Inox #33](https://github.com/JeanHuguesRobert/Inox/issues/33) records the
+C++ audit and cooperative event-loop direction. First restore the
+historical synchronous CLI from the common source, not a replacement VM.
+The generator and C++ compile currently have unresolved drift; the 32-bit
+native pointer assumption must be distinguished from logical Cell width.
+Event dispatch and wider addresses are later experiments, not prerequisites
+for restoring the historical target. See the [layer/materialization note](two-versions-scripting-vs-system.md).
+Micro/ESP32 remains deferred.
 
 ---
 

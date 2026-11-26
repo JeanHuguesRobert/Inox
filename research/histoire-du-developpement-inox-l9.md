@@ -4,7 +4,7 @@ subtitle: "Du langage conçu et programmé par son auteur au développement coop
 author: "Jean Hugues Noël Robert — direction et conception ; GPT-6 — enquête Git et rédaction sous mandat"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 date: "2026-11-23"
-last_modified_at: "2026-11-23"
+last_modified_at: "2026-11-26"
 status: "note de recherche historique — première version, à relire par l'auteur"
 language: fr
 license: "CC BY-SA 4.0"
@@ -199,3 +199,29 @@ node scripts/probe-l9-task-lifecycle.js  # diagnostics encore rouges
 ---
 
 *Note de provenance : cette synthèse historique a été recherchée et rédigée par GPT-6 à partir du dépôt Git, sous mandat de l'auteur. Elle n'attribue pas à GPT-6 le code historique, la conception d'Inox ou de L9 ; les contributions de coding agents identifiées sont référencées séparément. La validation éditoriale par l'auteur reste à faire.*
+
+
+## Addendum daté — 26 novembre 2026 : convergence incrémentale JavascriptInox
+
+Le paquet [Cogentia #291](https://github.com/JeanHuguesRobert/cogentia/issues/291)
+et [Inox #41](https://github.com/JeanHuguesRobert/Inox/issues/41) documentent
+une nouvelle matérialisation expérimentale en JavaScript natif, distincte
+de la VM historique à Cells empaquetées. L'auteur maintient l'unité de
+la sémantique, non l'identité des formats binaires. Les agents de coding
+réalisent les étapes sous sa direction, avec essais différentiels.
+
+| Jalon | Trace |
+| --- | --- |
+| Sélecteur de champ de navigation exprimé en Inox, image et test Chromium | [ae2d879](https://github.com/JeanHuguesRobert/Inox/commit/ae2d879) |
+| Contrôle structuré, compilateur, blocs et locaux dynamiques | [f92237c](https://github.com/JeanHuguesRobert/Inox/commit/f92237c), [d3a69e6](https://github.com/JeanHuguesRobert/Inox/commit/d3a69e6), [c1cdf3a](https://github.com/JeanHuguesRobert/Inox/commit/c1cdf3a) |
+| Mesures de mémoire des scripts courts ; pas de refonte prématurée | [466a94a](https://github.com/JeanHuguesRobert/Inox/commit/466a94a) |
+| Blocs cible et paramètres nommés ; FBF historique du retour et du mode rapide | [4bb3d0e](https://github.com/JeanHuguesRobert/Inox/commit/4bb3d0e), [d0445e2](https://github.com/JeanHuguesRobert/Inox/commit/d0445e2), [86ab50a](https://github.com/JeanHuguesRobert/Inox/commit/86ab50a) |
+| Liaison dynamique et définition capturée ; style historique de terminaison | [a79ad02](https://github.com/JeanHuguesRobert/Inox/commit/a79ad02), [ea1da5f](https://github.com/JeanHuguesRobert/Inox/commit/ea1da5f) |
+
+Au dernier jalon de ce paquet : 137 tests expérimentaux verts, images
+lexer/compilateur reproductibles et Reality Test Chromium sur fixture
+isolée réussi. Ce bilan ne couvre pas les autres travaux L9 parallèles.
+Les décisions pérennes se trouvent dans la [note des couches Inox](two-versions-scripting-vs-system.md)
+et la [note Micro/C++](inox-cpp-micro-runtime-and-images.md).
+Les états datés du 23 novembre ci-dessus restent des observations de leur
+révision, non un bilan courant de tout L9.

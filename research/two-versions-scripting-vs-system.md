@@ -3,7 +3,7 @@ title: "Inox: Two Versions — Scripting vs System Programming"
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 date: "2026-06-05"
-last_modified_at: "2026-11-23"
+last_modified_at: "2026-11-26"
 license: "CC BY-SA 4.0"
 status: "working-note"
 corpus_role: "source"
@@ -115,3 +115,33 @@ This document is the primary codification of the user's idea.
 Principal decision: compile `-e` / `--eval` expressions into a temporary verb and invoke it, since the process terminates immediately. Explicit source programs containing definitions retain their existing path. The two JS CLI entry points share this policy; the REPL and file execution are unchanged.
 
 Separate open parser/REPL problem ([#34](https://github.com/JeanHuguesRobert/Inox/issues/34)): direct top-level `1 2 + out` and `1 + 2 out` can leave a pending infix context at EOF and assert `proxy/reference` during parser cleanup. Reproduced on Linux/Node 26 and Windows/Node 24 at `7cf6071`. Compiled `to p 1 2 + out. p` works. Do not treat per-input permanent verb creation as the interactive solution; investigate operator disambiguation and parser-state recovery independently.
+
+
+### One language, several materializations — Principal decision, 2026-11-26
+
+The scripting/system distinction is a distinction of audience and library
+profile, not a fork of the language. AbstractInox source and observable
+semantics are shared; the historic TypeScript packed Cells, native
+JavascriptInox Cells and future C++ layouts need not share a binary ABI.
+The historical implementation remains the differential reference. Preserve
+working historical code; introduce primitives as actual workloads need them,
+choosing Inox definitions when their measured cost is reasonable and native
+host primitives where justified. Do not systematically replace working TS
+primitives, or require a new allocator for short-lived scripts.
+
+The Multitasking Kernel is strictly cooperative and non-preemptive at the
+interpreter level. Explicit suspension/resumption uses VM-owned contexts,
+not host green threads, native stack switching or setjmp/longjmp. The host
+event loop (Node.js, browser, Deno or a future native libuv/libev/libevent
+adapter) supplies events/completions and makes tasks eligible; the kernel
+chooses the next runnable task at cooperative boundaries. Housekeeping and
+instruction accounting are not implicit preemption. This is a direction
+for the native adapter, not evidence of implemented C++ event support.
+
+The experimental JavascriptInox milestone at [ea1da5f](https://github.com/JeanHuguesRobert/Inox/commit/ea1da5f6a0e739e332a982babc4a81f59fab066c)
+supports bounded source control, blocks, dynamic locals, it binding,
+named parameters, dynamic/bound verb invocation and historical definition
+termination in its tested subset. See [experiment status and measurements](../experiments/javascript-inox/README.md)
+and [Cogentia #291](https://github.com/JeanHuguesRobert/cogentia/issues/291).
+The existing browser selector is an opt-in Reality Test, not a production
+migration or proof of full L9 compatibility. Method/class dispatch is next.
