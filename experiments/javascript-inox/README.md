@@ -93,12 +93,37 @@ executed respectively 170,013, 180,013 and 200,013 instructions and retained
 100,009, 110,009 and 120,009 new Cells. Wall-clock samples for over/pick
 were noisy and do not establish a timing advantage.
 
-**Measured implementation defect to address before performance-based
-library placement decisions:** transient data and return-address Cells are
-currently retained by the append-only logical address space. A simple
-10,000-iteration loop leaves 80,009 extra Cells even after DSP and CSP return
-to zero (809 after 100 iterations; 8,009 after 1,000). The bounded control
-stack tests do not demonstrate bounded live memory. Next FBF checkpoint:
-make transient stack/return Cells reclaimable without invalidating code
-addresses, retained values or block references; add a bounded-memory
-regression. Reassess the measured costs after that correction.
+**Memory cost: measured, not an automatic FBF blocker.** The append-only
+logical address space retains transient Cells (809 / 8,009 / 80,009 for
+100 / 1,000 / 10,000 loop iterations, even with DSP=CSP=0).
+The Principal clarified that the intended scripts are short-lived: judge
+the actual cost against the whole execution environment, expected
+concurrency, and lifetime, rather than imposing bounded allocation in
+all cases.
+
+On Fracta2, Node v26.13.1, post-GC incremental heap measurements:
+
+| Workload | Retained heap (approx.) |
+|---|---:|
+| Bare VM (batch of 100) | 12 KB/VM |
+| Compiler + lexer (batch of 100) | 17 KB/VM |
+| Browser selection, 1 / 10 / 80 rejected fields (batch of 100 each) | 23 / 53 / 300 KB/VM |
+| Simple loop, 100 / 1,000 / 10,000 iterations (median of 5) | 70 / 480 / 4,774 KB |
+
+A fresh Node process with imports used about 51 MB RSS and 4.38 MB heap.
+The current Cogentia recipe adapter creates a VM for each selection, limits
+each invocation to 100,000 instructions and accepts at most 80 fields via
+the registry. After dropping the VM reference and forcing GC, heap returned
+near baseline (4.48 MB after the 80-field test; 4.46 MB after the 10,000
+iteration test). RSS and retained heap are different metrics.
+
+However, popped Cells currently retain their values: a direct test of
+`drop` with an object payload confirmed the original object remains
+referenced by `vm.cells` while the VM survives. Distinguish clearing dead
+payload references from recycling address slots. The former is relevant
+when handling larger host objects; the latter is not an immediate
+requirement for current short scripts. Do not introduce a free-list or
+compacting allocator merely to eliminate modest transient accumulation.
+Revisit when measured memory, concurrency or lifetime warrants it.
+Continue incremental source convergence; no memory-management rewrite is
+a prerequisite. Measurements are workload-specific, not a general memory cap.
