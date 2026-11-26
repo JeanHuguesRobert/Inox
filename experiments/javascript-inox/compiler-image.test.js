@@ -11,7 +11,7 @@ const image = JSON.parse(imageText);
 test('compiler is authored as Inox verb and compiled by stage-0 VM', () => {
   const build = createVM();
   build.evaluate(source);
-  assert.deepEqual(captureDefinitions(build, ['compile']), image);
+  assert.deepEqual(captureDefinitions(build, ['compile','to']), image);
   assert.ok(image.definitions[0].cells.some(c => c.name === 'jump-relative'));
   assert.ok(image.definitions[0].cells.some(c => c.name === 'branch-relative-if'));
 });
@@ -40,7 +40,7 @@ test('compiler image relocates correctly despite different primitive address lay
 test('compiled compiler itself can be exported from target runner without bootstrap', () => {
   const vm = createVM({ bootstrapCompiler: false });
   loadDefinitions(vm, image);
-  assert.deepEqual(captureDefinitions(vm, ['compile']), image);
+  assert.deepEqual(captureDefinitions(vm, ['compile','to']), image);
 });
 
 test('compiler relative backward branch does not accumulate control-stack frames', () => {
@@ -67,4 +67,14 @@ test('compiler can be loaded in multiple independent VMs', () => {
   assert.deepEqual(a.evaluate('compile plus-one 1 + . 41 plus-one'), [42]);
   assert.equal(b.words.has('plus-one'), false);
   assert.deepEqual(b.evaluate('compile times-two dup + . 21 times-two'), [42]);
+});
+
+test('loaded compiler recompiles its own unchanged source without bootstrap to', () => {
+  const vm=createVM({bootstrapCompiler:false});
+  assert.equal(vm.words.has('to'),false);
+  loadDefinitions(vm,image);
+  assert.equal(vm.cells[vm.words.get('to')].type,'verb');
+  vm.evaluate(source);
+  assert.deepEqual(captureDefinitions(vm,['compile','to']),image);
+  assert.deepEqual(vm.evaluate('to double dup +. 21 double'),[42]);
 });

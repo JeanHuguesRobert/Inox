@@ -106,6 +106,29 @@ export class VM {
       }
     };
     const conditionalExit = () => { emit('not'); return branch('branch-relative-if'); };
+    if (token === 'if:') {
+      // Historical keyword syntax: condition expression, then block,
+      // optional else block, and terminating semicolon.
+      for (;;) {
+        const word = this.nextToken();
+        if (word === 'then:') break;
+        this.emitSourceToken(word);
+      }
+      const otherwise = conditionalExit();
+      block();
+      const tail = this.nextToken();
+      if (tail === 'else:') {
+        const end = branch('jump-relative');
+        patch(otherwise,body.length);
+        block();
+        expect(';');
+        patch(end,body.length);
+      } else {
+        if (tail !== ';') throw new SyntaxError('expected else: or ;, got '+tail);
+        patch(otherwise,body.length);
+      }
+      return;
+    }
     if (token === 'while:' || token === 'do:') {
       const start = body.length;
       const exits = [];

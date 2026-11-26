@@ -3,17 +3,21 @@
 **Scope:** executable bootstrap experiment for [Inox #41](https://github.com/JeanHuguesRobert/Inox/issues/41).
 Author: GPT-6 coding agent, under Jean Hugues Noël Robert's direction (2026-11-23).
 
-The stage-0 VM still implements the **token reader** and **low-level definition storage primitives** in JavaScript, but the defining loop is now an Inox verb written in [`compiler.nox`](./compiler.nox):
+The stage-0 VM supplies the token reader and definition storage helpers. As of 2026-11-26 the Inox-written defining loop uses structured source, and the image exports both the legacy experimental entry `compile` and the historical source entry `to`:
 
 ```inox
-to compile next-token def.begin next-token dup token.end? 3 branch-relative-if def.emit -8 jump-relative drop def.finish .
+to compile
+  next-token def.begin
+  while: { next-token dup token.end? not } do: { def.emit };
+  drop def.finish.
+to to compile .
 ```
 
-The offsets `3` and `-8` are **relative instruction offsets**, not addresses of a particular VM. `build-compiler-image.mjs` executes this definition in the bootstrap VM and serializes its compiled Cells as [`compiler-image.json`](./compiler-image.json). That image has symbolic primitive imports and can be loaded in a **fresh VM with no JavaScript-assembled `to` verb**. The destination VM uses the loaded `compile` to define and execute stage-0 verbs:
+The compiler image uses symbolic primitive imports and relocatable branches. A fresh VM with `bootstrapCompiler:false` can load it and use the same source syntax as the historical runtime:
 
 ```inox
-compile double dup + .
-compile quadruple double double .
+to double dup + .
+to quadruple double double .
 21 double 21 quadruple
 ```
 
@@ -34,6 +38,6 @@ Tests cover bootstrap independence, relocation into VMs with different primitive
 
 ## Scope boundary
 
-**This is not Image Zero.** The stage-2 image carries one functioning **Inox-written defining verb**. Tokenization and the smallest definition helpers remain JavaScript primitives. It uses the experimental `inox.stage1.definitions.v0` representation, **not** the existing binary `.xnx` ABI. The historical Inox grammar is not implemented by this stage.
+**This is not Image Zero.** The stage-2 image carries an **Inox-written defining loop and source entry**. Tokenization and the smallest definition helpers remain JavaScript primitives. It uses the experimental `inox.stage1.definitions.v0` representation, **not** the existing binary `.xnx` ABI. A tested subset of the historical grammar is implemented; structured lowering still uses a JavaScript host helper.
 
-Next: study the TypeScript reference tokenizer/compiler, move more of their procedural logic into Inox, and integrate the compiled representation with the existing `.xnx` lineage instead of creating a second permanent image format.
+Next: study the TypeScript reference tokenizer/compiler, move more of their procedural logic into Inox, and converge on historical source syntax and semantics while allowing independent native JavaScript and binary Cell representations. Binary image compatibility is not a goal.

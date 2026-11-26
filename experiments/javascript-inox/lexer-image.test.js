@@ -15,8 +15,9 @@ const vmNew=()=>{
 };
 test('Inox lexer image loads with no JavaScript compiler bootstrap',()=>{
  const vm=vmNew();
- assert.equal(vm.words.has('to'),false);
- assert.deepEqual(vm.evaluate('compile double dup + . compile quadruple double double . 21 quadruple'),[84]);
+ assert.equal(vm.bootstrapCompiler,false);
+ assert.equal(vm.primitiveEntries.has(vm.words.get('to')),false);
+ assert.deepEqual(vm.evaluate('to double dup + . to quadruple double double . 21 quadruple'),[84]);
 });
 test('lexer is written in Inox and capture is deterministic',()=>{
  const vm=createVM();

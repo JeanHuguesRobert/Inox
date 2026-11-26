@@ -18,7 +18,7 @@ test('compiler-image itself round trips through minimal Inox source',()=>{
  const src=definitionImageToInox(compiler);
  const vm=target();
  vm.evaluate(src);
- assert.deepEqual(captureDefinitions(vm,['compile']),compiler);
+ assert.deepEqual(captureDefinitions(vm,['compile','to']),compiler);
  assert.deepEqual(vm.evaluate('compile double dup + . 21 double'),[42]);
 });
 test('lexer-image itself round trips through minimal Inox source',()=>{

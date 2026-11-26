@@ -10,7 +10,7 @@ import { captureDefinitions } from './definition-image.js';
 const source = readFileSync(new URL('./compiler.nox', import.meta.url), 'utf8');
 const vm = createVM();
 vm.evaluate(source);
-const image = JSON.stringify(captureDefinitions(vm, ['compile']), null, 2) + '\n';
+const image = JSON.stringify(captureDefinitions(vm, ['compile','to']), null, 2) + '\n';
 if (process.argv.includes('--check')) {
   const expected = readFileSync(new URL('./compiler-image.json', import.meta.url), 'utf8');
   if (image !== expected) {

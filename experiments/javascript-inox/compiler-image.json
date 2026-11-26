@@ -25,6 +25,14 @@
           "name": "token.end?"
         },
         {
+          "type": "primitive",
+          "name": "not"
+        },
+        {
+          "type": "primitive",
+          "name": "not"
+        },
+        {
           "type": "literal",
           "value": 3
         },
@@ -38,7 +46,7 @@
         },
         {
           "type": "literal",
-          "value": -8
+          "value": -10
         },
         {
           "type": "primitive",
@@ -51,6 +59,15 @@
         {
           "type": "primitive",
           "name": "def.finish"
+        }
+      ]
+    },
+    {
+      "name": "to",
+      "cells": [
+        {
+          "type": "verb",
+          "name": "compile"
         }
       ]
     }

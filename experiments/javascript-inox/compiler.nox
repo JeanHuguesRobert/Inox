@@ -1,1 +1,5 @@
-to compile next-token def.begin next-token dup token.end? 3 branch-relative-if def.emit -8 jump-relative drop def.finish .
+to compile
+  next-token def.begin
+  while: { next-token dup token.end? not } do: { def.emit };
+  drop def.finish.
+to to compile .
