@@ -36,6 +36,7 @@
     "test:l9-mutex": "node scripts/test-l9-mutex.js",
     "test:l9-lock": "node scripts/test-l9-lock.js",
     "test:l9-boxon": "node scripts/test-l9-boxon.js",
+    "test:l9-parole": "node scripts/test-l9-parole.js",
     "test:l9-semaphore": "node scripts/test-l9-semaphore.js",
     "test:l9-signal": "node scripts/test-l9-signal.js",
     "test:l9-promise-chain": "node scripts/test-l9-promise-chain.js",

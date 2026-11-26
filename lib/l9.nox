@@ -899,6 +899,86 @@ to initialize-l9
     run/it-method{ >source >event $source @idx @collection .record }
   }
 
+  ~~ 2026-11-26: GPT-6.2 under JHR, #42. Parole one-shot step chains.
+  ~~ Each step receives (Outcome, next Boxon); may receives (value, next).
+  ~~ Returning from a step does not advance it; settling next does.
+  parole-job/class{
+    maker{ >class >event >next >success-only? >callback
+      $class make{ $event :event $next :next $success-only? :success-only? $callback :callback }
+    }
+    run/it-method{
+      data-depth >base-depth
+      try: {
+        if: @success-only? then: {
+          if: @event .failed? then: { @event @next .settle drop } else: {
+            @callback .run( @event .value @next )
+          };
+        } else: { @callback .run( @event @next ) };
+      } catch: { >reason $reason @next .reject drop };
+      ~~ Step return values are ignored. Only explicit continuation settles.
+      while: { data-depth $base-depth > } do: { drop };
+    }
+  }
+  parole-driver/class{
+    maker{ >class $class make{ queue[] :ready false :busy? } }
+    enqueue/it-method{ >job
+      @ready $job queue.enqueue
+      if: @busy? not then: {
+        true @busy?!
+        try: {
+          while: { @ready queue.length 0 > } do: {
+            @ready queue.pull .run
+          };
+        } finally: { false @busy?! };
+      };
+    }
+  }
+  parole-step/class{
+    maker{ >class >driver >next >success-only? >callback
+      $class make{ $callback :callback $success-only? :success-only? $next :next $driver :driver }
+    }
+    run/it-method{ >source >event
+      @callback @success-only? @next $event make.parole-job/ as-verb run
+      @driver .enqueue
+    }
+  }
+  parole/class{
+    maker{ >class
+      make.boxon/ as-verb run >head
+      $class make{
+        $head :head $head :tail
+        make.parole-driver/ as-verb run :driver
+        false :deferred? false :started?
+      }
+    }
+    from/it-method{ true @deferred?! it }
+    append/it-method{ >success-only? >callback
+      @tail >source
+      make.boxon/ as-verb run >next
+      $next @tail!
+      $callback $success-only? $next @driver make.parole-step/ as-verb run
+      $source .observe drop
+      if: @started? not then: {
+        true @started?!
+        if: @deferred? not then: { @head .complete drop };
+      };
+      it
+    }
+    will/it-method{ >callback $callback false it .append }
+    may/it-method{ >callback $callback true it .append }
+    fill/it-method{ >event $event @head .settle drop it }
+    settle/it-method{ >event $event it .fill }
+    resolve/it-method{ >value $value @head .resolve drop it }
+    reject/it-method{ >reason $reason @head .reject drop it }
+    complete/it-method{ @head .complete drop it }
+    settled?/it-method{ @tail .settled? }
+    outcome/it-method{ @tail .outcome }
+    value/it-method{ @tail .value }
+    promise/it-method{ @tail .promise }
+    on/it-method{ >callback $callback @tail .on drop it }
+    then/it-method{ >on-reject >on-resolve $on-resolve $on-reject @tail .then }
+  }
+
   ~~ 2026-11-24: GPT-6 under Jean Hugues Noel Robert, Inox #42.
   ~~ Port of virteal/l8 lib/signal.js (d3dc0840). No event buffering.
   ~~ An absent next-promise represents the initial inactive detector.
@@ -1444,6 +1524,16 @@ to boxon-collect
 
 to boxon-all false boxon-collect
 to boxon-race true boxon-collect
+
+~~ First Whisper adapter for local Inox promises/Boxons/values.
+to parole-whisper
+  >source
+  if: ( $source .class /parole = ) then: { $source } else: {
+    make.parole .from >target
+    $source boxon-normalize >input-box
+    $target make.boxon-forwarder $input-box .observe drop
+    $target
+  };
 
 ~~ #2026: Selective testing explanation and diagnostics were added in 2026.
 ~~ Selective testing / bypassing full l9 for class hierarchy debug:
