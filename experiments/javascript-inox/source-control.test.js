@@ -57,6 +57,18 @@ const cases=[
  ['preserve caller data','4 7 8 with /a /b /{ $a $b + } +','19'],
  ['parameters inside conditional','7 true { with /a /{ $a } } if','7'],
  ['eleven parameters','1 2 3 4 5 6 7 8 9 10 11 with /a /b /c /d /e /f /g /h /i /j /k /{ $a $k + }','12'],
+ ['primitive via tag','7 /dup run +','14'],
+ ['primitive via tag.run','7 /dup tag.run +','14'],
+ ['primitive via text.run','7 "dup" text.run +','14'],
+ ['primitive via as-tag','7 "dup" as-tag tag.run +','14'],
+ ['primitive via as-verb','7 /dup as-verb run +','14'],
+ ['primitive via tag.to-verb','7 /dup tag.to-verb run +','14'],
+ ['missing tag no-op','/missing-test-verb tag.run 9','9'],
+ ['missing run tag no-op','/missing-test-verb run 9','9'],
+ ['missing as-verb void','/missing-test-verb as-verb run drop 9','9'],
+ ['missing tag.to-verb void','/missing-test-verb tag.to-verb run drop 9','9'],
+ ['missing text.as-verb noop','"missing-test-verb" text.as-verb run 9','9'],
+ ['verb.run retains handle','7 /dup as-verb verb.run drop drop drop 9','9'],
  ['stored block conditional','3 { 2 + } >b true $b if','5'],
  ['nested scope break','7 >x 0 while: { dup 3 < } do: { 8 >x if: true then: { 9 >x break }; 1 + }; drop $x','7'],
  ['stored block reused','{ 7 out } >b $b run $b run 0','770'],
@@ -131,4 +143,32 @@ test('invalid parameter calls do not enter body or leave frames',()=>{
   assert.throws(()=>vm.invoke('p'),error);
   assert.deepEqual(output,[]);assert.equal(vm.CSP,0);assert.equal(vm.frames.size,0);
  }
+});
+
+test('dynamic invocation resolves current or captured definition, including relocated caller',()=>{
+ const cases=[
+  ['to foo.bar 7 . to p /foo.bar run out. p','7'],
+  ['to q 7 . to save /q as-verb. save to q 8 . to p run out. p','8'],
+  ['to q 7 . to save /q tag.to-verb. save to q 8 . to p run out. p','7'],
+  ['to q 7 . to p /q as-verb verb.run out drop 9 out. p','79'],
+  ['to q 7 . to p /q tag.to-verb >v $v run out. p','7'],
+ ];
+ for(const [source,expected] of cases){
+  assert.equal(historical(source),expected);
+  for(const imageReader of [false,true]){
+   const vm=fresh(imageReader),output=[];
+   vm.primitive('out',v=>output.push(String(v.pop().value)));
+   vm.evaluate(source);assert.equal(output.join(''),expected);
+   assert.equal(vm.CSP,0);assert.equal(vm.DSP,0);assert.equal(vm.frames.size,0);
+  }
+ }
+ const source='to q 7 . to p /q run out.';
+ const vm=fresh();vm.primitive('out',v=>v.pop());vm.evaluate(source);
+ const target=fresh(),output=[];
+ target.primitive('out',v=>output.push(v.pop().value));
+ // The caller image uses a symbolic name; its callee is provided by target.
+ target.evaluate('to q 8 .');
+ loadDefinitions(target,JSON.parse(JSON.stringify(captureDefinitions(vm,['p']))));
+ target.invoke('p');assert.deepEqual(output,[8]);
+ assert.equal(target.CSP,0);assert.equal(target.DSP,0);
 });

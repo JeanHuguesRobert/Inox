@@ -74,8 +74,8 @@ export class VM {
   }
   static sourceTag(token) {
     if(token==='with')return 'with';
-    const match=/^\/([A-Za-z_][A-Za-z0-9_-]*)$/.exec(token)
-      || /^([A-Za-z_][A-Za-z0-9_-]*)\/$/.exec(token);
+    const match=/^\/([A-Za-z_][A-Za-z0-9_.?!-]*)$/.exec(token)
+      || /^([A-Za-z_][A-Za-z0-9_.?!-]*)\/$/.exec(token);
     return match?match[1]:null;
   }
   // Shared punctuation normalization for both experimental readers.
@@ -382,7 +382,60 @@ export class VM {
       if(cell.type!=='block'||!Number.isInteger(cell.value))throw Error('expected block');
       vm.call(cell.value);
     };
-    p('run',vm=>runBlock(vm,vm.pop()));
+    // A symbolic verb resolves the current dictionary entry; a bound
+    // verb retains the code address captured by tag.to-verb.
+    // All calls go through the VM, never a nested host invoke().
+    const callName=(vm,name)=>{
+      const entry=vm.words.get(name);
+      if(entry!==undefined)vm.call(entry);
+    };
+    const callVerb=(vm,cell)=>{
+      if(cell.type!=='verb')throw Error('expected verb');
+      if(cell.value===null)callName(vm,cell.name);
+      else vm.call(cell.value);
+    };
+    const textName=cell=>{
+      if(cell.type==='tag'||(cell.type==='literal'&&typeof cell.value==='string'))
+        return cell.value;
+      throw Error('expected text or tag');
+    };
+    const pushVerb=(vm,name,bound=false)=>{
+      const entry=vm.words.get(name);
+      vm.push(entry===undefined
+        ? {name:'',type:'void',value:null}
+        : {name,type:'verb',value:bound?entry:null});
+    };
+    p('run',vm=>{
+      const cell=vm.peek();
+      if(cell.type==='void'||(cell.type==='literal'&&typeof cell.value==='boolean'))return;
+      if(cell.type==='tag'){vm.pop();callName(vm,cell.name);return;}
+      if(cell.type==='verb'){vm.pop();callVerb(vm,cell);return;}
+      runBlock(vm,vm.pop());
+    });
+    p('tag.run',vm=>{
+      const cell=vm.pop();
+      if(cell.type!=='tag')throw Error('expected tag');
+      callName(vm,cell.value);
+    });
+    p('text.run',vm=>{
+      const name=textName(vm.pop());
+      if(!vm.words.has(name))throw Error('undefined verb: '+name);
+      callName(vm,name);
+    });
+    p('as-tag',vm=>vm.push({name:'tag',type:'tag',value:textName(vm.pop())}));
+    p('as-verb',vm=>pushVerb(vm,textName(vm.pop())));
+    p('text.as-verb',vm=>{
+      const name=textName(vm.pop());
+      if(vm.words.has(name))pushVerb(vm,name);
+      else vm.push({name:'noop',type:'verb',value:null});
+    });
+    p('tag.to-verb',vm=>{
+      const cell=vm.pop();
+      if(cell.type!=='tag')throw Error('expected tag');
+      pushVerb(vm,cell.value,true);
+    });
+    // Historical verb.run does not consume the verb Cell.
+    p('verb.run',vm=>callVerb(vm,vm.peek()));
     // Like the reference runtime, bind the target in the called block's
     // dynamic frame; nested calls can read it, and return restores outer it.
     p('run-with-it',vm=>{

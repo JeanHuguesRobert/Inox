@@ -161,3 +161,28 @@ entering the block. This is the needed tag subset, not a general
 implementation of tag operations, `as-tag`, or method dispatch.
 Thirteen new source-differential cases exercise parameter binding,
 including eleven arguments, shadowing, nested calls and image relocation.
+
+### Dynamic verb invocation (2026-11-26)
+
+The reference engine distinguishes a symbolic verb (via `as-verb`) from
+a bound definition (via `tag.to-verb`): redefining its name changes the
+former, not the latter. The experiment now supports this distinction,
+`tag.run`, `text.run`, `as-tag`, `text.as-verb`, and `verb.run`,
+including primitive calls. `verb.run` retains its operand as in the
+reference; generic `run` consumes the tag/verb, not a void or boolean.
+All execution uses the existing threaded VM call frames. An unknown tag
+is a no-op, an unknown conversion to verb is void, and `text.as-verb`
+falls back to noop. `text.run` is checked for a known verb.
+
+The source tag subset includes dotted method-like names. Scalar names
+and symbolic imports in definition images are unchanged; bound runtime
+verb Cells are not serialized. A relocated caller resolves the callee
+in the receiving VM. The new tests cover 12 single-body cases and five
+multi-definition cases, including late versus bound redefinition.
+
+Scope remains incremental: generic non-text conversion, integer-address
+execution, named/renamed symbolic verb metadata (the historical engine
+can lose the symbolic name when creating a local), full tag interning,
+and object/method dispatch are not established by this subset. A space
+before the final period after a numeric literal is still needed by the
+experimental lexer (e.g. `to q 7 .`).
