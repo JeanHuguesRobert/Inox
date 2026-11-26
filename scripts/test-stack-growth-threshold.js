@@ -3,7 +3,8 @@
  * 2026-11-22: GPT-6 coding agent, under Jean Hugues Noel Robert.
  * FBF for the declared 80% threshold in both data/control stack growers.
  * Execute the actual functions from lib/inox.ts in isolated VM contexts with
- * mocked allocators, without pretending to validate actor-stack relocation.
+ * mocked reservation, without pretending to validate actor-stack relocation.
+ * Actual relocation is tested by test-actor-stack-relocation.js.
  */
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -25,23 +26,17 @@ for (const kind of ['data','control']) {
   const body=matched[0];
   assert.ok(body.includes('( length * 80 ) / 100'),`${functionName}: missing threshold`);
   for (const [capacity, used, shouldGrow] of sizes) {
-    const moved=[], freed=[], allocations=[];
+    const reservations=[];
     const vars={
-      ONE:1, size_of_cell:8, tag_stack:1,
+      ONE:1,
       ACTOR_data_stack:1000, ACTOR_data_stack_limit:1000+capacity,
       ACTOR_control_stack:1000, ACTOR_control_stack_limit:1000+capacity,
       CSP:1000+used, TOS:1000+used,
-      allocate_area:(_tag, bytes)=>{allocations.push(bytes);return 2000;},
-      move_cells:(...args)=>moved.push(args),
-      area_free:(...args)=>freed.push(args),
-      FATAL:(message)=>{throw new Error('unexpected '+message);},
+      reserve_actor_stack:(control,spare)=>{reservations.push([control,spare]);return true;},
     };
-    const result=vm.runInNewContext(`${body}\n${functionName}();\n({base:ACTOR_${kind}_stack,limit:ACTOR_${kind}_stack_limit,top:${kind==='data'?'TOS':'CSP'}})`,vars,{timeout:1000});
-    assert.equal(allocations.length,shouldGrow?1:0,`${kind}: used=${used}/${capacity} unexpected growth decision`);
-    assert.equal(result.limit-result.base,capacity*(shouldGrow?2:1),`${kind}: capacity`);
-    assert.equal(result.top-result.base,used,`${kind}: depth not preserved`);
-    assert.equal(moved.length,shouldGrow?1:0,`${kind}: cells moved`);
-    assert.equal(freed.length,shouldGrow?1:0,`${kind}: old area freed`);
+    vm.runInNewContext(`${body}\n${functionName}();`,vars,{timeout:1000});
+    assert.deepEqual(reservations,shouldGrow?[[kind==='control',capacity-used]]:[],
+      `${kind}: used=${used}/${capacity} unexpected reservation decision`);
     passed++;
   }
 }

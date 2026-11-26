@@ -8754,6 +8754,11 @@ function set_list_cell( c : Cell, obj? : Object ){
 const tag_actor          = tag( "actor" );
 const tag_data_stack     = tag( "data-stack" );
 const tag_control_stack  = tag( "control-stack" );
+// 2026-11-26: coarse safe-point policy, not a per-call check.
+// 16 bytecodes per credit batch, 12 Cells of headroom per bytecode.
+const actor_stack_batch_credit = 16;
+const actor_stack_batch_spare = 12 * actor_stack_batch_credit;
+
 const tag_ip             = tag( "ip" );
 const tag_tos            = tag( "tos" );
 const tag_csp            = tag( "csp" );
@@ -8889,6 +8894,8 @@ function make_actor( ip : Cell ) : Cell {
 function actor_save_context(){
 // Save context (ip, tos, csp) of current actor
   check_de&&mand_actor( ACTOR );
+  mand( TOS >= ACTOR_data_stack && TOS < ACTOR_data_stack_limit
+     && CSP >= ACTOR_control_stack && CSP < ACTOR_control_stack_limit );
   set_value( ACTOR + 4 * ONE, IP );
   set_value( ACTOR + 5 * ONE, TOS );
   set_value( ACTOR + 6 * ONE, CSP );
@@ -8908,6 +8915,8 @@ function actor_restore_context( actor : Cell ){
   = ACTOR_data_stack    + stack_capacity( ACTOR_data_stack );
   ACTOR_control_stack_limit
   = ACTOR_control_stack + stack_capacity( ACTOR_control_stack );
+  mand( TOS >= ACTOR_data_stack && TOS < ACTOR_data_stack_limit
+     && CSP >= ACTOR_control_stack && CSP < ACTOR_control_stack_limit );
 }
 
 
@@ -9770,6 +9779,8 @@ function primitive_switch_actor(){
   // Release the outgoing VM pin only AFTER its state was saved. The task
   // and ready queue retain their own pins for a suspended live actor.
   area_free( previous_actor );
+  if( ! reserve_actor_stack( false, actor_stack_batch_spare ) )return;
+  reserve_actor_stack( true, actor_stack_batch_spare );
 }
 primitive( "switch-actor", primitive_switch_actor );
 
@@ -9788,6 +9799,8 @@ function primitive_switch_actor_raise(){
   // onto itself (which would clear its owning reference).
   if( reason_cell != new_top )move_cell( reason_cell, new_top );
   area_free( previous_actor );
+  if( ! reserve_actor_stack( false, actor_stack_batch_spare ) )return;
+  if( ! reserve_actor_stack( true, actor_stack_batch_spare ) )return;
   primitive_vm_raise();
 }
 primitive( "switch-actor-raise", primitive_switch_actor_raise );
@@ -10189,6 +10202,7 @@ primitive( "?dup", primitive_dup_if );
 function primitive_dups(){
   const n = pop_integer();
   check_de&&mand( n >= 0 );
+  if( ! reserve_actor_stack( false, n + actor_stack_batch_spare ) )return;
   let ii;
   for( ii = 0 ; ii < n ; ii++ ){
     // ToDo: check overflow
@@ -10206,6 +10220,7 @@ primitive( "dups", primitive_dups );
 function primitive_overs(){
   const n = pop_integer();
   check_de&&mand( n >= 0 );
+  if( ! reserve_actor_stack( false, n + actor_stack_batch_spare ) )return;
   let ii;
   // ToDo: test this
   const base = TOS - ( 2 * ( n - 1 ) * ONE );
@@ -15376,6 +15391,7 @@ function primitive_run_with_parameters(){
 // Create variables in the control stack for verbs with formal parameters.
 // Up to with sentinel. Usage : with a/ b/ { xxx } run-with-parameters
 
+  if( ! reserve_actor_stack( true, actor_stack_batch_spare + 14 ) )return;
   const block = pop_block();
   call( tag_run_with_parameters, block );
 
@@ -15545,6 +15561,10 @@ function primitive_parameters(){
       }
     }
   }
+  // Bulk transfer of formals can consume more than an instruction quantum.
+  let formals = 0;
+  for( let p = TOS; p > ACTOR_data_stack && ! is_with( p ); p -= ONE )formals++;
+  if( ! reserve_actor_stack( true, formals + actor_stack_batch_spare + 2 ) )return;
   // Push /with sentinel onto control stack
   CSP += ONE;
   set( CSP, type_tag, tag_with, tag_with );
@@ -16871,58 +16891,99 @@ primitive( "control-stack-limit", primitive_control_stack_limit );
  *  grow-data-stack - double the data stack if 80% full
  */
 
-function  primitive_grow_data_stack(){
-// When current actors data stack is more than 80% full, grow it
+// 2026-11-26 — GPT-6.2 under JHR, #42.
+// Explicit safe-point reservation. Actor owns the backing area, registers
+// are borrowed cursors. Preserve the header and move only live Cells.
+// A borrowed/aliased physical stack cannot be silently relocated.
+function reserve_actor_stack( control : boolean, spare : number ) : boolean {
+  const slot = ACTOR + ( control ? 2 : 1 ) * ONE;
+  const base = control ? ACTOR_control_stack : ACTOR_data_stack;
+  const limit = control ? ACTOR_control_stack_limit : ACTOR_data_stack_limit;
+  const top = control ? CSP : TOS;
+  const capacity = ( limit - base ) / ONE;
+  const used = ( top - base ) / ONE;
+  if( spare < 0 || used < 0 || used >= capacity ){
+    // An invalid cursor may already indicate memory damage. Do not unwind it.
+    mand( false );
+    return false;
+  }
+  if( capacity - used > spare )return true;
+  if( reference_of( slot ) != base || area_is_shared( base ) ){
+    FATAL( "reserve-stack: borrowed or shared physical stack" );
+    return false;
+  }
+  let new_capacity = capacity * 2;
+  while( new_capacity <= used + spare )new_capacity *= 2;
+  const replacement = allocate_area( tag_stack, ( new_capacity + 1 ) * size_of_cell );
+  if( ! replacement ){
+    FATAL( "reserve-stack: out of memory" );
+    return false;
+  }
+  const delta = replacement - base;
+  // Dead slots must be empty; do not move dangling references into the new area.
+  for( let dead = top + ONE; dead <= limit; dead += ONE ){
+    mand( info_of( dead ) == 0 && value_of( dead ) == 0 );
+  }
+  // The physical stack owns its Cells, including live reference values.
+  move_cells( base, replacement, used + 1 );
+  // Rebase the VM's own absolute addresses, not arbitrary user integers.
+  const cs = control ? replacement : ACTOR_control_stack;
+  const ct = control ? CSP + delta : CSP;
+  for( let frame = cs + ONE; frame <= ct; frame += ONE ){
+    if( type_of( frame ) != type_integer )continue;
+    const name = name_of( frame );
+    if( control && name == tag_jump_pending
+    && frame < ct && name_of( frame + ONE ) == tag_jump_resume ){
+      set_value( frame, value_of( frame ) + delta );
+    }
+    if( ! control && name == tag_guard_top
+    && name_of( frame - ONE ) == tag_guard_return
+    && frame < ct && name_of( frame + ONE ) == tag_guard_handler ){
+      set_value( frame, value_of( frame ) + delta );
+    }
+  }
+  // Publish the replacement in the actor before freeing its old allocation.
+  set_value( slot, replacement );
+  if( control ){
+    ACTOR_control_stack = replacement;
+    ACTOR_control_stack_limit = replacement + new_capacity * ONE;
+    CSP = top + delta;
+    set_value( ACTOR + 6 * ONE, CSP );
+  }else{
+    ACTOR_data_stack = replacement;
+    ACTOR_data_stack_limit = replacement + new_capacity * ONE;
+    TOS = top + delta;
+    set_value( ACTOR + 5 * ONE, TOS );
+  }
+  area_free( base );
+  return true;
+}
+
+function primitive_reserve_control_stack(){
+  const spare = pop_integer();
+  reserve_actor_stack( true, spare );
+}
+primitive( "reserve-control-stack", primitive_reserve_control_stack );
+
+function primitive_reserve_data_stack(){
+  const spare = pop_integer();
+  reserve_actor_stack( false, spare );
+}
+primitive( "reserve-data-stack", primitive_reserve_data_stack );
+
+function primitive_grow_data_stack(){
   const length = ACTOR_data_stack_limit - ACTOR_data_stack;
   const current_length = TOS - ACTOR_data_stack;
-  // If less than 80% full, do nothing
-  // 2026-11-22: GPT-6 coding agent under Jean Hugues Noel Robert.
-  // FBF: the former (length * 100) / 80 was 125% of capacity,
-  // not 80%. Do not conflate the threshold with overflow detection.
-  if( current_length < ( length * 80 ) / 100 ){
-    return;
-  }
-  const new_length = length * 2;
-  const new_stack_area = allocate_area( tag_stack, new_length * size_of_cell );
-  if( new_stack_area == 0 ){
-    FATAL( "grow-control-stack, out of memory" );
-    return;
-  }
-  move_cells( ACTOR_data_stack, new_stack_area, length );
-  area_free( ACTOR_data_stack );
-  ACTOR_data_stack = new_stack_area;
-  ACTOR_data_stack_limit = new_stack_area + new_length;
-  TOS = new_stack_area + current_length;
+  if( current_length < ( length * 80 ) / 100 )return;
+  reserve_actor_stack( false, ( length - current_length ) / ONE );
 }
 primitive( "grow-data-stack", primitive_grow_data_stack );
 
-
-/*
- *  grow-control-stack - double the control stack if 80% full
- */
-
 function primitive_grow_control_stack(){
-  // When current actors control stack is more than 80% full, grow it
   const length = ACTOR_control_stack_limit - ACTOR_control_stack;
   const current_length = CSP - ACTOR_control_stack;
-  // If less than 80% full, do nothing
-  // 2026-11-22: GPT-6 coding agent under Jean Hugues Noel Robert.
-  // FBF: the former (length * 100) / 80 was 125% of capacity,
-  // not 80%. Do not conflate the threshold with overflow detection.
-  if( current_length < ( length * 80 ) / 100 ){
-    return;
-  }
-  const new_length = length * 2;
-  const new_stack = allocate_area( tag_stack, new_length * size_of_cell );
-  if( new_stack == 0 ){
-    FATAL( "grow-control-stack, out of memory" );
-    return;
-  }
-  move_cells( ACTOR_control_stack, new_stack, length );
-  area_free( ACTOR_control_stack );
-  ACTOR_control_stack = new_stack;
-  ACTOR_control_stack_limit = new_stack + new_length;
-  CSP = new_stack + current_length;
+  if( current_length < ( length * 80 ) / 100 )return;
+  reserve_actor_stack( true, ( length - current_length ) / ONE );
 }
 primitive( "grow-control-stack", primitive_grow_control_stack );
 
@@ -18559,7 +18620,7 @@ function pop() : Cell {
 
 
 // Avoid infinite loops
-let instructions_credit_increment = 100000;
+let instructions_credit_increment = actor_stack_batch_credit;
 let remaining_instructions_credit = instructions_credit_increment;
 let instructions_total            = 0;
 let must_stop                     = false;
@@ -18679,6 +18740,15 @@ function run(){
   //c/ goto loop;
   //c/ break_loop: if( 0 )
   loop: while( true ){
+
+    // 2026-11-26: reserve at existing VM instruction-credit boundaries,
+    // not each call/defer. A batch of 16 has 192 spare Cells on each stack.
+    // Known bulk pushes (dups/overs/parameters) preflight their own needs.
+    // This is an incremental policy; audit additional bulk/native primitives
+    // before claiming a general overflow-proof VM.
+    if( ! reserve_actor_stack( false, actor_stack_batch_spare ) )break;
+    if( ! reserve_actor_stack( true, actor_stack_batch_spare ) )break;
+    if( IP == 0 )break;
 
     // ToDo: there should be a method to break this loop
     // There is one: set remainig_instructions_credit to 0
@@ -19262,7 +19332,7 @@ function run(){
     // overhead of the credit check, on returns only for example.
     // This would ease pseudo premptive multitasking too.
     instructions_total
-    += instructions_credit_increment - remaining_instructions_credit;
+    += instructions_credit_increment - remaining_instructions_credit - 1;
     remaining_instructions_credit = instructions_credit_increment;
 
   }  // until IP 0 or must stop
@@ -24482,6 +24552,11 @@ function primitive_eval(){
     }
 
     stack_de&&mand_stacks_are_in_bounds();
+
+    // Top-level literal evaluation can bypass run() entirely.
+    if( ACTOR_data_stack_limit - TOS <= 16 * ONE ){
+      if( ! reserve_actor_stack( false, 16 ) )return;
+    }
 
     // This will update global variables token_type, token_text, etc
     next_token();

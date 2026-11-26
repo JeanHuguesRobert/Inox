@@ -30,6 +30,7 @@
     "test:l9": "node scripts/test-l9-bootstrap.js",
     "test:loop-control": "node scripts/test-loop-control.js",
     "test:stack-growth-threshold": "node scripts/test-stack-growth-threshold.js",
+    "test:actor-stack-relocation": "node scripts/test-actor-stack-relocation.js",
     "test:l9-tasks": "node scripts/test-l9-task-structure.js",
     "test:l9-lifecycle-basics": "node scripts/test-l9-lifecycle-basics.js",
     "test:l9-mutex": "node scripts/test-l9-mutex.js",
