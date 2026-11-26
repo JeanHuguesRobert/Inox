@@ -175,6 +175,28 @@ export class VM {
     p('dup', vm => vm.push(vm.peek()));
     p('drop', vm => vm.pop());
     p('swap', vm => { const a = vm.pop(), b = vm.pop(); vm.push(a); vm.push(b); });
+    const pushValue = (vm, value) => vm.push({name:'',type:'literal',value});
+    const binary = (name, f) => p(name, vm => {
+      const b=vm.pop().value, a=vm.pop().value;
+      pushValue(vm,f(a,b));
+    });
+    p('over', vm => {
+      if(vm.DSP<2)throw Error('data stack underflow');
+      vm.push(vm.cells[vm.data[vm.DSP-2]]);
+    });
+    p('pick', vm => {
+      const n=vm.pop().value;
+      if(!Number.isInteger(n)||n<0||n>=vm.DSP)throw Error('invalid pick index');
+      vm.push(vm.cells[vm.data[vm.DSP-1-n]]);
+    });
+    binary('equal?', (a,b)=>a===b);
+    binary('<', (a,b)=>a<b);
+    binary('and', (a,b)=>Boolean(a&&b));
+    p('not',vm=>pushValue(vm,!vm.pop().value));
+    // Experimental host-projection and text operations, not a new binary ABI.
+    binary('get',(a,b)=>a!=null&&Object.hasOwn(a,b)?a[b]:undefined);
+    binary('text.matches-i?',(a,b)=>new RegExp(b,'i').test(String(a??'')));
+
     p('+', vm => {
       const b = vm.pop().value, a = vm.pop().value;
       vm.push({ name: '', type: 'literal', value: a + b });

@@ -1,0 +1,268 @@
+{
+  "format": "inox.stage1.definitions.v0",
+  "definitions": [
+    {
+      "name": "sensitive-field?",
+      "cells": [
+        {
+          "type": "literal",
+          "value": "username|password|one-time-code|cc-number|cc-csc"
+        },
+        {
+          "type": "primitive",
+          "name": "text.matches-i?"
+        }
+      ]
+    },
+    {
+      "name": "eligible-field",
+      "cells": [
+        {
+          "type": "primitive",
+          "name": "swap"
+        },
+        {
+          "type": "primitive",
+          "name": "dup"
+        },
+        {
+          "type": "literal",
+          "value": "tag"
+        },
+        {
+          "type": "primitive",
+          "name": "get"
+        },
+        {
+          "type": "literal",
+          "value": "input"
+        },
+        {
+          "type": "primitive",
+          "name": "equal?"
+        },
+        {
+          "type": "primitive",
+          "name": "swap"
+        },
+        {
+          "type": "primitive",
+          "name": "dup"
+        },
+        {
+          "type": "literal",
+          "value": "type"
+        },
+        {
+          "type": "primitive",
+          "name": "get"
+        },
+        {
+          "type": "literal",
+          "value": 3
+        },
+        {
+          "type": "primitive",
+          "name": "pick"
+        },
+        {
+          "type": "primitive",
+          "name": "equal?"
+        },
+        {
+          "type": "primitive",
+          "name": "swap"
+        },
+        {
+          "type": "primitive",
+          "name": "dup"
+        },
+        {
+          "type": "literal",
+          "value": "disabled"
+        },
+        {
+          "type": "primitive",
+          "name": "get"
+        },
+        {
+          "type": "literal",
+          "value": false
+        },
+        {
+          "type": "primitive",
+          "name": "equal?"
+        },
+        {
+          "type": "primitive",
+          "name": "swap"
+        },
+        {
+          "type": "primitive",
+          "name": "dup"
+        },
+        {
+          "type": "literal",
+          "value": "readonly"
+        },
+        {
+          "type": "primitive",
+          "name": "get"
+        },
+        {
+          "type": "literal",
+          "value": false
+        },
+        {
+          "type": "primitive",
+          "name": "equal?"
+        },
+        {
+          "type": "primitive",
+          "name": "swap"
+        },
+        {
+          "type": "literal",
+          "value": "autocomplete"
+        },
+        {
+          "type": "primitive",
+          "name": "get"
+        },
+        {
+          "type": "verb",
+          "name": "sensitive-field?"
+        },
+        {
+          "type": "primitive",
+          "name": "not"
+        },
+        {
+          "type": "primitive",
+          "name": "and"
+        },
+        {
+          "type": "primitive",
+          "name": "and"
+        },
+        {
+          "type": "primitive",
+          "name": "and"
+        },
+        {
+          "type": "primitive",
+          "name": "and"
+        },
+        {
+          "type": "primitive",
+          "name": "swap"
+        },
+        {
+          "type": "primitive",
+          "name": "drop"
+        }
+      ]
+    },
+    {
+      "name": "first-field",
+      "cells": [
+        {
+          "type": "literal",
+          "value": 0
+        },
+        {
+          "type": "primitive",
+          "name": "dup"
+        },
+        {
+          "type": "primitive",
+          "name": "count"
+        },
+        {
+          "type": "primitive",
+          "name": "<"
+        },
+        {
+          "type": "literal",
+          "value": 5
+        },
+        {
+          "type": "primitive",
+          "name": "branch-relative-if"
+        },
+        {
+          "type": "primitive",
+          "name": "drop"
+        },
+        {
+          "type": "primitive",
+          "name": "drop"
+        },
+        {
+          "type": "literal",
+          "value": -1
+        },
+        {
+          "type": "literal",
+          "value": 13
+        },
+        {
+          "type": "primitive",
+          "name": "jump-relative"
+        },
+        {
+          "type": "primitive",
+          "name": "dup"
+        },
+        {
+          "type": "primitive",
+          "name": "field"
+        },
+        {
+          "type": "literal",
+          "value": 2
+        },
+        {
+          "type": "primitive",
+          "name": "pick"
+        },
+        {
+          "type": "verb",
+          "name": "eligible-field"
+        },
+        {
+          "type": "literal",
+          "value": 4
+        },
+        {
+          "type": "primitive",
+          "name": "branch-relative-if"
+        },
+        {
+          "type": "literal",
+          "value": 1
+        },
+        {
+          "type": "primitive",
+          "name": "+"
+        },
+        {
+          "type": "literal",
+          "value": -21
+        },
+        {
+          "type": "primitive",
+          "name": "jump-relative"
+        },
+        {
+          "type": "primitive",
+          "name": "swap"
+        },
+        {
+          "type": "primitive",
+          "name": "drop"
+        }
+      ]
+    }
+  ]
+}

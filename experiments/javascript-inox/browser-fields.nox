@@ -1,0 +1,3 @@
+to sensitive-field? "username|password|one-time-code|cc-number|cc-csc" text.matches-i? .
+to eligible-field swap dup "tag" get "input" equal? swap dup "type" get 3 pick equal? swap dup "disabled" get false equal? swap dup "readonly" get false equal? swap "autocomplete" get sensitive-field? not and and and and swap drop .
+to first-field 0 dup count < 5 branch-relative-if drop drop -1 13 jump-relative dup field 2 pick eligible-field 4 branch-relative-if 1 + -21 jump-relative swap drop .
