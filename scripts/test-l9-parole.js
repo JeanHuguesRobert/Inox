@@ -18,7 +18,7 @@ const cases=[
  ['empty completion is typed outcome','to p make.parole .from >p { >next >event $event .values array.length out $next .complete drop } $p .will drop $p .complete drop $p .settled? out. p','01'],
  ['late observer sees tail settlement','to p make.parole >p { >next >event 9 $next .resolve drop } $p .will drop { >ctx >event $event .value out } $p .on drop. p','9'],
  ['200 pending steps drain at constant control depth','global: fd/ is: _; global: ld/ is: _; to p make.parole .from >p from: 1 to: 200 do: { { >next >v control-depth >d if: ( $v 0 = ) then: { $d fd! }; $d ld! $v 1 + $next .resolve drop } $p .may drop }; 0 $p .resolve drop $p .value out fd ld = out. p','2001'],
- // FBF: a child actor's ordinary 100-cell control stack currently overflows.
+ // FBF: the former 100-cell control-stack overflow in a child actor.
  ['continuation settled by another actor','global: pp/ is: _; to worker 7 pp .resolve drop. to p make.parole .from pp! { >next >v $v 2 * $next .resolve drop } pp .may drop l9-root .spawn( worker/ as-verb definition ) >w $w .resume l9-root .join drop pp .value out. p','14'],
 ];
 let passed=0;

@@ -979,6 +979,45 @@ to initialize-l9
     then/it-method{ >on-reject >on-resolve $on-resolve $on-reject @tail .then }
   }
 
+  ~~ 2026-11-26: GPT-6.2 under JHR, #42.
+  ~~ Reusable step description, separate from each one-shot execution.
+  ~~ Unlike L8's callable head, each invocation has its own explicit handle.
+  parole-step-spec/class{
+    maker{ >class >success-only? >callback
+      $class make{ $callback :callback $success-only? :success-only? }
+    }
+    callback/getter
+    success-only?/getter
+  }
+  parole-template/class{
+    maker{ >class $class make{ array[] :steps } }
+    append/it-method{ >success-only? >callback
+      @steps $callback $success-only? make.parole-step-spec/ as-verb run array.push
+      it
+    }
+    will/it-method{ >callback $callback false it .append }
+    may/it-method{ >callback $callback true it .append }
+    instantiate/it-method{
+      make.parole/ as-verb run .from >execution
+      0 >idx
+      @steps array.length >count
+      while: { $idx $count < } do: {
+        $idx @steps array.get >step
+        $step .callback $step .success-only? $execution .append drop
+        $idx ++ >idx!
+      };
+      $execution
+    }
+    invoke/it-method{ >event
+      it .instantiate >execution
+      $event $execution .fill
+    }
+    submit/it-method{ >value
+      it .instantiate >execution
+      $value $execution .resolve
+    }
+  }
+
   ~~ 2026-11-24: GPT-6 under Jean Hugues Noel Robert, Inox #42.
   ~~ Port of virteal/l8 lib/signal.js (d3dc0840). No event buffering.
   ~~ An absent next-promise represents the initial inactive detector.
