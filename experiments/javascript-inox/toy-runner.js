@@ -71,6 +71,86 @@ export class VM {
     }
     return null;
   }
+  // Shared punctuation normalization for both experimental readers.
+  // This is a deliberately bounded subset of the historical tokenizer.
+  static normalizeTokens(tokens) {
+    return tokens.flatMap(token => {
+      if (VM.literal(token) || token.startsWith('"')) return [token];
+      return token.split(/([{};])/u).filter(Boolean).flatMap(part =>
+        part.length > 1 && part.endsWith('.') && !VM.literal(part)
+          ? [part.slice(0,-1), '.'] : [part]);
+    });
+  }
+  // Structured control lowers to the existing relocatable branch primitives.
+  // The compiler is still VM-invoked through def.emit. No JS runtime recursion.
+  emitSourceToken(token) {
+    const d = this.definition, body = d.body;
+    const emit = word => body.push(this.resolve(word));
+    const branch = word => {
+      const index = body.length;
+      body.push({name:'',type:'literal',value:0});
+      emit(word);
+      return index;
+    };
+    const patch = (index,target) => { body[index].value = target-index-2; };
+    const expect = word => {
+      const actual = this.nextToken();
+      if(actual!==word)throw new SyntaxError('expected '+word+', got '+actual);
+    };
+    const block = () => {
+      expect('{');
+      for (;;) {
+        const word = this.nextToken();
+        if (word === '}') return;
+        this.emitSourceToken(word);
+      }
+    };
+    const conditionalExit = () => { emit('not'); return branch('branch-relative-if'); };
+    if (token === 'while:' || token === 'do:') {
+      const start = body.length;
+      const exits = [];
+      d.loops.push(exits);
+      if (token === 'while:') {
+        block();
+        exits.push(conditionalExit());
+        expect('do:');
+        block();
+        patch(branch('jump-relative'),start);
+      } else {
+        block();
+        const kind = this.nextToken();
+        if (kind!=='while:' && kind!=='until:')throw new SyntaxError('expected while: or until:');
+        block();
+        if(kind==='until:')emit('not');
+        patch(branch('branch-relative-if'),start);
+      }
+      expect(';');
+      d.loops.pop();
+      for(const index of exits)patch(index,body.length);
+      return;
+    }
+    if(token==='break-if' || token==='break') {
+      if(!d.loops.length)throw new SyntaxError(token+' outside loop');
+      d.loops.at(-1).push(branch(token==='break-if'?'branch-relative-if':'jump-relative'));
+      return;
+    }
+    if(token==='{') {
+      // Only the historical immediately-invoked postfix conditional is lowered.
+      // General first-class block values remain outside this subset.
+      const exit=conditionalExit();
+      for(;;) {
+        const word=this.nextToken();
+        if(word==='}')break;
+        this.emitSourceToken(word);
+      }
+      expect('if');
+      patch(exit,body.length);
+      return;
+    }
+    if(['}', ';', '.', 'then:', 'else:', 'until:'].includes(token))
+      throw new SyntaxError('unexpected structured token '+token);
+    emit(token);
+  }
   resolve(token) {
     const lit = VM.literal(token);
     if (lit) return lit;
@@ -160,6 +240,7 @@ export class VM {
         this.tokens.push(token);
       }
     } else this.tokens = VM.lex(source);
+    this.tokens = VM.normalizeTokens(this.tokens);
     this.cursor = 0;
     while (this.cursor < this.tokens.length) {
       const token = this.nextToken();
@@ -212,7 +293,7 @@ export class VM {
       const name = vm.pop().value;
       if (typeof name !== 'string' || !name || name === '.')
         throw new Error('bad definition name');
-      vm.definition = { name, body: [] };
+      vm.definition = { name, body: [], loops: [] };
     });
     p('token.end?', vm => {
       const token = vm.pop().value;
@@ -220,7 +301,7 @@ export class VM {
     });
     p('def.emit', vm => {
       if (!vm.definition) throw new Error('no active definition');
-      vm.definition.body.push(vm.resolve(vm.pop().value));
+      vm.emitSourceToken(vm.pop().value);
     });
     p('def.finish', vm => {
       if (!vm.definition) throw new Error('no active definition');

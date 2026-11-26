@@ -183,32 +183,16 @@
           "name": "<"
         },
         {
+          "type": "primitive",
+          "name": "not"
+        },
+        {
           "type": "literal",
-          "value": 5
+          "value": 11
         },
         {
           "type": "primitive",
           "name": "branch-relative-if"
-        },
-        {
-          "type": "primitive",
-          "name": "drop"
-        },
-        {
-          "type": "primitive",
-          "name": "drop"
-        },
-        {
-          "type": "literal",
-          "value": -1
-        },
-        {
-          "type": "literal",
-          "value": 13
-        },
-        {
-          "type": "primitive",
-          "name": "jump-relative"
         },
         {
           "type": "primitive",
@@ -248,11 +232,43 @@
         },
         {
           "type": "literal",
-          "value": -21
+          "value": -17
         },
         {
           "type": "primitive",
           "name": "jump-relative"
+        },
+        {
+          "type": "primitive",
+          "name": "dup"
+        },
+        {
+          "type": "primitive",
+          "name": "count"
+        },
+        {
+          "type": "primitive",
+          "name": "equal?"
+        },
+        {
+          "type": "primitive",
+          "name": "not"
+        },
+        {
+          "type": "literal",
+          "value": 2
+        },
+        {
+          "type": "primitive",
+          "name": "branch-relative-if"
+        },
+        {
+          "type": "primitive",
+          "name": "drop"
+        },
+        {
+          "type": "literal",
+          "value": -1
         },
         {
           "type": "primitive",
