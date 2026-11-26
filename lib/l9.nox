@@ -697,6 +697,81 @@ to initialize-l9
     }
   }
 
+  ~~ 2026-11-24: GPT-6 under JHR, #42. L8 mutex, corrected d2145cb.
+  ~~ Store non-owning task IDs, not task references. Queue entries pair
+  ~~ an owner ID with a promise; transfer ownership before settlement.
+  mutex-waiter/class{
+    maker{ >class >pending >owner
+      $class make{ $owner :owner-id $pending :promise }
+    }
+    owner-id/getter
+    promise/getter
+  }
+  mutex/class{
+    maker{ >class >entered
+      $class make{
+        $entered :entered?
+        0        :owner-id
+        false    :closed?
+        queue[]  :waiters
+      }
+    }
+    entered?/getter
+    owner-id/getter
+    closed?/getter
+    promise/it-method{
+      make.promise/ as-verb run >pending
+      l9 .id >requester
+      if: @closed? then: { /closed $pending .reject } else: {
+        if: @entered? then: {
+          if: ( @owner-id $requester = ) then: {
+            /mutex-already-entered $pending .reject
+          } else: {
+            $requester $pending make.mutex-waiter/ as-verb run >waiter
+            @waiters $waiter queue.enqueue
+          };
+        } else: {
+          true @entered?!
+          $requester @owner-id!
+          it $pending .resolve
+        };
+      };
+      $pending
+    }
+    then/it-method{ >on-reject >on-resolve
+      $on-resolve $on-reject it .promise .then
+    }
+    release/it-method{
+      if: @closed? not then: {
+        if: @entered? then: {
+          if: ( @waiters queue.length > 0 ) then: {
+            @waiters queue.pull >waiter
+            $waiter .owner-id @owner-id!
+            it $waiter .promise .resolve
+          } else: {
+            false @entered?!
+            0 @owner-id!
+          };
+        };
+      };
+      it
+    }
+    signal/it-method{ it .release }
+    close/it-method{
+      if: @closed? not then: {
+        true @closed?!
+        false @entered?!
+        0 @owner-id!
+        @waiters >pending-list
+        queue[] @waiters!
+        while: { $pending-list queue.length 0 > } do: {
+          /closed $pending-list queue.pull .promise .reject
+        };
+      };
+      it
+    }
+  }
+
   task/class{
     thing/superclass
     queue/class-attribute
