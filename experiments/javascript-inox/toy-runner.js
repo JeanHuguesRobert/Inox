@@ -77,7 +77,7 @@ export class VM {
   static normalizeTokens(tokens) {
     return tokens.flatMap(token => {
       if (VM.literal(token) || token.startsWith('"')) return [token];
-      return token.split(/([{};])/u).filter(Boolean).flatMap(part =>
+      return token.split(/(>\{|[{};])/u).filter(Boolean).flatMap(part =>
         part.length > 1 && part.endsWith('.') && !VM.literal(part)
           ? [part.slice(0,-1), '.'] : [part]);
     });
@@ -163,15 +163,15 @@ export class VM {
       if(skip!==null)patch(skip,body.length);
       return;
     }
-    if(token==='{') {
+    if(token==='{' || token==='>{') {
       // Retain inline lowering of immediate conditionals to support loop breaks.
       let depth=1, end=this.cursor;
       for(;end<this.tokens.length && depth;end++){
-        if(this.tokens[end]==='{')depth++;
+        if(this.tokens[end]==='{' || this.tokens[end]==='>{')depth++;
         else if(this.tokens[end]==='}')depth--;
       }
       if(depth)throw new SyntaxError('unterminated block');
-      if(this.tokens[end]==='if'){
+      if(token==='{' && this.tokens[end]==='if'){
         const exit=conditionalExit();
         emit('scope.enter');d.scopeDepth++;
         while(this.cursor<end-1)this.emitSourceToken(this.nextToken());
@@ -189,6 +189,7 @@ export class VM {
       expect('}');emit('block.return');
       d.loops=oldLoops;d.scopeDepth=oldDepth;
       patch(skip,body.length);
+      if(token==='>{')emit('run-with-it');
       return;
     }
     const local=/^>([A-Za-z_][A-Za-z0-9_-]*)(!)?$/.exec(token);
@@ -366,6 +367,16 @@ export class VM {
       vm.call(cell.value);
     };
     p('run',vm=>runBlock(vm,vm.pop()));
+    // Like the reference runtime, bind the target in the called block's
+    // dynamic frame; nested calls can read it, and return restores outer it.
+    p('run-with-it',vm=>{
+      const block=vm.pop(),target=vm.pop();
+      runBlock(vm,block);
+      vm.scopes().at(-1).set('it',{...target,name:'it'});
+    });
+    p('it',vm=>vm.push(vm.findLocal('it').get('it')));
+    p('it!',vm=>vm.findLocal('it').set('it',{...vm.pop(),name:'it'}));
+
     p('if',vm=>{
       const block=vm.pop(),condition=vm.pop().value;if(condition)runBlock(vm,block);
     });

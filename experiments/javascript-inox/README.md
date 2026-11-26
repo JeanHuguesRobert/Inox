@@ -127,3 +127,17 @@ compacting allocator merely to eliminate modest transient accumulation.
 Revisit when measured memory, concurrency or lifetime warrants it.
 Continue incremental source convergence; no memory-management rewrite is
 a prerequisite. Measurements are workload-specific, not a general memory cap.
+
+### Target blocks (incremental source convergence)
+
+The tested historical forms `target >{ ... }` and
+`target { ... } run-with-it` now bind a dynamic local `it` in the
+called block's frame. `it`, `$it` and `it!` access/update that target;
+return restores the caller's binding. The new native primitives reuse
+existing frame lookup and threaded invocation; the syntax emits a normal
+block followed by `run-with-it`. No binary representation dependency.
+Seven differential cases cover nested targets, update, conditional
+invocation and continuation after the block. Historical `/{ ... }`
+parameter binding and `.{ ... }` syntax are deferred: probes of the
+existing CLI did not establish expected continuation behavior.
+No memory allocator changes.
