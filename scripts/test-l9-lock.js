@@ -4,6 +4,7 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 const cwd=fileURLToPath(new URL('..',import.meta.url));
 const cases=[
+ ['release of unheld Lock and Mutex is a no-op','to p 0 make.lock >m $m .release drop $m .count out false make.mutex >x $x .release drop $x .entered? out. p','00'],
  ['recursive acquisition and balanced release','to p 0 make.lock >m $m .promise .resolved? out $m .count out $m .promise .resolved? out $m .count out $m .release drop $m .count out $m .release drop $m .entered? out $m .owner-id out. p','1112100'],
  ['initial depth owned by creator','to p 2 make.lock >m $m .owner-id out $m .count out $m .promise .resolved? out $m .count out $m .release drop $m .release drop $m .release drop $m .entered? out. p','12130'],
  ['closure resets state and rejects future acquisition','to p 2 make.lock >m $m .close drop $m .count out $m .owner-id out $m .entered? out $m .promise .rejected? out $m .closed? out $m .release drop $m .close drop. p','00011'],

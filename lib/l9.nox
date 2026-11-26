@@ -863,12 +863,14 @@ to initialize-l9
     }
     release/it-method{
       if: @closed? not then: {
-        if: ( @entered? and{ it .release-ready? } ) then: {
-          if: ( @waiters queue.length > 0 ) then: {
-            @waiters queue.pull >waiter
-            $waiter .owner-id $waiter .promise it .grant
-          } else: {
-            it .clear-owner
+        if: @entered? then: {
+          if: it .release-ready? then: {
+            if: ( @waiters queue.length > 0 ) then: {
+              @waiters queue.pull >waiter
+              $waiter .owner-id $waiter .promise it .grant
+            } else: {
+              it .clear-owner
+            };
           };
         };
       };
