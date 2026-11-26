@@ -1,0 +1,2 @@
+to eligible dup "tag" get "input" eq swap dup "type" get "text" eq swap dup "disabled" get false eq swap dup "readonly" get false eq swap "autocomplete" get secret? not and and and and .
+to first 0 dup count lt 4 branch-relative-if drop -1 9 jump-relative dup field eligible 4 branch-relative-if 1 + -18 jump-relative .
