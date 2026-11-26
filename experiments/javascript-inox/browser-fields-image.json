@@ -172,6 +172,10 @@
         },
         {
           "type": "primitive",
+          "name": "scope.enter"
+        },
+        {
+          "type": "primitive",
           "name": "dup"
         },
         {
@@ -184,15 +188,23 @@
         },
         {
           "type": "primitive",
+          "name": "scope.leave"
+        },
+        {
+          "type": "primitive",
           "name": "not"
         },
         {
           "type": "literal",
-          "value": 11
+          "value": 17
         },
         {
           "type": "primitive",
           "name": "branch-relative-if"
+        },
+        {
+          "type": "primitive",
+          "name": "scope.enter"
         },
         {
           "type": "primitive",
@@ -215,12 +227,28 @@
           "name": "eligible-field"
         },
         {
+          "type": "primitive",
+          "name": "not"
+        },
+        {
           "type": "literal",
-          "value": 4
+          "value": 3
         },
         {
           "type": "primitive",
           "name": "branch-relative-if"
+        },
+        {
+          "type": "primitive",
+          "name": "scope.leave"
+        },
+        {
+          "type": "literal",
+          "value": 5
+        },
+        {
+          "type": "primitive",
+          "name": "jump-relative"
         },
         {
           "type": "literal",
@@ -231,8 +259,12 @@
           "name": "+"
         },
         {
+          "type": "primitive",
+          "name": "scope.leave"
+        },
+        {
           "type": "literal",
-          "value": -17
+          "value": -25
         },
         {
           "type": "primitive",
@@ -256,11 +288,15 @@
         },
         {
           "type": "literal",
-          "value": 2
+          "value": 4
         },
         {
           "type": "primitive",
           "name": "branch-relative-if"
+        },
+        {
+          "type": "primitive",
+          "name": "scope.enter"
         },
         {
           "type": "primitive",
@@ -269,6 +305,10 @@
         {
           "type": "literal",
           "value": -1
+        },
+        {
+          "type": "primitive",
+          "name": "scope.leave"
         },
         {
           "type": "primitive",

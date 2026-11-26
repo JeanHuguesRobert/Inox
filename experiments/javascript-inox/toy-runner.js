@@ -12,6 +12,7 @@ export class VM {
     this.CSP = 0;
     this.DSP = 0;
     this.control = []; // addresses of return-address Cells
+    this.frames = new Map(); // locals by control-frame address
     this.data = []; // addresses of value Cells
     this.tokens = [];
     this.sourceText = "";
@@ -99,9 +100,10 @@ export class VM {
     };
     const block = () => {
       expect('{');
+      emit('scope.enter'); d.scopeDepth++;
       for (;;) {
         const word = this.nextToken();
-        if (word === '}') return;
+        if (word === '}') { d.scopeDepth--; emit('scope.leave'); return; }
         this.emitSourceToken(word);
       }
     };
@@ -132,7 +134,7 @@ export class VM {
     if (token === 'while:' || token === 'do:') {
       const start = body.length;
       const exits = [];
-      d.loops.push(exits);
+      d.loops.push({exits,depth:d.scopeDepth});
       if (token === 'while:') {
         block();
         exits.push(conditionalExit());
@@ -154,20 +156,46 @@ export class VM {
     }
     if(token==='break-if' || token==='break') {
       if(!d.loops.length)throw new SyntaxError(token+' outside loop');
-      d.loops.at(-1).push(branch(token==='break-if'?'branch-relative-if':'jump-relative'));
+      const loop=d.loops.at(-1);
+      const skip=token==='break-if'?conditionalExit():null;
+      for(let i=loop.depth;i<d.scopeDepth;i++)emit('scope.leave');
+      loop.exits.push(branch('jump-relative'));
+      if(skip!==null)patch(skip,body.length);
       return;
     }
     if(token==='{') {
-      // Only the historical immediately-invoked postfix conditional is lowered.
-      // General first-class block values remain outside this subset.
-      const exit=conditionalExit();
-      for(;;) {
-        const word=this.nextToken();
-        if(word==='}')break;
-        this.emitSourceToken(word);
+      // Retain inline lowering of immediate conditionals to support loop breaks.
+      let depth=1, end=this.cursor;
+      for(;end<this.tokens.length && depth;end++){
+        if(this.tokens[end]==='{')depth++;
+        else if(this.tokens[end]==='}')depth--;
       }
-      expect('if');
-      patch(exit,body.length);
+      if(depth)throw new SyntaxError('unterminated block');
+      if(this.tokens[end]==='if'){
+        const exit=conditionalExit();
+        emit('scope.enter');d.scopeDepth++;
+        while(this.cursor<end-1)this.emitSourceToken(this.nextToken());
+        expect('}');expect('if');
+        d.scopeDepth--;emit('scope.leave');patch(exit,body.length);
+        return;
+      }
+      // A relative block reference followed by a jump around its body.
+      // All operands remain relocatable scalars; no JS closures in images.
+      emit('2');emit('block.relative');
+      const skip=branch('jump-relative');
+      const oldLoops=d.loops, oldDepth=d.scopeDepth;
+      d.loops=[];d.scopeDepth=0;
+      while(this.cursor<end-1)this.emitSourceToken(this.nextToken());
+      expect('}');emit('block.return');
+      d.loops=oldLoops;d.scopeDepth=oldDepth;
+      patch(skip,body.length);
+      return;
+    }
+    const local=/^>([A-Za-z_][A-Za-z0-9_-]*)(!)?$/.exec(token);
+    const read=/^\$([A-Za-z_][A-Za-z0-9_-]*)$/.exec(token)||/^([A-Za-z_][A-Za-z0-9_-]*)>$/.exec(token);
+    if(local||read){
+      emit(JSON.stringify((local||read)[1]));
+      emit(read?'local.read':local[2]?'local.write':'local.create');
       return;
     }
     if(['}', ';', '.', 'then:', 'else:', 'until:'].includes(token))
@@ -215,12 +243,35 @@ export class VM {
       // A failed invocation must not leave a fake running frame behind.
       this.IP = null;
       this.control.length = 0;
+      this.frames.clear();
       this.CSP = 0;
       this.data.length = Math.min(this.data.length, initialDSP);
       this.DSP = this.data.length;
       this.definition = null;
       throw error;
     }
+  }
+  call(address, resume=this.IP) {
+    const frame=this.alloc({name:'',type:'return-address',value:resume});
+    this.control.push(frame);this.frames.set(frame,[new Map()]);
+    this.CSP=this.control.length;this.IP=address;
+  }
+  returnFrame() {
+    const frame=this.control.pop();
+    this.IP=frame===undefined?null:this.cells[frame].value;
+    this.frames.delete(frame);this.CSP=this.control.length;
+  }
+  scopes() {
+    const scopes=this.frames.get(this.control.at(-1));
+    if(!scopes)throw Error('local outside call frame');
+    return scopes;
+  }
+  findLocal(name) {
+    for(let i=this.control.length-1;i>=0;i--){
+      const scopes=this.frames.get(this.control[i]);
+      for(let j=scopes.length-1;j>=0;j--)if(scopes[j].has(name))return scopes[j];
+    }
+    throw Error('undefined local: '+name);
   }
   run() {
     while (this.IP !== null) {
@@ -237,15 +288,10 @@ export class VM {
           cell.value(this); // FFI: direct JS function
           break;
         case 'verb':
-          this.control.push(this.alloc({
-            name: '', type: 'return-address', value: this.IP + 1
-          }));
-          this.CSP = this.control.length;
-          this.IP = cell.value;
+          this.call(cell.value,this.IP+1);
           break;
         case 'return':
-          this.IP = this.CSP ? this.cells[this.control.pop()].value : null;
-          this.CSP = this.control.length;
+          this.returnFrame();
           break;
         default: throw new Error('unexecutable cell type: ' + cell.type);
       }
@@ -297,6 +343,34 @@ export class VM {
     binary('<', (a,b)=>a<b);
     binary('and', (a,b)=>Boolean(a&&b));
     p('not',vm=>pushValue(vm,!vm.pop().value));
+    p('scope.enter',vm=>vm.scopes().push(new Map()));
+    p('scope.leave',vm=>{
+      const scopes=vm.scopes();if(scopes.length<2)throw Error('scope underflow');scopes.pop();
+    });
+    p('local.create',vm=>{
+      const name=vm.pop().value;vm.scopes().at(-1).set(name,vm.pop());
+    });
+    p('local.read',vm=>{
+      const name=vm.pop().value;vm.push(vm.findLocal(name).get(name));
+    });
+    p('local.write',vm=>{
+      const name=vm.pop().value;vm.findLocal(name).set(name,vm.pop());
+    });
+    p('block.relative',vm=>{
+      const offset=vm.pop().value;
+      if(!Number.isInteger(offset))throw Error('invalid block offset');
+      vm.push({name:'',type:'block',value:vm.IP+offset});
+    });
+    const runBlock=(vm,cell)=>{
+      if(cell.type!=='block'||!Number.isInteger(cell.value))throw Error('expected block');
+      vm.call(cell.value);
+    };
+    p('run',vm=>runBlock(vm,vm.pop()));
+    p('if',vm=>{
+      const block=vm.pop(),condition=vm.pop().value;if(condition)runBlock(vm,block);
+    });
+    p('block.return',vm=>vm.returnFrame());
+
     // Experimental host-projection and text operations, not a new binary ABI.
     binary('get',(a,b)=>a!=null&&Object.hasOwn(a,b)?a[b]:undefined);
     binary('text.matches-i?',(a,b)=>new RegExp(b,'i').test(String(a??'')));
@@ -316,7 +390,7 @@ export class VM {
       const name = vm.pop().value;
       if (typeof name !== 'string' || !name || name === '.')
         throw new Error('bad definition name');
-      vm.definition = { name, body: [], loops: [] };
+      vm.definition = { name, body: [], loops: [], scopeDepth:0 };
     });
     p('token.end?', vm => {
       const token = vm.pop().value;
