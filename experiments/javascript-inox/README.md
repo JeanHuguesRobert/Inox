@@ -207,3 +207,22 @@ The experiment's decimal arithmetic is not claimed to match the
 historical integer parser. No general indentation-sensitive block
 grammar or full historical tokenizer is introduced. Compiler and
 lexer image contents remain unchanged.
+
+### Direct method dispatch (2026-11-26)
+
+The first OO convergence step is the historical direct dictionary lookup
+`class.method`, with `.method` lowered to a tag and `run-method`.
+`run-method-by-name` and `class-method-tag` share the same naming
+convention. The receiver remains on the data stack and method invocation
+uses the existing VM call frames. Native scalar classification is a
+small host primitive; there is no separate JS object hierarchy or cache.
+Nine differential programs cover integer/text/tag receivers, method
+composition, explicit invocation and late redefinition. Relocated caller
+images use the receiving dictionary.
+
+This is only the successful direct-lookup path. Missing methods currently
+raise an explicit unsupported-resolution error; the historical fallback
+to class verbs/thing, interpret, L9 metaclasses, inheritance, user-defined
+objects and attribute/it-method protocols are not implemented here. JS
+numeric classification uses Number.isInteger, not the historical packed
+numeric type distinction. Do not interpret this as general L9 parity.

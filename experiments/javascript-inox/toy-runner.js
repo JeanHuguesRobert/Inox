@@ -235,6 +235,11 @@ export class VM {
       if(token==='/{')emit('run-with-parameters');
       return;
     }
+    // Dot-method notation lowers to a symbolic tag and ordinary dispatch.
+    if(/^\.[A-Za-z_][A-Za-z0-9_.?!-]*$/.test(token)){
+      emit(JSON.stringify(token.slice(1)));emit('tag.literal');emit('run-method');
+      return;
+    }
     const tag = VM.sourceTag(token);
     if(tag!==null){
       emit(JSON.stringify(tag));emit('tag.literal');
@@ -367,7 +372,10 @@ export class VM {
       else {
         const tag=VM.sourceTag(token);
         if(tag!==null)this.push({name:tag,type:'tag',value:tag});
-        else this.invoke(token);
+        else if(/^\.[A-Za-z_][A-Za-z0-9_.?!-]*$/.test(token)){
+          const name=token.slice(1);
+          this.push({name,type:'tag',value:name});this.invoke('run-method');
+        } else this.invoke(token);
       }
     }
     if (this.definition !== null) throw new Error('unfinished definition');
@@ -469,6 +477,36 @@ export class VM {
       const cell=vm.pop();
       if(cell.type!=='tag')throw Error('expected tag');
       pushVerb(vm,cell.value,true);
+    });
+    // Direct historical class-qualified lookup, without a parallel
+    // JavaScript class hierarchy or a premature method cache.
+    const receiverClass=cell=>{
+      if(cell.type==='tag'||cell.type==='verb'||cell.type==='void')return cell.type;
+      if(cell.type==='literal'){
+        if(typeof cell.value==='number')return Number.isInteger(cell.value)?'integer':'float';
+        if(typeof cell.value==='string')return 'text';
+        if(typeof cell.value==='boolean')return 'boolean';
+        if(cell.value===null)return 'void';
+      }
+      throw Error('unsupported method receiver');
+    };
+    const dispatchMethod=(vm,name)=>{
+      const qualified=receiverClass(vm.peek())+'.'+name;
+      const entry=vm.words.get(qualified);
+      if(entry===undefined)throw Error('unresolved method: '+qualified);
+      vm.call(entry);
+    };
+    p('run-method',vm=>{
+      const method=vm.pop();
+      if(method.type!=='tag')throw Error('expected method tag');
+      dispatchMethod(vm,method.value);
+    });
+    p('run-method-by-name',vm=>dispatchMethod(vm,textName(vm.pop())));
+    p('class-method-tag',vm=>{
+      const klass=vm.pop(),method=vm.pop();
+      if(klass.type!=='tag'||method.type!=='tag')throw Error('expected class and method tags');
+      const name=klass.value+'.'+method.value;
+      vm.push({name,type:'tag',value:name});
     });
     // Historical verb.run does not consume the verb Cell.
     p('verb.run',vm=>callVerb(vm,vm.peek()));

@@ -210,3 +210,35 @@ test('definition boundaries preserve decimal literals and reject unfinished defi
   }
  }
 });
+
+test('direct class-qualified method dispatch matches historical source',()=>{
+ const cases=[
+  ['to integer.twice dup +. to p 7 .twice out. p','14'],
+  ['to integer.twice dup +. to p 7 /twice run-method out. p','14'],
+  ['to integer.twice dup +. to p 7 "twice" run-method-by-name out. p','14'],
+  ['to text.twice dup drop. to p "hi" .twice out. p','hi'],
+  ['to integer.twice dup +. to p 7 .twice out. p to integer.twice 3 *. p','1421'],
+  ['to p /twice /integer class-method-tag out. p','integer.twice'],
+  ['to tag.ping drop 7. to p /hello .ping out. p','7'],
+  ['to integer.ping drop 7. to text.ping drop 8. to p 3 .ping out "x" .ping out. p','78'],
+  ['to integer.twice dup +. to integer.four .twice .twice. to p 7 .four out. p','28'],
+ ];
+ for(const [source,expected] of cases){
+  assert.equal(historical(source),expected,source);
+  for(const imageReader of [false,true]){
+   const vm=fresh(imageReader),output=[];
+   vm.primitive('out',v=>output.push(String(v.pop().value)));
+   vm.evaluate(source);assert.equal(output.join(''),expected,source);
+   assert.equal(vm.CSP,0);assert.equal(vm.DSP,0);assert.equal(vm.frames.size,0);
+  }
+ }
+ const vm=fresh();vm.evaluate('to integer.twice dup +. to p 7 .twice.');
+ const target=fresh();target.evaluate('to integer.twice 3 *.');
+ loadDefinitions(target,JSON.parse(JSON.stringify(captureDefinitions(vm,['p']))));
+ target.invoke('p');assert.deepEqual(target.values(),[21]);assert.equal(target.CSP,0);
+});
+test('unsupported method fallback fails rather than inventing L9 semantics',()=>{
+ const vm=fresh();vm.evaluate('to p 7 .unresolved-method.');
+ assert.throws(()=>vm.invoke('p'),/unresolved method: integer.unresolved-method/);
+ assert.equal(vm.CSP,0);assert.equal(vm.frames.size,0);
+});
