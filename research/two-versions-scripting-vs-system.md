@@ -78,7 +78,7 @@ Hence the two versions, as stated.
 - The minimal/CLI/scripting path is the pleasant default and is what most `.nox` examples and tools should target first.
 - `cli-stdlib.nox` is the place where we improve the "obvious" surface (update ergonomics to decent-script level, agent memory/branch/turn patterns, collections, CLI I/O, and the `js.*` host bridge).
 - The `js.*` bridge (`js.eval`, `js.require`, `js.get`/`js.set`/`js.call`, `js.global`, `js.new`, ...) is an explicit, first-class feature of the scripting layer. Being based on a real JS VM is considered an *advantage* for easy per-project extension (see `research/js-interop-api-for-scripting-layer.md` and `examples/js-bridge-demo.nox`).
-- l9 path is opt-in and still under repair (the bugs are why the user "moved on" to the CLI solution).
+- L9 remains opt-in. On 2026-11-26 the TypeScript reference has tested cooperative actors, task lifecycle/join, local promises, Signal/Semaphore/Mutex/Lock, Outcome/Boxon/Moxon, one-shot Parole/Whisper and dynamic actor stacks. See [dated evidence](histoire-du-developpement-inox-l9.md) and [#42](https://github.com/JeanHuguesRobert/Inox/issues/42). Full L8 parity, host-event reentry, native backends and distributed COP deployment remain separate.
 - See also:
   - `Inox#17` (the GitHub issue recording the destiny of l8 / side / hybrid / move-out-of-JS-to-Inox, with the user's "Actually, I know what I want..." statement).
   - `research/` (naming, reactive sets, rossignol criterion, task-step-continuation lineage).

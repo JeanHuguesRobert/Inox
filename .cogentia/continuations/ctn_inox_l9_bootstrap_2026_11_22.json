@@ -5,7 +5,7 @@
   "subject": "inox_l9_bootstrap_repair_and_full_runtime_behavior_validation",
   "status": "in_progress",
   "created_at": "2026-11-22",
-  "updated_at": "2026-11-24",
+  "updated_at": "2026-11-26",
   "principal": "Jean Hugues Noel Robert",
   "authority_source": "Principal request to continue L9 debugging and finish putting it in working order; explicit FixBugsFirst doctrine and agent coding attribution requirement",
   "source_issue": "https://github.com/JeanHuguesRobert/Inox/issues/16",
@@ -31,10 +31,15 @@
     "scripts/test-inox-guarded-exceptions.js",
     "scripts/test-l9-promise-chain.js",
     "scripts/test-l9-error-delivery.js",
-    "scripts/test-inox-try-finally.js"
+    "scripts/test-inox-try-finally.js",
+    "scripts/test-l9-external-unwind.js",
+    "scripts/test-l9-stop-requests.js",
+    "scripts/test-l9-terminal-ownership.js",
+    "scripts/test-l9-task-finalization.js",
+    "scripts/test-l9-join.js"
   ],
   "checkpoint": {
-    "result": "2026-11-24 L9 FBF: original 2023 try-run/try:catch:/try:finally:/try:catch:finally: completed in Inox on a shared actor-local VM guard and scope/on-return cleanup. Exceptional unwind and explicit nonlocal break/long-jump execute finalizers in LIFO order; long-jump now resumes at the located sentinel. Language method/verb/operator lookup failures use FATAL/vm-raise. FBF corrected reversed data-stack depth in data-depth/data-dump/clear-data and removed a wrong `with` marker that leaked one data cell per try/finally iteration (1000 iterations returned to depth zero). Regression test: try/finally 41/41; guarded 12/12; promises 29/29; task errors 16/16; OO 35/35; scheduler 21/21; tasks 44/44; bootstrap 22/22; loops 82/82; 4/4 integrations, build PASS. No commit, push or deployment.",
+    "result": "2026-11-24 L9 FBF: original 2023 try-run/try:catch:/try:finally:/try:catch:finally: completed in Inox on a shared actor-local VM guard and scope/on-return cleanup. Exceptional unwind and explicit nonlocal break/long-jump execute finalizers in LIFO order; long-jump now resumes at the located sentinel. Language method/verb/operator lookup failures use FATAL/vm-raise. FBF corrected reversed data-stack depth in data-depth/data-dump/clear-data and removed a wrong `with` marker that leaked one data cell per try/finally iteration (1000 iterations returned to depth zero). Regression test: try/finally 41/41; guarded 12/12; promises 29/29; task errors 16/16; OO 35/35; scheduler 21/21; tasks 44/44; bootstrap 22/22; loops 82/82; 4/4 integrations, build PASS. No commit, push or deployment. 2026-11-24 continuation: cooperative stop/stop-because, external and self-directed task exception unwind and typed reason preservation now verified locally (16/16 targeted; 263/263 suite results). Deferred: terminal actor/result/parent history ownership, Task.defer/failure/success/final, native backends and FATAL semantic retrofit. No commit/push/deployment. 2026-11-24 terminal actor/result follow-up: Task.result explicit setter, actor detached on success/error, suspended/current actor introspection repaired; new 21/21 suite, 284/284 total, 1000 normal and 100 failed stress. Parent Task record retention and Task.defer/failure/success/final unresolved. No commit/push/deployment. 2026-11-24 next FBF: L9 Task.defer/failure/success/final and local Task.exit(result) now implemented using shared actor-local completion, catch-protected callbacks, nonlocal long-jump to actor finish sentinel; finalization may yield and still releases callback references. New 51/51 lifecycle tests, all 16 suites 335/335, 500-defer and 100-task stress. L8 second-defer typo fixed and tested. Join/supervision and parent history reaping remain as next design. No commit, push or deployment. 2026-11-24 join FBF: parent.join is event-driven via pending-children and completion wakeups; reparent live descendants when their parent terminates; return owned Task snapshot with result/error and reap parent subtasks/forks/failed-children. Canceled parent may still wake to complete a join; quiescence with no runnable actor explicitly raises /join-no-runnable-child pending future host/event integration. New suite 30/30; 17 suites 365/365; 100 children and 100 adopted descendants. No commit/push/deployment.",
     "completed_repair_steps": [
       "class{ saves the outer code value before entering extend-class{ to avoid dynamic-scope self-recursion",
       "make.task stub explicitly supplies task/ receiver to make{",
@@ -84,11 +89,11 @@
       "stdlib.nox is marked derived but no checked-in generator was found; regeneration needs a reproducible source",
       "zero-step range invalid input invokes the historical FATAL hook but its error diagnostics and nested-scope unwinding remain defective",
       "proper tail-call elimination/again is specified but not implemented; no recursion replaces the fixed loops",
-      "Promise callback exceptions are not translated into rejection of the next promise, and returned-promise adoption is not specified; pending exception path shared with task.raise",
+      "Promise callbacks reject dependent promises on language-level exceptions; returned-promise assimilation and cycle handling remain unimplemented.",
       "OO alias-method remains a ToDo and is excluded from the validated object-core contract",
-      "L9 fail-early task.raise supports terminal error delivery and parent notification but not user catch/finally, supervisor escalation policy, or L8 step-level retry/recovery; not a complete exception mechanism",
+      "L9 task-level defer/failure/success/final, local exit and parent.join with event-driven completion wakeup are implemented and tested. Host-triggered reentry for quiescent joins, fork-specific result aggregation and supervisor policy are still missing.",
       "L9 scheduler is cooperative and VM-local: no preemptive quantum, timers/sleep or cross-VM COP integration; cannot claim full multitasking platform portability before non-JS runtime validation",
-      "Terminal child task/actor objects remain owned in parent subtasks for join/introspection; define lifetime/retention/release semantics when join/supervisor implementation is completed",
+      "Terminal child actors and callbacks are detached; join returns a Task snapshot and reaps parent-held child/fork/failed-child references on request. Parents that never call join still retain terminal child history. Host-event wake and optional retention/reap policies remain to be designed.",
       "Promise callback returning another promise is not yet assimilated/adopted; cyclic-promise behavior needs its own contract",
       "Native low-level FATAL for compromised internal VM invariants remains a hard failure; do not confuse with language-level vm-raise",
       "Port actor-local exception frame and failure signaling to non-TypeScript / native-JavaScript Cell representation and other runtime backends with explicit tests"
@@ -212,9 +217,10 @@
       "tests": "41/41 dedicated, 12/12 guarded, 29/29 promise, 16/16 error, 21/21 scheduler, 35/35 OO, 44/44 tasks, 22/22 bootstrap, 82/82 loops, 16/16 threshold, micro images PASS, 4/4 integration PASS; TypeScript build PASS",
       "open": "Task join/supervisor escalation, promise adoption, alternative backends, CSP overflow monitoring explicitly deferred",
       "provenance": "GPT-6 coding agent under Jean Hugues Noel Robert, 2026-11-24"
-    }
+    },
+    "red_diagnostic": "Historical L9 bootstrap red probes were superseded by fixes. 2026-11-24 actor exception/cancel unwind was reproduced red at 4/14 then fixed green at 16/16; retained terminal actor/result ownership is the next FBF issue."
   },
-  "next_packet_candidate": "L9 next FBF: explicit task join/supervision and promise-returned-promise adoption; try-run/catch/finally now implemented on TypeScript VM with dedicated 41/41 suite. Porting and CSP monitoring remain distinct; CSP explicitly deferred.",
+  "next_packet_candidate": "Host-event reentry, fork aggregation and supervision remain open; library ports continue in #42. CSP deferral superseded by fd6ced5; residual audit in ctn_inox_csp_context_switch_policy_2026_11_22.",
   "current_focus_2026_11_22": {
     "priority": "L9 child cancellation/exception and task scheduler; local synchronous promise.then tested; CSP overflow work deferred",
     "historical_root_reproductions_now_fixed": [
@@ -321,7 +327,18 @@
       "npm run test:inox-guarded-exceptions": "12/12",
       "node scripts/probe-l9-task-lifecycle.js": "4/4",
       "npm run test:inox-try-finally": "41/41",
-      "repeated try/finally data-depth": "1000 runs, 0 residual stack cells"
+      "repeated try/finally data-depth": "1000 runs, 0 residual stack cells",
+      "node scripts/test-l9-external-unwind.js": "16/16",
+      "node scripts/test-l9-stop-requests.js": "15/15",
+      "node scripts/test-l9-error-delivery.js": "16/16 (injected actor error semantics)",
+      "2026-11-24 focused suites": "365/365 across 17 suites",
+      "tsc": "PASS (generated builds/inox.js and source map)",
+      "node scripts/test-l9-terminal-ownership.js": "21/21",
+      "terminal actors stress": "1000 normal completions and 100 external failures, actor void and result/error preserved",
+      "node scripts/test-l9-task-finalization.js": "51/51 (Task.defer/failure/success/final and local exit)",
+      "L9 hooks stress": "500 defers in one task, 100 terminal Tasks with callbacks, external canceled task cleanup",
+      "node scripts/test-l9-join.js": "30/30",
+      "L9 join stress": "100 direct children and 100 orphaned grandchildren reparented, all joined and reaped"
     },
     "red_diagnostic": "No remaining red cases in probe-l9-task-lifecycle.js: 4/4, but missing-method reporter and unimplemented try/catch/finally are separate known defects.",
     "unfinished_design_contracts": [
@@ -329,10 +346,156 @@
       "Extend cooperative scheduler with sleep/timers and portable runtime backends only when separately mandated",
       "Do not add per-call/defer stack checks or reopen deferred CSP overflow monitoring",
       "Exception handling in other Inox implementations (native JS object Cells, system targets) needs independent port and validation",
-      "Promise returning a promise needs assimilation, cycle handling, and cleanup contracts"
+      "Promise returning a promise needs assimilation, cycle handling, and cleanup contracts",
+      "Task.result remains void after worker return even when data stack contains values; do not release actor until transfer-of-results semantics (single vs multiple Cells) and lifetime of parent-owned subtasks are specified."
     ],
-    "publication_state": "Fracta2 /srv/cogentia/repos/Inox working tree, HEAD ca123f0 (unchanged); existing WIP preserved. No commit, push or service deployment in this mandate.",
+    "publication_state": "Fracta2 /srv/cogentia/repos/Inox local master HEAD a1e95a1efcdc; uncommitted local WIP including concurrent work; no commit/push/deployment.",
     "provenance": "GPT-6 coding agent under Jean Hugues Noel Robert, 2026-11-24",
-    "object_core_gate": "Object subsystem FBF completed in tested subset, 35/35. Resume task.raise and task.schedule next, while maintaining CSP overflow deferral."
+    "object_core_gate": "Object subsystem FBF completed in tested subset, 35/35. Resume task.raise and task.schedule next, while maintaining CSP overflow deferral.",
+    "terminal_actor_unwind_and_retention_2026_11_24": {
+      "status": "implemented_and_verified_locally; parent-owned child history and L8 task-finalization callbacks remain separate",
+      "principal_decisions": [
+        "FATAL is an internal VM failure, outside ordinary exception recovery (semantic retrofit not performed here)",
+        "Use actor-local linear exception-handler search, not an optimization at this stage",
+        "Cooperative stop is separate from exception injection; APIs stop and stop-because(reason), first reason wins",
+        "Preserve L8 task.defer/failure/success/final semantics in future L9 task lifecycle",
+        "External cancel/raise must execute finally and release resources after clean termination"
+      ],
+      "verified_effects": [
+        "VM switch-actor-raise injects typed, owned reason only after saving sender and restoring target IP/TOS/CSP",
+        "l9-next-ready selects pending-error tasks without terminal delivery; real dispatch injects the exception",
+        "vm-raise runs suspended and nested finally/on-return in LIFO order, with scope locals still accessible",
+        "Cleanup may yield/resume even when canceled; unwinding? prevents external re-injection while cleanup is active",
+        "Self-directed task.raise and task.cancel unwind the current actor immediately; long-lived root remains special",
+        "Unhandled child errors retain original typed Cell, notify parent exactly once and unregister child",
+        "Cooperative stop check at explicit stable point uses l9 .should-stop? return-if; return inside if-body only exits that body",
+        "100 completed child tasks remain strongly retained in parent.subtasks, last child actor is reference and result is void",
+        "L9 task.result/getter was changed to result/attribute, making the result explicitly assignable; no implicit copying of arbitrary worker data-stack values",
+        "l9-actor-finish and task.deliver-error drop the Task.actor reference only after VM cleanup; the VM retains a temporary ACTOR pin until context switch or quiescent shutdown",
+        "Task.ip/data-stack/control-stack/tos/csp now address actor slots 3/0/1/4/5 (saved context), and return void on a completed task",
+        "Terminal task payload remains readable through parent.subtasks without retaining its actor; 1000 successful and 100 failed actor detachment cases passed",
+        "Every one of 100 parent-retained completed children was checked for actor absence (live actor count 0)."
+      ],
+      "files_modified_by_this_agent": [
+        "lib/inox.ts",
+        "lib/l9.nox",
+        "scripts/test-l9-error-delivery.js",
+        "scripts/test-l9-external-unwind.js",
+        "scripts/test-l9-stop-requests.js",
+        ".cogentia/continuations/ctn_inox_l9_bootstrap_2026_11_22.json",
+        "scripts/test-l9-terminal-ownership.js"
+      ],
+      "verified_tests_total": "284/284 across 15 suites, plus 1000 success and 100 failure probes; git diff --check",
+      "unresolved_decision": "Task.result is now an explicitly assigned Cell (e.g., 42 l9 .>result!); multiple values can be packed into an array. Task actors are detached after finalizers, normal return or unhandled failure. Next define join/supervision and when parent.subtasks releases completed Task records, as well as L8 Task.defer/failure/success/final and explicit task.exit/return.",
+      "deferred": "Parent retains completed Task records (not their actors); task join/reap/history policy is not implemented; Task.defer/failure/success/final and task.return/exit remain pending; no change to CSP overflow policy or FATAL.",
+      "runtime": "Fracta2 /srv/cogentia/repos/Inox; branch master at a1e95a1efcdc0f5cda3bdcc098c87abba2d39295; local WIP; no commit/push/deployment."
+    },
+    "task_finalization_and_exit_2026_11_24": {
+      "status": "local implementation verified, no commit/push/deployment",
+      "scope": "L9 Task.defer/failure/success/final, common success/error termination, task.exit(result) for current actor; L8 multiple defer FBF repair",
+      "semantics": [
+        "VM scoped on-return/finally executes before Task.defer callbacks in LIFO order; defer may register additional defers during the defer phase",
+        "failure(reason) runs for errors; if it returns normally, error is cleared as in L8 (recovery); success(result) runs instead on success; final(error,result) always runs",
+        "Callback raises are caught by actor-local run-guarded, recorded on Task.error, and do not skip remaining deferred cleanup/final callback",
+        "Deferred, failure and final callbacks may yield and resume; Task.done is set only after all hooks return",
+        "External pending-error? is reset as soon as the VM injects an unhandled error; otherwise yielding failure callbacks could trigger a duplicate injection",
+        "Completed Tasks release deferred-task-hooks and failure/success/final code references before actor detachment, retaining only result/error/terminal metadata",
+        "Task.exit(result) uses existing l9-actor-finish control-stack sentinel and long-jump to unwind scope finalizers, with no new VM primitive",
+        "Task.exit is confined to the owning current child actor; remote exit raises /exit-of-other-task, root exit raises /root-task-cannot-exit",
+        "exiting? makes early exit idempotent and blocks later external cancel/raise during scope cleanup, while self-directed raise remains catchable by VM guard",
+        "Task.deliver-error was removed because direct terminalization could bypass the required VM unwind"
+      ],
+      "changed_files_in_Inox": [
+        "lib/l9.nox",
+        "scripts/test-l9-task-finalization.js",
+        ".cogentia/continuations/ctn_inox_l9_bootstrap_2026_11_22.json"
+      ],
+      "cross_repo_L8_FBF": {
+        "repo": "/srv/cogentia/repos/l8",
+        "files": [
+          "lib/l8.js",
+          "test/defer-fbf.js",
+          "package.json"
+        ],
+        "defect": "ProtoTask.defer used step.push(args) rather than steps.push(args), aborting a task on its second defer",
+        "verification": "L8 two-defer LIFO FBF, previous stop-because FBF, suite, parole 71+, water, signal, semaphore, mutex, stale wakeups; all passed"
+      },
+      "verification": {
+        "Inox new lifecycle suite": "51/51",
+        "Inox 16 verified suites": "335/335",
+        "additional probes": "500 deferred callbacks in one Task; 100 completed Tasks with hooks, result and detached actor; external canceled cleanup; all passed",
+        "git diff --check": "PASS"
+      },
+      "remaining": [
+        "L9 join/supervision and parent-held child record reaping remain open",
+        "L8 join() waits all children and automatically removes completed subtask ownership; L9 retains child records indefinitely for introspection: choose explicit/history retention versus join-time reaping",
+        "A real quiescent wait for paused children cannot be implemented by busy polling; scheduler must park a parent continuation and wake it when child completion occurs, without silently halting the VM",
+        "Promise-returned-promise assimilation, non-TypeScript VM backends and CSP overflow monitoring are independent work; the CSP monitoring policy remains deferred"
+      ],
+      "source_revision": "Inox Fracta2 master HEAD a1e95a1efcdc; L8 master HEAD d2145cbcb452; both local WIP, no commit/push/deployment"
+    },
+    "task_join_and_supervision_2026_11_24": {
+      "status": "implemented_and_tested_locally; host-event quiescent reactivation remains pending",
+      "scope": "L9 parent Task.join, child completion event-driven wake, terminal child handle transfer, descendant reparenting, cancellation-compatible join",
+      "contract": [
+        "Calling l9 .join in the current parent actor waits until pending-children is zero; a join of another task raises /join-of-other-task",
+        "Child creation increments parent.pending-children; terminal child completion decrements it after all scope and Task finalizers run and actor cleanup completes",
+        "When last pending child completes, a joining parent is resumed via the existing ready queue; spurious wakes do not permit an early join return",
+        "When a Task completes while owning descendants, its completed and still-active children are reparented to its grandparent, with weak parent-id updated and active counts transferred before decrementing the finishing task",
+        "The reparent walk uses an iterative while/index array traversal. No recursion or per-instruction scheduler overhead was added",
+        "join returns the ordered array of completed Task objects, including typed .result/.error and .canceled? state; ownership transfers to the caller. The joining parent clears subtasks, forks and failed-children references",
+        "The caller may keep the snapshot for supervision or drop it to release terminal child records; join called again without new children returns an empty array",
+        "A canceled parent remains scheduler-eligible while joining so it can collect the final results of canceled children; this does not restart its normal work",
+        "If pending children remain but no actor is runnable, join raises /join-no-runnable-child and restores its own joining/paused flags; it does not silently return or busy-poll. This is NOT yet an asynchronous wait for a future external wake-up"
+      ],
+      "files_modified": [
+        "lib/l9.nox",
+        "scripts/test-l9-join.js",
+        "package.json",
+        ".cogentia/continuations/ctn_inox_l9_bootstrap_2026_11_22.json"
+      ],
+      "verification": {
+        "node scripts/test-l9-join.js": "30/30 (real Fracta2 working tree)",
+        "all 17 checked regression suites": "365/365 (real Fracta2 working tree)",
+        "stress": "100 direct children joined and reaped; 100 orphaned-grandchild adoptions joined and reaped",
+        "git diff --check": "PASS"
+      },
+      "remaining": [
+        "The current synchronous run_eval/processor clears VM data/control on return; true externally awakened parked actors require an explicit persistent-VM/host event contract before replacing /join-no-runnable-child.",
+        "Host-event integration: expose a resumable parked actor so quiescent joins can await future external I/O, timers and COP wakeups rather than reporting /join-no-runnable-child",
+        "Fork-specific result aggregation and supervisor policy (failure propagation, sibling cancellation and escalation) remain distinct from join, which returns per-Task records unchanged",
+        "This is local cooperative actor scheduling in the TypeScript VM; no native/backend cross-port claim, and no CSP overflow-monitoring change"
+      ],
+      "provenance": "2026-11-24 GPT-6 coding agent under Jean Hugues Robert; Fracta2 /srv/cogentia/repos/Inox master a1e95a1efcdc; no commit, push or deployment",
+      "host_reentry_read_only_audit_2026_11_24": {
+        "observed": "lib/inox.ts run_eval() always installs a new eval IP, invokes run() synchronously, then clears data/control stacks. bin/inox.js exits after -e/file evaluation; inox-serve runs jobs via sidecar/worker/process pools and its fulfillment API does not resume a specific VM actor.",
+        "consequence": "A parked Task cannot simply resume from a later HTTP request using the existing processor() path; that would create a new evaluation and clear the old continuation.",
+        "design_direction": "Introduce an explicit persistent VM session with saved actor IP/TOS/CSP, an owned host event queue and a bounded reentry API. Wake a parked joined parent through completion events, preserving Task.result/error and avoiding busy waits. Keep CLI one-shot and existing Cogentia packet continuations separate until their contracts are reconciled.",
+        "files_read": [
+          "lib/inox.ts",
+          "bin/inox.js",
+          "bin/inox-serve.js"
+        ],
+        "mutations": "read-only audit; no VM/host code modified for reentry"
+      }
+    }
+  },
+  "current_focus_2026_11_26": {
+    "status": "published_reference_runtime_subset",
+    "supersedes": "Earlier dated local-only checkpoints and CSP deferral are historical.",
+    "commits": [
+      "6cccc7b",
+      "fd6ced5",
+      "b28fe9d"
+    ],
+    "checkpoint": "https://github.com/JeanHuguesRobert/Inox/issues/42#issuecomment-7200490854",
+    "validation": "578 distinct checks at b28fe9d; checkout rebuilt; no standalone service deployment.",
+    "remaining": [
+      "host event reentry for quiescent joins",
+      "fork aggregation and supervision",
+      "returned-promise assimilation and native interop",
+      "stack bulk operations, borrowed stacks, native targets and cost"
+    ],
+    "routing": "#42 library ports; #41 JavascriptInox convergence; existing CSP continuation for stack residuals."
   }
 }

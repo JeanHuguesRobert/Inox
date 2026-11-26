@@ -129,6 +129,20 @@ Au dernier commit étudié, les tests L9 comprennent **22 cas de bootstrap**, **
 
 **Ce qui reste ouvert** : `task.raise` et la propagation des annulations/erreurs, `task.schedule` et la reprise effective des acteurs, la traduction des exceptions des callbacks en rejets de promesses, et plusieurs garanties mémoire. La recherche sur la détection des débordements de pile lors d'un changement de contexte a été **explicitement différée** par l'auteur ; la correction arithmétique du seuil de croissance à 80 % est un autre sujet, déjà traité.
 
+### Prolongement du 24 au 26 novembre 2026 — portages croisés et piles
+
+Bilan daté du [paquet #42](https://github.com/JeanHuguesRobert/Inox/issues/42), distinct du chantier JavascriptInox #41. GPT-6/GPT-6.2 sous la direction de Jean Hugues Noël Robert.
+
+- Cycle de vie, exceptions inter-acteurs, finalisation, join et adoption des descendants : [6cccc7b](https://github.com/JeanHuguesRobert/Inox/commit/6cccc7b).
+- Signal, Semaphore, Mutex, Lock réentrant FIFO : 90feee0, a1e95a1, 03c3325, 459811a.
+- Outcome, Boxon, Moxon, adoption de promesses locales et combinateurs : [97143f0](https://github.com/JeanHuguesRobert/Inox/commit/97143f0).
+- Relocalisation des piles d'acteurs : [fd6ced5](https://github.com/JeanHuguesRobert/Inox/commit/fd6ced5).
+- Parole à usage unique et Whisper local : [b28fe9d](https://github.com/JeanHuguesRobert/Inox/commit/b28fe9d).
+
+Le portage croisé a révélé des défauts corrigés en retour dans [L8](https://github.com/virteal/l8) (Mutex d2145cb, Lock 49fefab, Boxon 9b6f6e2, Whisper 6b15cad). Il enrichit la bibliothèque en Inox et fournit des tests discriminants. Le test Parole inter-acteurs a révélé un débordement (contrôle 100/100 cellules, données 2/100) ; la réparation concerne le propriétaire, les curseurs et les adresses des gardes et sauts. La réservation par lots de 16 instructions et marge de 192 cellules est un choix mesurable, non une sémantique du langage.
+
+À b28fe9d, 578 vérifications distinctes ont été rapportées réussies sur le runtime TypeScript ; build et tests ciblés refaits sur Fracta2. [Checkpoint](https://github.com/JeanHuguesRobert/Inox/issues/42#issuecomment-7200490854). Pas de service de production distinct identifié ni redéployé. Restent ouverts : primitives à empilement massif, piles empruntées, coût de réservation, backends natifs, thenables JS, reprise par événements hôte et Parole réutilisable. Le COP distribué reste distinct de L9 local.
+
 ## 9. Avant et après les agents : comparaison de méthode
 
 | Dimension | Avant l'usage attesté des agents (2021–2025) | Avec les agents (à partir du 22 mai 2026) |
