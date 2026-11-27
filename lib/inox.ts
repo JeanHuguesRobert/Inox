@@ -6985,14 +6985,12 @@ function is_an_integer( c : Cell ) : boolean {
  */
 
 function set_float( c : Cell, v : Float ){
-  /**/ set( c, type_float, tag_float, v );
-  // For TypeScript, use mem32f
-  //a/ set( c, type_float, tag_float, 0 );
-  //a/ mem32f[ ( c << 1 ) ] = v;
-  //c/ set( c, type_float, tag_float, 0 );
+  // 2026-11-27: GPT-6.2 under JHR, #42. A Cell is two 32-bit words.
+  // Float payload occupies the same value word that copy_cell preserves.
+  set( c, type_float, tag_float, 0 );
+  /**/ mem32f[ c << 1 ] = v;
   //c/ *( ( Float * ) ( c << 3 ) ) = v;
 }
-
 
 function is_a_float( c : Cell ) : boolean {
   return type_of( c ) == type_float;
@@ -7001,10 +6999,8 @@ function is_a_float( c : Cell ) : boolean {
 
 function cell_float( c : Cell ) : Float {
   de&&mand( is_a_float( c ) );
-  /**/ return value_of( c );
-  // For TypeScript, use mem32f
-  //a/ return mem32f[ ( c << 1 ) ];
-  //c/ return *( ( Float * ) ( c << 4 ) );
+  /**/ return mem32f[ c << 1 ];
+  //c/ return *( ( Float * ) ( c << 3 ) );
 }
 
 
@@ -11567,7 +11563,7 @@ function dump( c : Cell ) : Text {
     break;
 
     case type_float :
-      buf += float_as_text( v );
+      buf += float_as_text( cell_float( c ) );
       if( n != tag_integer ){
         buf += " :" + tag_as_dump_text( n );
       }
@@ -13968,43 +13964,20 @@ operator_primitive( "abs",      checked_int_abs      );
  */
 
 function push_float( f : Float ){
-  const c = push();
-  // TypeScript version:
-  /**/ mem32f[ c ] = f;
-  // C++ version:
-  //c/ *( float* ) ( ( void* ) ( c << 3 ) ) = f;
-  set_info( c, pack( type_float, tag_float ) );
+  set_float( push(), f );
 }
 
-
 function primitive_as_float(){
-
-  const top = pop();
-
-  if( is_a_float( top ) ){
-    push();
-    return;
+  if( is_a_float( TOS ) )return;
+  let f : Float;
+  if( is_an_integer( TOS ) ){
+    f = value_of( TOS );
+  }else{
+    /**/ f = parseFloat( cell_as_text( TOS ) );
+    //c/ f = (Float) atof( cell_as_text( TOS ).c_str() );
   }
-
-  if( is_an_integer( top ) ){
-    /**/ const f = mem32f[ top ];
-    //c/ auto  f = *( float* ) ( ( void* ) ( top << 3 ) );
-    push_float( f );
-    return;
-  }
-
-  if( is_a_text( top ) ){
-    /**/ const f = parseFloat( cell_as_text( top ) );
-    //c/ auto  f = (Float) atof( cell_as_text( top ).c_str() );
-    push_float( f );
-    return;
-  }
-
-  const auto_ = cell_as_text( top );
-  /**/ const f = parseFloat( auto_ );
-  //c/ auto  f = (Float) atof( auto_.c_str() );
-  push_float( f );
-
+  clear_top();
+  set_float( TOS, f );
 }
 primitive( "as-float", primitive_as_float );
 
@@ -14016,8 +13989,8 @@ primitive( "as-float", primitive_as_float );
 function pop_float() : Float {
   const top = pop();
   check_de&&mand_cell_type( top, type_float );
-  /**/ const f = mem32f[ top ];
-  //c/ auto  f = *( float *) ( top << 3 );
+  const f = cell_float( top );
+  clear( top );
   return f;
 }
 
@@ -17719,7 +17692,7 @@ function cell_textify( c : Cell ){
       return;
 
     case type_float:
-      set_text_cell( c, float_as_text( value_of( c ) ) );
+      set_text_cell( c, float_as_text( cell_float( c ) ) );
       return;
 
     case type_tag:
@@ -17770,7 +17743,7 @@ function cell_as_text( c : Cell ) : Text {
       return N( v );
 
     case type_float :
-      return float_as_text( v );
+      return float_as_text( cell_float( c ) );
 
     case type_tag :
       return tag_as_text( v );
