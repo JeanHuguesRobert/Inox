@@ -81,9 +81,9 @@ Retrospective review of the existing experiment:
   than representation. Consider moving individual rules into Inox as they
   are next needed, keeping low-level emission/linking native. Do not make
   wholesale migration a prerequisite for source convergence.
-- ZeroBrowser's `count` and `field` are host adapters. Legacy `eq`, `lt`,
-  `secret?` are retained for the first experimental image; newer recipes
-  already use the generic comparison primitives and Inox selection policy.
+- ZeroBrowser originally exposed `count`, raw `field` and legacy aliases
+  `eq`, `lt`, `secret?`. These redundant adapters were removed in the
+  consolidation described below; use `count` and projected `field.object`.
 
 Measured on Fracta2, Node v26.13.1: 10,000 iterations of identical loops
 using `over` versus `1 pick` executed 180,013 versus 190,013 instructions,
@@ -412,3 +412,22 @@ The Cogentia generic.unique-text@1 recipe is an explicit new choice,
 not a change to the existing first-match recipes. The comparison
 registry still treats JavaScript as its reference and rejects any
 disagreement. No authorization or transport change.
+
+
+### Consolidation by subsumption (2026-11-27)
+
+The Principal directs us to remove superseded capabilities, not merely
+accumulate more general ones. The three historical browser selectors
+(first text, first by type, unique by type) are replaced by a single
+`browser-select-field.nox`, one definition image and one shared test file.
+`select-field` receives the requested input type and the explicitly
+validated selection policy ("first" or "unique"). Both choices remain
+available; there is no duplicate named implementation. The sensitive
+predicate and native metadata projection are shared. ZeroBrowser no longer
+exports raw `field` or the three legacy aliases `eq`, `lt`, `secret?`.
+The earlier source/image filenames in this dated record refer to prior
+Git revisions, not maintained alternatives. Historical source and images
+remain recoverable from Git. Tests retain the earlier first-text cases,
+image reproducibility, missing-import rejection, ambiguity and maximum
+field count, and compare both policies against the same reference over
+100 deterministic mixed observations. No VM core or L9 changes.

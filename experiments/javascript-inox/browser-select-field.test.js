@@ -5,17 +5,15 @@ import {VM} from './toy-runner.js';
 import {installZeroBrowser} from './zero-browser.js';
 import {captureDefinitions,loadDefinitions} from './definition-image.js';
 const read=name=>readFileSync(new URL(name,import.meta.url),'utf8');
-const base=JSON.parse(read('browser-fields-image.json'));
-const image=JSON.parse(read('browser-unique-field-image.json'));
+const image=JSON.parse(read('browser-select-field-image.json'));
 const build=installZeroBrowser(new VM(),[]);
-loadDefinitions(build,base);
-build.evaluate(read('browser-unique-field.nox'));
-test('unique-field image reproducible',()=>assert.deepEqual(captureDefinitions(build,['eligible-input?','unique-field']),image));
+build.evaluate(read('browser-select-field.nox'));
+test('select-field image reproducible',()=>assert.deepEqual(captureDefinitions(build,['sensitive-field?','eligible-input?','select-field']),image));
 const plain={tag:'input',type:'text',disabled:false,readonly:false};
-function select(fields,type='text'){
+function select(fields,type='text',selection='unique'){
  const vm=installZeroBrowser(new VM({maxSteps:100000}),fields);
- loadDefinitions(vm,base);loadDefinitions(vm,image);
- const result=vm.evaluate(JSON.stringify(type)+' unique-field');
+ loadDefinitions(vm,image);
+ const result=vm.evaluate(JSON.stringify(type)+' '+JSON.stringify(selection)+' select-field');
  assert.equal(vm.CSP,0);assert.equal(vm.frames.size,0);assert.equal(result.length,1);
  return {index:result[0],steps:vm.steps};
 }
@@ -50,6 +48,32 @@ test('compiled behavior agrees with reference across deterministic mixed observa
    });
    const hits=fields.flatMap((f,i)=>f?.tag==='input'&&f.type===type&&f.disabled===false&&f.readonly===false&&!/username|password|one-time-code|cc-number|cc-csc/i.test(String(f.autocomplete||''))?[i]:[]);
    assert.equal(select(fields,type).index,hits.length>1?-2:hits[0]??-1);
+   assert.equal(select(fields,type,'first').index,hits[0]??-1);
   }
  }
+});
+
+
+test('source and image agree in both selection policies; historical first-text cases',()=>{
+ const b={...plain,autocomplete:''};
+ const cases=[[],[b],[{...b,autocomplete:'username'},b],
+  [{...b,disabled:true},{...b,readonly:true},b],
+  [{...b,type:'email'},b],[{...b,tag:'textarea'}],[null,b],
+  [{...b,disabled:undefined},b],Array(80).fill({...b,autocomplete:'one-time-code'}),
+  [...Array(79).fill({...b,autocomplete:'cc-csc'}),b],[b,b]];
+ const expected=[-1,0,1,2,1,-1,1,1,-1,79,0];
+ for(const [i,fields] of cases.entries()){
+  const vm=installZeroBrowser(new VM(),fields);vm.evaluate(read('browser-select-field.nox'));
+  assert.deepEqual(vm.evaluate('"text" "first" select-field'),[expected[i]]);
+  assert.equal(select(fields,'text','first').index,expected[i]);
+  assert.equal(vm.CSP,0);
+ }
+});
+test('missing host imports reject before mutation',()=>{
+ const vm=new VM(),before=vm.cells.length;
+ assert.throws(()=>loadDefinitions(vm,image),/missing primitive import/);
+ assert.equal(vm.cells.length,before);
+});
+test('generic comparisons remain available without browser',()=>{
+ const vm=new VM();assert.deepEqual(vm.evaluate('2 3 over 2 equal? 2 pick 3 < and not'),[2,3,false]);
 });

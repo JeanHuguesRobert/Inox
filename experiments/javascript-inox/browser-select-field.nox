@@ -1,4 +1,6 @@
-~~ A distinct behavior: no arbitrary first-match choice.
+to sensitive-field? "username|password|one-time-code|cc-number|cc-csc" text.matches-i?.
+
+~~ A single selector with explicit first/unique policy.
 ~~ ZeroBrowser projects only observed, non-value field metadata.
 to eligible-input? >wanted >field
   /tag $field object.?@ "input" equal?
@@ -7,7 +9,7 @@ to eligible-input? >wanted >field
   /readonly $field object.?@ false equal? and
   /autocomplete $field object.?@ sensitive-field? not and.
 
-to unique-field >wanted
+to select-field >selection >wanted
   -1 >selected
   0 >index
   while: { $index count < } do: {
@@ -17,6 +19,7 @@ to unique-field >wanted
         break
       };
       $index >selected!
+      $selection "first" equal? break-if
     };
     $index 1 + >index!
   };
