@@ -1275,6 +1275,18 @@ static Index tidxr(  ConstText s, ConstText sub  );
 static boolean tpre(  ConstText pre, ConstText txt  );
 static boolean tsuf(  ConstText suf, ConstText txt  );
 static boolean mand_eq(  i32 a, i32 b  );
+// 2026-11-27: shared VM forward references restored for native compilation.
+static boolean mand_named( Cell c, Tag n );
+static boolean is_an_integer( Cell c );
+static void update_method_cache( Tag klass, Tag method, Cell def );
+static void drop( void );
+static void raw_drop( void );
+static void set_top_boolean( Name n, Value v );
+static i32 IP;
+static i32 TOS;
+static i32 CSP;
+static Cell ACTOR_data_stack = 0;
+static Cell ACTOR_control_stack = 0;
 static boolean mand_neq(  i32 a, i32 b  );
 static Index init_cell_allocator( void );
 static void grow_memory(  Size sz  );
@@ -2811,7 +2823,7 @@ function lean_str_new_from_native( str : TxtC ) : Area {
     Count str_len = strlen( str );
     if( str_len == 0 )return the_empty_lean;
     Area area = lean_str_allocate_cells_for_bytes( str_len + 1 );
-    memcpy( (char*) ( (int) to_ptr( area ) ), str, str_len );
+    memcpy( to_ptr( area ), str, str_len );
   }*/
 
   // ToDo: AssemblyScript version
@@ -5219,6 +5231,12 @@ function resize_area( area : Area, sz : Size ) : Area {
 }
 
 
+// Reference counters saturate at this value. A "saturated" area is treated as
+// eternal: incref/decref become no-ops and it is never freed. This both
+// protects against counter overflow and lets long-lived objects (verb
+// definitions and the values they capture) opt out of reference counting.
+const area_eternal_ref_count = 0x40000000;  // 2^30, far above any real count
+
 function area_free( area : Area ){
 
   alloc_de&&mand( area_is_free( the_first_free_area ) );
@@ -5413,11 +5431,7 @@ function primitive_debug_flush_frees(){
 }
 
 
-// Reference counters saturate at this value. A "saturated" area is treated as
-// eternal: incref/decref become no-ops and it is never freed. This both
-// protects against counter overflow and lets long-lived objects (verb
-// definitions and the values they capture) opt out of reference counting.
-const area_eternal_ref_count = 0x40000000;  // 2^30, far above any real count
+
 
 
 function area_is_eternal( area : Area ) : boolean {
@@ -8150,13 +8164,13 @@ function is_a_reference( c : Cell ) : boolean {
  */
 
 /**/ let IP : number = 0;
-//c/ static i32 IP;
+// Native declaration is in the forward-declaration section.
 
 /**/ let TOS : number = 0;
-//c/ static i32 TOS;
+// Native declaration is in the forward-declaration section.
 
 /**/ let CSP : number = 0;
-//c/ static i32 CSP;
+// Native declaration is in the forward-declaration section.
 
 
 /* ----------------------------------------------------------------------------
@@ -8349,9 +8363,9 @@ function pop_block() : Cell {
 function pop_tag() : Tag {
 // Pop a tag from the stack
 // #2026: This was added in 2026:
-  if( run_de && TOS <= ACTOR_data_stack ){
-    try { console.error( "DIAG: pop_tag() under or at base, TOS=" + C(TOS) + " CSP=" + C(CSP) + " cspname=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
-  }
+  /**/ if( run_de && TOS <= ACTOR_data_stack ){
+  /**/     try { console.error( "DIAG: pop_tag() under or at base, TOS=" + C(TOS) + " CSP=" + C(CSP) + " cspname=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
+  /**/ }
   check_de&&mand_tag( TOS );
   return pop_raw_value();
 }
@@ -8438,9 +8452,9 @@ function pop_ip(){
 function drop(){
 // Drop the top of the data stack
 // #2026: This was added in 2026:
-  if( run_de && TOS <= ACTOR_data_stack ){
-    try { console.error( "DIAG: drop() under or at base before pop, TOS=" + C(TOS) + " CSP=" + C(CSP) + " cspname=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
-  }
+  /**/ if( run_de && TOS <= ACTOR_data_stack ){
+  /**/     try { console.error( "DIAG: drop() under or at base before pop, TOS=" + C(TOS) + " CSP=" + C(CSP) + " cspname=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
+  /**/ }
   clear( pop() );
 }
 
@@ -8448,18 +8462,18 @@ function drop(){
 function raw_drop(){
 // Drop the top of the data stack, assuming it is not a reference
 // #2026: This was added in 2026:
-  if( run_de && TOS <= ACTOR_data_stack ){
-    try { console.error( "DIAG: raw_drop() under or at base before pop, TOS=" + C(TOS) + " CSP=" + C(CSP) + " cspname=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
-  }
+  /**/ if( run_de && TOS <= ACTOR_data_stack ){
+  /**/     try { console.error( "DIAG: raw_drop() under or at base before pop, TOS=" + C(TOS) + " CSP=" + C(CSP) + " cspname=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
+  /**/ }
   reset( pop() );
 }
 
 
 function drop_control(){
 // #2026: This was added in 2026:
-  if( run_de && CSP <= ACTOR_control_stack ){
-    try { console.error( "DIAG: drop_control() CSP low/under, CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) + " TOS=" + C(TOS) ); } catch(e){}
-  }
+  /**/ if( run_de && CSP <= ACTOR_control_stack ){
+  /**/     try { console.error( "DIAG: drop_control() CSP low/under, CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) + " TOS=" + C(TOS) ); } catch(e){}
+  /**/ }
   if( CSP <= ACTOR_control_stack ){
     // Clamp to prevent underflow into area headers (_dynsz cells etc) during
     // error recovery clears (FATAL, bootstrap missing-verb handlers) or end-of-script
@@ -8479,9 +8493,9 @@ function drop_control(){
 
 function raw_drop_control(){
 // #2026: This was added in 2026:
-  if( run_de && CSP <= ACTOR_control_stack ){
-    try { console.error( "DIAG: raw_drop_control() CSP low/under, CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
-  }
+  /**/ if( run_de && CSP <= ACTOR_control_stack ){
+  /**/     try { console.error( "DIAG: raw_drop_control() CSP low/under, CSP=" + C(CSP) + " name=" + tag_as_text( name_of(CSP) ) ); } catch(e){}
+  /**/ }
   if( CSP <= ACTOR_control_stack ){
     // Clamp (see drop_control for rationale: prevents hitting _dynsz header cells
     // below control base during recovery clears while frames from l9 prereqs or
@@ -8706,11 +8720,11 @@ function set_list_cell( c : Cell, obj? : Object ){
 
 // The base of the data stack of the current actor
 /**/ let   ACTOR_data_stack : Cell = 0;
-//c/ static Cell  ACTOR_data_stack = 0;
+// Native declaration is in the forward-declaration section.
 
 // The base of the control stack of the current actor
 /**/ let  ACTOR_control_stack : Cell = 0;
-//c/ static Cell ACTOR_control_stack   = 0;
+// Native declaration is in the forward-declaration section.
 
 // The upper limit of the data stack of the current actor
 /**/ let  ACTOR_data_stack_limit : Cell = 0;
