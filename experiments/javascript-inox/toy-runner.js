@@ -164,7 +164,7 @@ export class VM {
         this.tokenPositions[this.cursor-1].start+token.length===this.tokenPositions[this.cursor].start)){
       const callee=token==='('?null:token;
       if(callee!==null)expect('(');
-      let pending=false,haveOperand=false;
+      let pending=null,haveOperand=false;
       for(;;){
         const word=this.nextToken();
         if(word===')'||word===','){
@@ -172,15 +172,16 @@ export class VM {
           if(word===')')break;
           haveOperand=false;continue;
         }
-        if(word==='&'){
+        if(word==='&'||word==='='){
           if(!haveOperand||pending)throw new SyntaxError('missing left operand');
-          pending=true;continue;
+          pending=word;continue;
         }
         this.emitSourceToken(word);
-        if(pending){emit('&');pending=false;}
+        if(pending){emit(pending);pending=null;}
         haveOperand=true;
       }
-      if(callee!==null)emit(callee);
+      if(callee==='break-if')this.emitSourceToken(callee);
+      else if(callee!==null)emit(callee);
       return;
     }
     const conditionalExit = () => { emit('not'); return branch('branch-relative-if'); };
@@ -282,7 +283,7 @@ export class VM {
       return;
     }
     // Dot-method notation lowers to a symbolic tag and ordinary dispatch.
-    if(/^\.[A-Za-z_][A-Za-z0-9_.?!-]*$/.test(token)){
+    if(/^\.[A-Za-z_?!@][A-Za-z0-9_.?!@-]*$/.test(token)){
       emit(JSON.stringify(token.slice(1)));emit('tag.literal');emit('run-method');
       return;
     }
@@ -290,6 +291,7 @@ export class VM {
       emit(JSON.stringify(token.slice(1)));emit('tag.literal');emit('rename');
       return;
     }
+    if(token==='_'){emit('void.literal');return;}
     const tag = VM.sourceTag(token);
     if(tag!==null){
       emit(JSON.stringify(tag));emit('tag.literal');
@@ -426,12 +428,33 @@ export class VM {
     this.cursor = 0;
     while (this.cursor < this.tokens.length) {
       const token = this.nextToken();
+      if(token==='global:'){
+        const name=VM.sourceTag(this.nextToken());
+        if(name===null||this.nextToken()!=='is:')throw Error('expected global: name/ is:');
+        const d={name:'',body:[],loops:[],scopeDepth:0};
+        this.definition=d;
+        try{
+          d.body.push(this.resolve(JSON.stringify(name)),this.resolve('tag.literal'));
+          for(;;){
+            const word=this.nextToken();
+            if(word===';')break;
+            this.emitSourceToken(word);
+          }
+          d.body.push(this.resolve('make.global'));
+          const entry=this.cells.length;
+          for(const cell of d.body)this.alloc(cell);
+          this.alloc({name:'',type:'return',value:null});
+          this.definition=null;
+          this.invoke(entry);
+        }finally{this.definition=null;}
+        continue;
+      }
       const lit = VM.literal(token);
       if (lit) this.push(lit);
       else {
         const tag=VM.sourceTag(token);
         if(tag!==null)this.push({name:tag,type:'tag',value:tag});
-        else if(/^\.[A-Za-z_][A-Za-z0-9_.?!-]*$/.test(token)){
+        else if(/^\.[A-Za-z_?!@][A-Za-z0-9_.?!@-]*$/.test(token)){
           const name=token.slice(1);
           this.push({name,type:'tag',value:name});this.invoke('run-method');
         } else this.invoke(token);
@@ -483,6 +506,13 @@ export class VM {
     binary('<', (a,b)=>a<b);
     binary('and', (a,b)=>Boolean(a&&b));
     p('not',vm=>pushValue(vm,!vm.pop().value));
+    p('void.literal',vm=>vm.push({name:'',type:'void',value:null}));
+    p('something?',vm=>pushValue(vm,vm.pop().type!=='void'));
+    p('nothing?',vm=>pushValue(vm,vm.pop().type==='void'));
+    p('=',vm=>{
+      const b=vm.pop(),a=vm.pop();
+      pushValue(vm,a.type===b.type&&a.value===b.value);
+    });
     p('scope.enter',vm=>vm.scopes().push(new Map()));
     p('scope.leave',vm=>{
       const scopes=vm.scopes();if(scopes.length<2)throw Error('scope underflow');scopes.pop();
@@ -569,6 +599,40 @@ export class VM {
       if(name.type!=='tag'||code.type!=='block')throw Error('expected tag and block');
       const entry=runnableCode(vm,[runtimeLiteral(code),vm.resolve('run')]);
       vm.words.set(name.value,entry);
+    });
+    p('verb.exist?',vm=>pushValue(vm,vm.words.has(textName(vm.pop()))));
+    p('definition',vm=>{
+      const cell=vm.pop();
+      const name=cell.type==='verb'?cell.name:textName(cell);
+      const entry=vm.words.get(name);
+      if(entry===undefined)throw Error('undefined definition: '+name);
+      pushValue(vm,entry);
+    });
+    // The current dictionary lookup is uncached. These historical cache
+    // hints need not create a second source of truth for inherited dispatch.
+    p('update-method-cache',vm=>{
+      const entry=vm.pop(),method=vm.pop(),klass=vm.pop();
+      if(!Number.isInteger(entry.value)||!vm.cells[entry.value]||
+          method.type!=='tag'||klass.type!=='tag')throw Error('invalid method cache hint');
+    });
+    p('clear-method-cache',vm=>{
+      const method=vm.pop(),klass=vm.pop();
+      if(method.type!=='tag'||klass.type!=='tag')throw Error('invalid method cache clear');
+    });
+    p('missing-method',vm=>{throw Error('missing-method '+textName(vm.pop()));});
+    p('global.write',vm=>{
+      const address=vm.pop();
+      if(address.type!=='global-address'||vm.cells[address.value]?.type!=='runtime-literal')
+        throw Error('invalid global address');
+      vm.cells[address.value].value={...vm.pop(),name:vm.cells[address.value].value.name};
+    });
+    p('make.global',vm=>{
+      const value=vm.pop(),name=vm.pop();
+      if(name.type!=='tag')throw Error('expected global name');
+      const entry=runnableCode(vm,[runtimeLiteral({...value,name:name.value})]);
+      const setter=runnableCode(vm,[runtimeLiteral({name:'',type:'global-address',value:entry}),
+        vm.resolve('global.write')]);
+      vm.words.set(name.value,entry);vm.words.set(name.value+'!',setter);
     });
     p('as-tag',vm=>vm.push({name:'tag',type:'tag',value:textName(vm.pop())}));
     p('as-verb',vm=>pushVerb(vm,textName(vm.pop())));
@@ -660,11 +724,31 @@ export class VM {
       if(!found)throw Error('Object variable not found, named '+key);
       Object.assign(found,value,{name:key});
     });
+    // Maps reuse the ordinary ordered Cell payload, not a separate
+    // JavaScript class registry.
+    p('map.!',vm=>{
+      const map=vm.pop(),key=tagValue(vm.pop()),value=vm.pop();
+      const payload=objectPayload(map),found=field(map,key);
+      if(found)Object.assign(found,value,{name:key});
+      else{
+        if(!payload.extensible)throw Error("Can't extend a non extensible map");
+        payload.fields.push({...value,name:key});
+      }
+    });
+    p('map.?@',vm=>{
+      const map=vm.pop(),key=vm.pop();
+      const found=map.type==='object'&&key.type==='tag'?field(map,key.value):undefined;
+      vm.push(found??{name:'',type:'void',value:null});
+    });
     const dispatchMethod=(vm,name)=>{
-      const qualified=receiverClass(vm.peek())+'.'+name;
+      const klass=receiverClass(vm.peek()),qualified=klass+'.'+name;
       const entry=vm.words.get(qualified);
-      if(entry===undefined)throw Error('unresolved method: '+qualified);
-      vm.call(entry);
+      if(entry!==undefined){vm.call(entry);return;}
+      const fallback=vm.words.get(klass)??vm.words.get('thing');
+      if(fallback===undefined)throw Error('unresolved method: '+qualified);
+      vm.push({name:klass,type:'tag',value:klass});
+      vm.push({name,type:'tag',value:name});
+      vm.call(fallback);
     };
     p('run-method',vm=>{
       const method=vm.pop();

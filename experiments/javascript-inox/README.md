@@ -318,3 +318,41 @@ L9 source. Nine canonical definitions are now reused and relocatable;
 runtime-created captures and objects still require a richer image format.
 Next: the L9 metaclass registry and fallback dispatch; do not duplicate
 the inheritance mechanism in JavaScript.
+
+### Canonical L9 registry and inherited method resolution (2026-11-27)
+
+The experiment now executes eight more unchanged L9 definitions:
+`map[]`, `classes.get`, `make.metaclass`, `resolve-method-name`,
+`understand?`, `thing.understand?`, `thing`, and `map`.
+The actual `global: classes/ is: map[] :classes;` declaration is
+executed too. Metaclasses are ordinary Inox objects in an Inox map,
+not a parallel host-side hierarchy. Direct lookup falls back to the
+receiver's class verb or `thing`, passing the receiver, class and
+method tags as in the reference. Inherited resolution, overrides and
+reflection therefore execute the existing L9 code.
+
+New kernel dependencies include native globals (getter and setter
+over one captured Cell), map insertion/optional lookup over the
+existing ordered member Cells, void/presence predicates, typed
+equality, verb existence and definition lookup. The compiler supports
+the subset of global declarations and parenthesized equality and
+break-if used by these definitions. The cache-update/clear operations
+consume and validate their operands but do not maintain a method
+cache: lookup remains uncached. The historical cache can retain an
+old inherited definition when the low-level define-method is invoked
+without invalidation (observed 77 vs uncached 78); the differential
+redefinition case explicitly clears the cache, as the normal L9
+class-update path does. This is not full cache-primitive conformance,
+nor a change to the historical runtime.
+
+Ten inheritance/reflection programs and one global declaration case
+compare against the full historical L9 bootstrap. The fixture uses
+make.metaclass and explicit superclass-name assignment, not an
+alternative class implementation. Two additional tests check image
+relocation and observable missing-method failure. The 17 source
+definitions are relocatable; the receiving VM initializes its own
+registry before importing dependent definitions. Runtime global state
+and captured methods are not serialized by the existing codec.
+Remaining work: execute the actual class{ / extend-class{ /
+update-classes protocol, then use the existing full object-core suite.
+No changes to lib/l9.nox or historical runtime.

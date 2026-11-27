@@ -101,3 +101,69 @@ test('fixed objects retain Cell names, identity and optional missing values',()=
  assert.deepEqual(vm.evaluate('to q 3 :value 2 :sample make.object >o /missing $o object.?@. q'),[null]);
  assert.equal(vm.peek().type,'void');
 });
+
+
+// Reuse the actual registry initializer and inheritance algorithm.
+// A small fixture registers metaclasses directly; it does not replace
+// the still-unported class{ declaration/update protocol.
+const registryNames=['map[]','classes.get','resolve-method-name','understand?','thing.understand?','make.metaclass','thing','map'];
+const registryDeclaration=l9.split('\n').find(line=>line.startsWith('global: classes/'));
+assert.ok(registryDeclaration);
+function loadRegistry(vm){
+ vm.evaluate(extract('map[]')+'\nto l9-map-end .');
+ vm.evaluate(registryDeclaration);
+ vm.evaluate(sharedSource+registryNames.slice(1).map(extract).join('\n')+'\nto l9-registry-end .');
+}
+const parentChild='/parent make.metaclass drop /child make.metaclass >m /parent $m /superclass-name object.! ';
+const parentMethod='/parent >it ping/it-method{ 7 } ';
+const registryCases=[
+ ['inherited dispatch',parentChild+parentMethod+'child/make{ } .ping out','7'],
+ ['inherited method name',parentChild+parentMethod+'/child /ping resolve-method-name out','parent.ping'],
+ ['override',parentChild+parentMethod+'/child >it ping/it-method{ 8 } child/make{ } .ping out parent/make{ } .ping out','87'],
+ ['two-level inheritance',parentChild+'/grand make.metaclass >m /child $m /superclass-name object.! '+parentMethod+'grand/make{ } .ping out','7'],
+ ['redefinition after cache clear',parentChild+parentMethod+'child/make{ } .ping out ping/it-method{ 8 } /parent /all clear-method-cache child/make{ } .ping out','78'],
+ ['metaclass rebuild preserves parent',parentChild+'/child make.metaclass /superclass-name object.@ out','parent'],
+ ['reflection on inherited method',parentChild+parentMethod+'if: /ping child/make{ } .understand? then: { 1 } else: { 0 }; out','1'],
+ ['reflection on absent method','/parent make.metaclass drop if: /unknown parent/make{ } .understand? then: { 1 } else: { 0 }; out','0'],
+ ['inherited attribute',parentChild+'/parent >it /value attribute child/make{ 3 :value } >o $o .value out 8 $o .value! $o .value out','38'],
+ ['inherited dispatch resumes caller',parentChild+parentMethod+'child/make{ } .ping out 9 out','79'],
+];
+for(const [name,body,expected] of registryCases)test('L9 '+name,()=>{
+ const source='to p '+body+'. p';
+ assert.equal(historical(source),expected);
+ for(const reader of [false,true]){
+  const vm=fresh(reader),out=[];
+  vm.primitive('out',v=>out.push(String(v.pop().value)));
+  loadRegistry(vm);
+  vm.evaluate(source);
+  assert.equal(out.join(''),expected);
+  assert.equal(vm.CSP,0);assert.equal(vm.DSP,0);assert.equal(vm.frames.size,0);
+ }
+});
+test('L9 registry definition images relocate, registry state initialized separately',()=>{
+ const vm=fresh(false);loadRegistry(vm);
+ const target=fresh(true);
+ loadDefinitions(target,JSON.parse(JSON.stringify(captureDefinitions(vm,['map[]']))));
+ target.evaluate(registryDeclaration);
+ loadDefinitions(target,JSON.parse(JSON.stringify(captureDefinitions(vm,[...names,...registryNames.slice(1)]))));
+ const out=[];target.primitive('out',v=>out.push(String(v.pop().value)));
+ target.evaluate('to p '+parentChild+parentMethod+'child/make{ } .ping out. p');
+ assert.deepEqual(out,['7']);assert.equal(target.CSP,0);assert.equal(target.DSP,0);
+});
+test('global declaration and update use native Cells',()=>{
+ const source='global: demo-global/ is: 7; to p demo-global out 8 demo-global! demo-global out. p';
+ assert.equal(historical(source),'78');
+ for(const reader of [false,true]){
+  const vm=fresh(reader),out=[];
+  vm.primitive('out',v=>out.push(String(v.pop().value)));
+  vm.evaluate(source);
+  assert.deepEqual(out,['7','8']);assert.equal(vm.CSP,0);assert.equal(vm.DSP,0);
+ }
+});
+test('L9 missing inherited method remains observable',()=>{
+ const vm=fresh(false);loadRegistry(vm);
+ vm.evaluate('to p /parent make.metaclass drop parent/make{ } .absent 99.');
+ assert.throws(()=>vm.invoke('p'),/missing-method parent.absent/);
+ assert.equal(vm.CSP,0);assert.equal(vm.frames.size,0);
+ assert.ok(!vm.values().includes(99));
+});
