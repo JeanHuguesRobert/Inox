@@ -14,7 +14,7 @@ const project=(fields,type)=>fields.map(f=>f==null?f:{...f,editable:f.tag==='inp
 function select(fields,type='text',selection='unique'){
  const vm=installZeroBrowser(new VM({maxSteps:100000}),project(fields,type));
  loadDefinitions(vm,image);
- const result=vm.evaluate(JSON.stringify(selection)+' select-editable');
+ const result=vm.evaluate(JSON.stringify(selection)+' "" select-editable');
  assert.equal(vm.CSP,0);assert.equal(vm.frames.size,0);assert.equal(result.length,1);
  return {index:result[0],steps:vm.steps};
 }
@@ -65,7 +65,7 @@ test('source and image agree in both selection policies; historical first-text c
  const expected=[-1,0,1,2,1,-1,1,1,-1,79,0];
  for(const [i,fields] of cases.entries()){
   const vm=installZeroBrowser(new VM(),project(fields,'text'));vm.evaluate(read('browser-select-field.nox'));
-  assert.deepEqual(vm.evaluate('"first" select-editable'),[expected[i]]);
+  assert.deepEqual(vm.evaluate('"first" "" select-editable'),[expected[i]]);
   assert.equal(select(fields,'text','first').index,expected[i]);
   assert.equal(vm.CSP,0);
  }
@@ -83,7 +83,7 @@ test('one native edit intent for both operations and all selection outcomes',()=
  for(const operation of ['replace-all','insert-at-selection']){
   for(const [fields,index] of [[[], -1],[[plain],0],[[plain,plain],-2]]){
    const vm=installZeroBrowser(new VM(),project(fields,'text'));loadDefinitions(vm,image);
-   const [intent]=vm.evaluate('"unique" '+JSON.stringify(operation)+' plan-text-edit');
+   const [intent]=vm.evaluate('"unique" "" '+JSON.stringify(operation)+' plan-text-edit');
    assert.equal(intent.klass,'text-edit');
    assert.deepEqual(Object.fromEntries(intent.fields.map(c=>[c.name,c.value])),{operation,index});
    assert.equal(vm.CSP,0);assert.equal(vm.frames.size,0);
@@ -97,8 +97,25 @@ test('editor selection has no HTML tag or input type dependency',()=>{
  const textarea={...ordinary,tag:'textarea'},rich={...ordinary,tag:'div'};
  for(const candidate of [ordinary,textarea,rich]){
   const vm=installZeroBrowser(new VM(),[candidate]);loadDefinitions(vm,image);
-  assert.deepEqual(vm.evaluate('"unique" select-editable'),[0]);
+  assert.deepEqual(vm.evaluate('"unique" "" select-editable'),[0]);
  }
  const vm=installZeroBrowser(new VM(),[textarea,rich]);loadDefinitions(vm,image);
- assert.deepEqual(vm.evaluate('"unique" select-editable'),[-2]);
+ assert.deepEqual(vm.evaluate('"unique" "" select-editable'),[-2]);
+});
+
+test('semantic role narrows selection without requiring a site-specific primitive',()=>{
+ const base={editable:true,disabled:false,readonly:false};
+ const composer={...base,semantic_role:'facebook.comment-composer'};
+ for(const [fields,role,expected] of [
+  [[base,composer],'facebook.comment-composer',1],
+  [[composer,composer],'facebook.comment-composer',-2],
+  [[base],'facebook.comment-composer',-1],
+  [[base,composer],'',-2],
+  [[{...composer,readonly:true},base],'facebook.comment-composer',-1],
+ ]){
+  const vm=installZeroBrowser(new VM(),fields);loadDefinitions(vm,image);
+  const [intent]=vm.evaluate('"unique" '+JSON.stringify(role)+' "replace-all" plan-text-edit');
+  assert.equal(intent.fields.find(f=>f.name==='index').value,expected);
+  assert.equal(vm.CSP,0);
+ }
 });

@@ -2,17 +2,18 @@ to sensitive-field? "username|password|one-time-code|cc-number|cc-csc" text.matc
 
 ~~ A single selector with explicit first/unique policy.
 ~~ ZeroBrowser projects only observed, non-value field metadata.
-to eligible-editor? >field
+to eligible-editor? >wanted-role >field
   /editable $field object.?@ true equal?
   /disabled $field object.?@ false equal? and
   /readonly $field object.?@ false equal? and
-  /autocomplete $field object.?@ sensitive-field? not and.
+  /autocomplete $field object.?@ sensitive-field? not and
+  $wanted-role "" equal? not /semantic_role $field object.?@ $wanted-role equal? not and not and.
 
-to select-editable >selection
+to select-editable >wanted-role >selection
   -1 >selected
   0 >index
   while: { $index count < } do: {
-    if: $index field.object eligible-editor? then: {
+    if: $index field.object $wanted-role eligible-editor? then: {
       if: $selected -1 equal? not then: {
         -2 >selected!
         break

@@ -461,3 +461,19 @@ covers ordinary inputs, textareas and explicit contenteditable editors.
 The shared real Chromium/Firefox fixture verifies complete replacement
 and independent readback for all three, including Unicode and multiline
 text in the latter two, and ambiguity between actual mixed editors.
+
+### Site semantics, not site-specific VM primitives (2026-11-27)
+
+The selector receives a wanted semantic role (empty string = any role).
+The Core's reviewed site library maps the observed DOM to a small
+vocabulary, such as facebook.comment-composer, without projecting
+personalized labels. The same eligible-editor?/select-editable and
+plan-text-edit definitions select the target; no Facebook-specific VM
+primitive or alternate selector. Role mismatch is part of eligibility.
+The Core retains the requested role in the UID-bound effect envelope
+and revalidates it before executing the existing edit. A change after
+editing is an unconfirmed effect, not a pre-edit stale-target refusal.
+Real Chromium and Firefox on a browser-locally mapped fixture hostname
+both distinguish a comment composer from a reply editor, edit only the
+selected UID, and refuse a role changed after planning. This verifies
+the integration, not the current production Facebook interface.

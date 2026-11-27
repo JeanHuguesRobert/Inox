@@ -11,7 +11,7 @@ export function installZeroBrowser(vm, fields) {
       v.push({name:'',type:'void',value:null});return;
     }
     const members=[];
-    for(const name of ['editable','disabled','readonly','autocomplete']){
+    for(const name of ['editable','disabled','readonly','autocomplete','semantic_role']){
       if(!Object.hasOwn(source,name))continue;
       const value=source[name];
       if(value===undefined||value===null)continue;
