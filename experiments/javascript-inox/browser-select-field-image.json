@@ -499,6 +499,91 @@
           "name": "local.read"
         }
       ]
+    },
+    {
+      "name": "plan-text-edit",
+      "cells": [
+        {
+          "type": "literal",
+          "value": "operation"
+        },
+        {
+          "type": "primitive",
+          "name": "local.create"
+        },
+        {
+          "type": "verb",
+          "name": "select-field"
+        },
+        {
+          "type": "literal",
+          "value": "index"
+        },
+        {
+          "type": "primitive",
+          "name": "local.create"
+        },
+        {
+          "type": "literal",
+          "value": "index"
+        },
+        {
+          "type": "primitive",
+          "name": "local.read"
+        },
+        {
+          "type": "literal",
+          "value": "index"
+        },
+        {
+          "type": "primitive",
+          "name": "tag.literal"
+        },
+        {
+          "type": "primitive",
+          "name": "rename"
+        },
+        {
+          "type": "literal",
+          "value": "operation"
+        },
+        {
+          "type": "primitive",
+          "name": "local.read"
+        },
+        {
+          "type": "literal",
+          "value": "operation"
+        },
+        {
+          "type": "primitive",
+          "name": "tag.literal"
+        },
+        {
+          "type": "primitive",
+          "name": "rename"
+        },
+        {
+          "type": "literal",
+          "value": 3
+        },
+        {
+          "type": "literal",
+          "value": "text-edit"
+        },
+        {
+          "type": "primitive",
+          "name": "tag.literal"
+        },
+        {
+          "type": "primitive",
+          "name": "rename"
+        },
+        {
+          "type": "primitive",
+          "name": "make.object"
+        }
+      ]
     }
   ]
 }

@@ -24,3 +24,11 @@ to select-field >selection >wanted
     $index 1 + >index!
   };
   $selected.
+
+~~ Pure intent: the Core binds the observed index to the element identity.
+~~ No effect is performed by the short-lived VM.
+to plan-text-edit >operation
+  select-field >index
+  $index :index
+  $operation :operation
+  3 :text-edit make.object.

@@ -431,3 +431,18 @@ remain recoverable from Git. Tests retain the earlier first-text cases,
 image reproducibility, missing-import rejection, ambiguity and maximum
 field count, and compare both policies against the same reference over
 100 deterministic mixed observations. No VM core or L9 changes.
+
+### Native text-edit intent, common across browser engines (2026-11-27)
+
+The single selector image now includes `plan-text-edit`. It takes
+field type, selection policy and requested operation and returns an
+ordinary Inox object of class text-edit, with index and operation
+members. The selected index remains -1 (absent), -2 (ambiguous), or an
+index into the bounded metadata snapshot. The VM neither reads field
+values nor performs browser effects. The Core compares the result to
+its existing reference, binds a replacement to the observed document
+and element UID, and supplies the text through the already admitted
+browser.form.fill path. No host edit primitive or separate engine-specific
+Inox program is required. The same image drives the disposable Chromium
+and managed Firefox/BiDi fixtures. The existing insert-at-selection
+operation is semantically distinct and is not removed.

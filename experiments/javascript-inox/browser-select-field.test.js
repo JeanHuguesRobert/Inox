@@ -8,7 +8,7 @@ const read=name=>readFileSync(new URL(name,import.meta.url),'utf8');
 const image=JSON.parse(read('browser-select-field-image.json'));
 const build=installZeroBrowser(new VM(),[]);
 build.evaluate(read('browser-select-field.nox'));
-test('select-field image reproducible',()=>assert.deepEqual(captureDefinitions(build,['sensitive-field?','eligible-input?','select-field']),image));
+test('select-field image reproducible',()=>assert.deepEqual(captureDefinitions(build,['sensitive-field?','eligible-input?','select-field','plan-text-edit']),image));
 const plain={tag:'input',type:'text',disabled:false,readonly:false};
 function select(fields,type='text',selection='unique'){
  const vm=installZeroBrowser(new VM({maxSteps:100000}),fields);
@@ -76,4 +76,16 @@ test('missing host imports reject before mutation',()=>{
 });
 test('generic comparisons remain available without browser',()=>{
  const vm=new VM();assert.deepEqual(vm.evaluate('2 3 over 2 equal? 2 pick 3 < and not'),[2,3,false]);
+});
+
+test('one native edit intent for both operations and all selection outcomes',()=>{
+ for(const operation of ['replace-all','insert-at-selection']){
+  for(const [fields,index] of [[[], -1],[[plain],0],[[plain,plain],-2]]){
+   const vm=installZeroBrowser(new VM(),fields);loadDefinitions(vm,image);
+   const [intent]=vm.evaluate('"text" "unique" '+JSON.stringify(operation)+' plan-text-edit');
+   assert.equal(intent.klass,'text-edit');
+   assert.deepEqual(Object.fromEntries(intent.fields.map(c=>[c.name,c.value])),{operation,index});
+   assert.equal(vm.CSP,0);assert.equal(vm.frames.size,0);
+  }
+ }
 });
