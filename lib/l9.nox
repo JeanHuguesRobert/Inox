@@ -213,20 +213,25 @@ to make.metaclass  >class-name
   $metaclass $class-name classes .!
   $metaclass
 
+~~ 2026-11-27: GPT-6 coding agent under Jean Hugues Noel Robert.
+~~ Refresh registered metaclasses, not arbitrary dictionary entries:
+~~ definitions returns named addresses, not textual method names, and
+~~ breaking on a non-method prevented the old scan from doing its work.
 to update-classes  >pattern
-  definitions >definitions
-  $definitions .each{ >full-name
-    text.find( $full-name, "." ) >dot-index
-    break-if( $dot-index nothing? )
-    $full-name .cut( $dot-index ) as-tag >class-name
-    break-unless( $class-name in? classes  )
-    break-unless( $pattern = "*"  or{ ( $class-name = $pattern ) } )
-    make.metaclass( $class-name )
-  }
   if: ( $pattern = "*" ) then: {
+    classes >registered
+    0 >index
+    while: { $index $registered stack.length < } do: {
+      $index $registered stack.fetch name-of make.metaclass drop
+      $index 1 + >index!
+    };
     clear-method-cache( all/, all/ )
   } else: {
-    clear-method-cache( $pattern as-tag, all/ )
+    $pattern as-tag >class-name
+    if: $class-name classes.get something? then: {
+      $class-name make.metaclass drop
+    };
+    clear-method-cache( $class-name, all/ )
   };
 
 to update-all-classes  update-classes( "*" )

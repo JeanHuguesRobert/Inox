@@ -19652,40 +19652,22 @@ primitive( "definition", primitive_definition );
 const tag_definitions = tag( "definitions" );
 
 function primitive_definitions(){
+  // Symbols are packed Cells in VM memory, not a host array indexed by tag.
+  // get_definition() handles the native definition table's capacity too.
   let ndef = 0;
-  // Count the number of definitions
-  let ii = 0;
-  while( ii < all_symbol_cells_length ){
-    if( all_symbol_cells[ ii ] ){
-      if( all_definitions[ ii ] ){
-        ndef++;
-      }
-    }
-// #2026: This was added in 2026:
-    ii++;
+  let ii;
+  for( ii = 0; ii < all_symbol_cells_length; ii++ ){
+    if( get_definition( ii ) )ndef++;
   }
-  // Allocate a stack object to hold all the definitions
   const list = stack_allocate( ndef );
-  // Fill the list with the definitions
-  ii = 0;
-  while( ii < all_symbol_cells_length ){
-    if( all_symbol_cells[ ii ] ){
-      if( all_definitions[ ii ] ){
-        set(
-          the_tmp_cell,
-          type_integer,
-          all_symbol_cells[ ii ],
-          all_definitions[ ii ]
-        );
-        stack_push( list, the_tmp_cell );
-      }
+  for( ii = 0; ii < all_symbol_cells_length; ii++ ){
+    const def = get_definition( ii );
+    if( def ){
+      set( the_tmp_cell, type_integer, ii, def );
+      stack_push( list, the_tmp_cell );
     }
-// #2026: This was added in 2026:
-    ii++;
   }
-  // Return the list
-  push();
-  set_top( type_reference, tag_definitions, list );
+  set( push(), type_reference, tag_definitions, list );
 }
 primitive( "definitions", primitive_definitions );
 

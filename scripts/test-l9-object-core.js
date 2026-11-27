@@ -10,7 +10,11 @@ import {spawnSync} from 'node:child_process';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 const cwd=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
-const cases=[
+export const cases=[
+ // FBF: the previous empty dictionary and non-method break masked refresh.
+ ['dictionary enumeration contains named definitions','to marker 7. to t definitions >d 0 >i false >found while: { $i $d stack.length < } do: { $i $d stack.fetch name-of /marker = { true >found! break } if $i 1 + >i! }; $found out. t','1'],
+ ['named class refresh rebuilds metaclass','to t aa_one/class{ thing/superclass } aa_one/ classes.get >before aa_one/ update-class aa_one/ classes.get $before = not out. t','1'],
+ ['all-class refresh rebuilds metaclass','to t aa_one/class{ thing/superclass } aa_one/ classes.get >before update-all-classes aa_one/ classes.get $before = not out. t','1'],
  ['registered root thing class','to t thing/ classes.get type-of out. t','reference'],
  ['registered map class','to t map/ classes.get type-of out. t','reference'],
  ['primitive integer method reflection','to t /succ 4 .understand? out. t','1'],
@@ -62,6 +66,7 @@ const cases=[
 
 
 ];
+if(process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
 let passed=0;
 for(const [name,program,expected] of cases){
  const r=spawnSync(process.execPath,['bin/inox.js','-e',program],{
@@ -86,3 +91,5 @@ console.log('PASS missing-method dispatch is observable (diagnostic quality pend
 passed++;
 console.log(`L9 object core: ${passed}/${cases.length+1} cases`);
 process.exitCode=passed===cases.length+1?0:1;
+
+}
