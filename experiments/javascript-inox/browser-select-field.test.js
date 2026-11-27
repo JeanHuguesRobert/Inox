@@ -8,12 +8,13 @@ const read=name=>readFileSync(new URL(name,import.meta.url),'utf8');
 const image=JSON.parse(read('browser-select-field-image.json'));
 const build=installZeroBrowser(new VM(),[]);
 build.evaluate(read('browser-select-field.nox'));
-test('select-field image reproducible',()=>assert.deepEqual(captureDefinitions(build,['sensitive-field?','eligible-input?','select-field','plan-text-edit']),image));
+test('select-field image reproducible',()=>assert.deepEqual(captureDefinitions(build,['sensitive-field?','eligible-editor?','select-editable','plan-text-edit']),image));
 const plain={tag:'input',type:'text',disabled:false,readonly:false};
+const project=(fields,type)=>fields.map(f=>f==null?f:{...f,editable:f.tag==='input'&&f.type===type});
 function select(fields,type='text',selection='unique'){
- const vm=installZeroBrowser(new VM({maxSteps:100000}),fields);
+ const vm=installZeroBrowser(new VM({maxSteps:100000}),project(fields,type));
  loadDefinitions(vm,image);
- const result=vm.evaluate(JSON.stringify(type)+' '+JSON.stringify(selection)+' select-field');
+ const result=vm.evaluate(JSON.stringify(selection)+' select-editable');
  assert.equal(vm.CSP,0);assert.equal(vm.frames.size,0);assert.equal(result.length,1);
  return {index:result[0],steps:vm.steps};
 }
@@ -30,10 +31,10 @@ test('unique, missing, and ambiguous selections, including maximum field count',
  ])assert.equal(select(fields).index,index);
 });
 test('strict metadata and no field values enter the native object',()=>{
- const vm=installZeroBrowser(new VM(),[{...plain,value:'not-projected',other:'not-projected'}]);
+ const vm=installZeroBrowser(new VM(),[{...plain,editable:true,value:'not-projected',other:'not-projected'}]);
  vm.evaluate('0 field.object');
  const names=vm.peek().value.fields.map(x=>x.name);
- assert.deepEqual(names,['tag','type','disabled','readonly']);
+ assert.deepEqual(names,['editable','disabled','readonly']);
  assert.throws(()=>select([{...plain,autocomplete:{}}]),/invalid field metadata/);
  assert.equal(select([{...plain,disabled:0}]).index,-1);
 });
@@ -63,8 +64,8 @@ test('source and image agree in both selection policies; historical first-text c
   [...Array(79).fill({...b,autocomplete:'cc-csc'}),b],[b,b]];
  const expected=[-1,0,1,2,1,-1,1,1,-1,79,0];
  for(const [i,fields] of cases.entries()){
-  const vm=installZeroBrowser(new VM(),fields);vm.evaluate(read('browser-select-field.nox'));
-  assert.deepEqual(vm.evaluate('"text" "first" select-field'),[expected[i]]);
+  const vm=installZeroBrowser(new VM(),project(fields,'text'));vm.evaluate(read('browser-select-field.nox'));
+  assert.deepEqual(vm.evaluate('"first" select-editable'),[expected[i]]);
   assert.equal(select(fields,'text','first').index,expected[i]);
   assert.equal(vm.CSP,0);
  }
@@ -81,11 +82,23 @@ test('generic comparisons remain available without browser',()=>{
 test('one native edit intent for both operations and all selection outcomes',()=>{
  for(const operation of ['replace-all','insert-at-selection']){
   for(const [fields,index] of [[[], -1],[[plain],0],[[plain,plain],-2]]){
-   const vm=installZeroBrowser(new VM(),fields);loadDefinitions(vm,image);
-   const [intent]=vm.evaluate('"text" "unique" '+JSON.stringify(operation)+' plan-text-edit');
+   const vm=installZeroBrowser(new VM(),project(fields,'text'));loadDefinitions(vm,image);
+   const [intent]=vm.evaluate('"unique" '+JSON.stringify(operation)+' plan-text-edit');
    assert.equal(intent.klass,'text-edit');
    assert.deepEqual(Object.fromEntries(intent.fields.map(c=>[c.name,c.value])),{operation,index});
    assert.equal(vm.CSP,0);assert.equal(vm.frames.size,0);
   }
  }
+});
+
+
+test('editor selection has no HTML tag or input type dependency',()=>{
+ const ordinary={editable:true,disabled:false,readonly:false};
+ const textarea={...ordinary,tag:'textarea'},rich={...ordinary,tag:'div'};
+ for(const candidate of [ordinary,textarea,rich]){
+  const vm=installZeroBrowser(new VM(),[candidate]);loadDefinitions(vm,image);
+  assert.deepEqual(vm.evaluate('"unique" select-editable'),[0]);
+ }
+ const vm=installZeroBrowser(new VM(),[textarea,rich]);loadDefinitions(vm,image);
+ assert.deepEqual(vm.evaluate('"unique" select-editable'),[-2]);
 });

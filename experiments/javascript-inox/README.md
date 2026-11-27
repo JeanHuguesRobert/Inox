@@ -446,3 +446,18 @@ browser.form.fill path. No host edit primitive or separate engine-specific
 Inox program is required. The same image drives the disposable Chromium
 and managed Firefox/BiDi fixtures. The existing insert-at-selection
 operation is semantically distinct and is not removed.
+
+### Editor abstraction (2026-11-27)
+
+The same selection image now exposes select-editable instead of
+select-field. ZeroBrowser projects operation-compatible editable
+candidates, disabled/readonly state and autocomplete metadata only.
+HTML tag and input type are no longer part of the Inox contract.
+The Core classifies DOM materializations and resolves the chosen
+index to the existing UID-bound edit path. Selection policy remains
+in Inox, with independent reference comparison. The older verbs
+eligible-input? and select-field are removed, not aliased. One image
+covers ordinary inputs, textareas and explicit contenteditable editors.
+The shared real Chromium/Firefox fixture verifies complete replacement
+and independent readback for all three, including Unicode and multiline
+text in the latter two, and ambiguity between actual mixed editors.

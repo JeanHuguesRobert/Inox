@@ -11,7 +11,7 @@ export function installZeroBrowser(vm, fields) {
       v.push({name:'',type:'void',value:null});return;
     }
     const members=[];
-    for(const name of ['tag','type','disabled','readonly','autocomplete']){
+    for(const name of ['editable','disabled','readonly','autocomplete']){
       if(!Object.hasOwn(source,name))continue;
       const value=source[name];
       if(value===undefined||value===null)continue;
@@ -19,7 +19,7 @@ export function installZeroBrowser(vm, fields) {
         throw Error('invalid field metadata');
       members.push({name,type:'literal',value});
     }
-    v.push({name:'field',type:'object',value:{klass:'browser-field',fields:members,extensible:false}});
+    v.push({name:'field',type:'object',value:{klass:'editable-candidate',fields:members,extensible:false}});
   });
   return vm;
 }

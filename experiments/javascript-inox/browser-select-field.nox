@@ -2,18 +2,17 @@ to sensitive-field? "username|password|one-time-code|cc-number|cc-csc" text.matc
 
 ~~ A single selector with explicit first/unique policy.
 ~~ ZeroBrowser projects only observed, non-value field metadata.
-to eligible-input? >wanted >field
-  /tag $field object.?@ "input" equal?
-  /type $field object.?@ $wanted equal? and
+to eligible-editor? >field
+  /editable $field object.?@ true equal?
   /disabled $field object.?@ false equal? and
   /readonly $field object.?@ false equal? and
   /autocomplete $field object.?@ sensitive-field? not and.
 
-to select-field >selection >wanted
+to select-editable >selection
   -1 >selected
   0 >index
   while: { $index count < } do: {
-    if: $index field.object $wanted eligible-input? then: {
+    if: $index field.object eligible-editor? then: {
       if: $selected -1 equal? not then: {
         -2 >selected!
         break
@@ -28,7 +27,7 @@ to select-field >selection >wanted
 ~~ Pure intent: the Core binds the observed index to the element identity.
 ~~ No effect is performed by the short-lived VM.
 to plan-text-edit >operation
-  select-field >index
+  select-editable >index
   $index :index
   $operation :operation
   3 :text-edit make.object.
