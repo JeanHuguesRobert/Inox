@@ -6,7 +6,7 @@ drafted_by: "OpenAI Codex (GPT-5)"
 principal: "Jean Hugues Noël Robert"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 date: "2026-07-16"
-last_modified_at: "2026-11-26"
+last_modified_at: "2026-11-27"
 status: "draft-for-human-review"
 version: "0.1.0-draft"
 license: "MIT (code examples) · CC BY-SA 4.0 (text)"
@@ -93,6 +93,8 @@ future functionality. It is the contract for a concrete experiment.
 ### Open review conclusion — 2026-11-23 (microcontroller port deferred)
 
 **Priority decision.** ESP32-class deployment is **not a current priority**.
+
+**Clarification by the Principal (2026-11-27).** The historical C++ implementation on ordinary hosts must not fall significantly behind the other incarnations of Inox. Maintain its deliberately small dependence on C++ libraries. The deferred Micro/ESP32 implementation is not a reason to defer repairs to the existing C++ runtime. See [the native maintenance direction](two-versions-scripting-vs-system.md#principal-clarification--2026-11-27-keep-the-historical-c-incarnation-close) and issue [#5](https://github.com/JeanHuguesRobert/Inox/issues/5). This clarification does not approve the draft Micro ABI or reopen its deferred milestones.
 Keep the existing experimental Micro v0 profile, conformance vectors and
 host-side .xnx image builder as historical/test evidence, without launching
 a native C++/ESP32 implementation or an ABI migration merely to resolve these

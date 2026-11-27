@@ -3,7 +3,7 @@ title: "Inox: Two Versions — Scripting vs System Programming"
 author: "Jean Hugues Noël Robert, baron Mariani"
 affiliation: "Institut Mariani / C.O.R.S.I.C.A."
 date: "2026-06-05"
-last_modified_at: "2026-11-26"
+last_modified_at: "2026-11-27"
 license: "CC BY-SA 4.0"
 status: "working-note"
 corpus_role: "source"
@@ -159,3 +159,11 @@ Porting exposed leaked receivers in existing Boxon/Whisper adapters (use `class-
 The historical comment-based generator is operational again as an explicit developer operation: `node builds/inox.js --build-targets` (after `npm run build`). The direct REPL no longer generates native/documentation files as a side effect. The nested TS region at the CLI boundary and duplicate line markers caused assertion failures; the CLI region is now separated at the documentation comment. The LeanString equality loop uses a predeclared index compatible with the historical extractor. `npm run test:target-generation` checks REPL isolation, artifact generation and the CLI comment boundary.
 
 **Native compilation remains red.** On Fracta2 (aarch64, GCC 13.3), `g++ -std=c++17 -fsyntax-only -fmax-errors=15 builds/inox.cpp` rejects historical pointer-to-32-bit casts (e.g. `to_cell`, `lean_str_from_native`). A diagnostic-only `-fpermissive` probe also reports missing VM declarations and TS-specific actor stack/debug code. No permissive binary was built or executed. Restoring the extractor does not establish native semantic parity, especially for recent actor relocation, float and equality work. Preserve the existing decision to defer the native/Micro ABI implementation: evaluate it in its own packet, not by silently changing the Cell ABI or broadening the L8/L9 port.
+
+### Principal clarification — 2026-11-27: keep the historical C++ incarnation close
+
+The Principal does not want the C++ version to lag substantially behind the other Inox implementations. Its deliberately small use of C++ library facilities is a design property to preserve: use the least reasonably necessary host facilities, not a general-purpose C++ framework. The historical Linux/native runtime and the deferred Micro/ESP32 implementation are distinct work. Deferring Micro does not imply deferring maintenance of the existing native incarnation.
+
+Operational consequence: restore a runnable native baseline in bounded FBF batches through #5, alongside the AbstractInox/L9 work, and reuse shared .nox definitions and semantic regression cases wherever supported. Once native execution is restored, test common VM changes on both reference and native targets as part of the ordinary delivery loop, rather than accumulating a separate porting backlog. Keep host-specific facilities explicitly separated; avoid adding a heavyweight dependency to compensate for extraction drift.
+
+The immediate issues are extraction correctness, missing shared declarations and host-specific code in the emitted C++, then native address representation. Historical C++ stores shifted native addresses in 32-bit Cells and uses calloc-backed chunks (including INOX_USE_MALLOC); a 64-bit host pointer is not a 32-bit logical Cell address. Investigate an existing 32-bit build baseline and/or a stable reserved arena with relative Cell addressing before choosing a repair. These are engineering candidates, not an approved ABI decision. Preserve the existing 64-bit Cell and LeanString design where practical; do not widen Cells solely to match host pointer width. No new Micro ABI, ESP32 work or mandatory C++ standard-library dependency is introduced by this clarification.
