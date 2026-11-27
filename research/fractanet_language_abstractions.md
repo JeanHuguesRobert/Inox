@@ -548,3 +548,7 @@ Suggested first slice:
 ```text
 button → relay → local log → mqtt publish → smartphone ack → COP event → replay check
 ```
+
+## Related research — programmable learning infrastructure (2026-11-27)
+
+The [New Social Contract research note](https://github.com/JeanHuguesRobert/barons-Mariani/blob/main/projects/capable/doctrine/nouveau-contrat-social.md) considers programmable Fractanet as infrastructure for shared references and independently revisable learning procedures. This is a possible application of the language architecture, not a change to Inox semantics or evidence of implementation.
