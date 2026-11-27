@@ -975,6 +975,7 @@ to initialize-l9
     outcome/it-method{ @tail .outcome }
     value/it-method{ @tail .value }
     promise/it-method{ @tail .promise }
+    tail-box/it-method{ @tail }
     on/it-method{ >callback $callback @tail .on drop it }
     then/it-method{ >on-reject >on-resolve $on-resolve $on-reject @tail .then }
   }
@@ -989,6 +990,43 @@ to initialize-l9
     callback/getter
     success-only?/getter
   }
+  ~~ 2026-11-27: #42. Fork group is a step, not an actor scheduler.
+  ~~ Join preserves every typed Outcome in declaration order.
+  parole-join-observer/class{
+    maker{ >class >next $class make{ $next :next } }
+    run/it-method{ >source >event
+      $event .value >boxes
+      array[] >outcomes 0 >idx
+      while: { $idx $boxes array.length < } do: {
+        $outcomes $idx $boxes array.get .outcome array.push
+        $idx ++ >idx!
+      };
+      $outcomes @next .resolve drop
+    }
+  }
+  parole-fork-group/class{
+    maker{ >class >branches
+      $class make{ $branches outcome-copy-values :branches }
+    }
+    run/it-method{ >next >event
+      array[] >runs array[] >tails 0 >idx
+      while: { $idx @branches array.length < } do: {
+        $idx @branches array.get .instantiate >execution
+        $runs $execution array.push
+        $tails $execution .tail-box array.push
+        $idx ++ >idx!
+      };
+      ~~ Subscribe before starting any branch, including synchronous branches.
+      $tails boxon-all/ as-verb run >joined
+      $next make.parole-join-observer/ as-verb run $joined .observe drop
+      0 >idx!
+      while: { $idx $runs array.length < } do: {
+        $event $idx $runs array.get .fill drop
+        $idx ++ >idx!
+      };
+    }
+  }
+
   parole-template/class{
     maker{ >class $class make{ array[] :steps } }
     append/it-method{ >success-only? >callback
@@ -997,6 +1035,9 @@ to initialize-l9
     }
     will/it-method{ >callback $callback false it .append }
     may/it-method{ >callback $callback true it .append }
+    fork-join/it-method{ >branches
+      $branches make.parole-fork-group/ as-verb run it .will
+    }
     instantiate/it-method{
       make.parole/ as-verb run .from >execution
       0 >idx
