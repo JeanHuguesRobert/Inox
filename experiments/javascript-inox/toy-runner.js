@@ -82,6 +82,7 @@ export class VM {
   }
   static sourceTag(token) {
     if(token==='with')return 'with';
+    if(token==='/!')return '!';
     const match=/^\/([A-Za-z_][A-Za-z0-9_.?!-]*)$/.exec(token)
       || /^([A-Za-z_][A-Za-z0-9_.?!-]*)\/$/.exec(token);
     return match?match[1]:null;
@@ -230,6 +231,14 @@ export class VM {
       if(skip!==null)patch(skip,body.length);
       return;
     }
+    const followingBrace=this.tokens[this.cursor]==='{' &&
+      this.tokenPositions[this.cursor-1].start+token.length===this.tokenPositions[this.cursor].start;
+    if(followingBrace && /^[A-Za-z_][A-Za-z0-9_.?!-]*\/[A-Za-z_][A-Za-z0-9_.?!-]*$/.test(token)){
+      const [name,callee]=token.split('/');
+      emit(JSON.stringify(name));emit('tag.literal');
+      expect('{');this.emitSourceToken('{');emit(callee+'{');
+      return;
+    }
     if(token==='{' || token==='>{' || token==='/{') {
       // Retain inline lowering of immediate conditionals to support loop breaks.
       let depth=1, end=this.cursor;
@@ -263,6 +272,10 @@ export class VM {
     // Dot-method notation lowers to a symbolic tag and ordinary dispatch.
     if(/^\.[A-Za-z_][A-Za-z0-9_.?!-]*$/.test(token)){
       emit(JSON.stringify(token.slice(1)));emit('tag.literal');emit('run-method');
+      return;
+    }
+    if(/^:[A-Za-z_][A-Za-z0-9_.?!-]*$/.test(token)){
+      emit(JSON.stringify(token.slice(1)));emit('tag.literal');emit('rename');
       return;
     }
     const tag = VM.sourceTag(token);
@@ -438,13 +451,13 @@ export class VM {
       const scopes=vm.scopes();if(scopes.length<2)throw Error('scope underflow');scopes.pop();
     });
     p('local.create',vm=>{
-      const name=vm.pop().value;vm.scopes().at(-1).set(name,vm.pop());
+      const name=vm.pop().value;vm.scopes().at(-1).set(name,{...vm.pop(),name});
     });
     p('local.read',vm=>{
       const name=vm.pop().value;vm.push(vm.findLocal(name).get(name));
     });
     p('local.write',vm=>{
-      const name=vm.pop().value;vm.findLocal(name).set(name,vm.pop());
+      const name=vm.pop().value;vm.findLocal(name).set(name,{...vm.pop(),name});
     });
     p('block.relative',vm=>{
       const offset=vm.pop().value;
@@ -535,6 +548,7 @@ export class VM {
     // Direct historical class-qualified lookup, without a parallel
     // JavaScript class hierarchy or a premature method cache.
     const receiverClass=cell=>{
+      if(cell.type==='object')return cell.value.klass;
       if(cell.type==='tag'||cell.type==='verb'||cell.type==='void')return cell.type;
       if(cell.type==='literal'){
         if(typeof cell.value==='number')return Number.isInteger(cell.value)?'integer':'float';
@@ -544,6 +558,49 @@ export class VM {
       }
       throw Error('unsupported method receiver');
     };
+    p('class-of',vm=>vm.push({name:'class',type:'tag',value:receiverClass(vm.pop())}));
+    p('name-of',vm=>vm.push({name:'name',type:'tag',value:vm.pop().name}));
+    const tagValue=cell=>{
+      if(cell.type!=='tag')throw Error('expected tag');
+      return cell.value;
+    };
+    p('rename',vm=>{
+      const name=tagValue(vm.pop());
+      vm.push({...vm.pop(),name});
+    });
+    // The fixed-object length includes its class/length descriptor.
+    // Fields are Cells in top-to-bottom stack order; references share
+    // the native payload even when their Cell names change.
+    p('make.object',vm=>{
+      const header=vm.peek(),length=header.value;
+      if(header.type!=='literal'||!Number.isInteger(length)||length<1||length>vm.DSP)
+        throw Error('invalid object length');
+      vm.pop();
+      const fields=[];
+      for(let i=1;i<length;i++)fields.push({...vm.pop()});
+      vm.push({name:header.name,type:'object',value:{klass:header.name,fields}});
+    });
+    const field=(obj,key)=>{
+      if(obj.type==='void')return undefined;
+      if(obj.type!=='object')throw Error('expected Inox object');
+      return obj.value.fields.find(c=>c.name===key);
+    };
+    p('object.@',vm=>{
+      const key=tagValue(vm.pop()),obj=vm.pop(),found=field(obj,key);
+      if(found)vm.push(found);
+      else if(obj.type==='void')vm.push(obj);
+      else throw Error('Object variable not found, named '+key);
+    });
+    p('object.?@',vm=>{
+      const obj=vm.pop(),key=tagValue(vm.pop());
+      vm.push(field(obj,key)??{name:'',type:'void',value:null});
+    });
+    p('object.!',vm=>{
+      const key=tagValue(vm.pop()),obj=vm.pop(),value=vm.pop();
+      const found=field(obj,key);
+      if(!found)throw Error('Object variable not found, named '+key);
+      Object.assign(found,value,{name:key});
+    });
     const dispatchMethod=(vm,name)=>{
       const qualified=receiverClass(vm.peek())+'.'+name;
       const entry=vm.words.get(qualified);
@@ -630,7 +687,11 @@ export class VM {
       vm.push({ name: '', type: 'literal', value: vm.nextToken({definitionBoundary:true}) }));
     p('def.begin', vm => {
       if (vm.definition) throw new Error('nested definition not supported');
-      const name = vm.pop().value;
+      let name = vm.pop().value;
+      if(vm.tokens[vm.cursor]==='{' &&
+          vm.tokenPositions[vm.cursor-1].start+name.length===vm.tokenPositions[vm.cursor].start){
+        vm.nextToken();name+='{';
+      }
       if (typeof name !== 'string' || !name || name === '.')
         throw new Error('bad definition name');
       vm.definition = { name, body: [], loops: [], scopeDepth:0 };

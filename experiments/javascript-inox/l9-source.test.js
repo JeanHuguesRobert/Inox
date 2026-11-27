@@ -9,7 +9,7 @@ import {VM} from './toy-runner.js';
 import {captureDefinitions,loadDefinitions} from './definition-image.js';
 const root=fileURLToPath(new URL('../..',import.meta.url));
 const l9=readFileSync(new URL('../../lib/l9.nox',import.meta.url),'utf8');
-const names=['method-text-name','method-name','define-method'];
+const names=['method-text-name','method-name','define-method','it-method{','attribute'];
 function extract(name){
  const lines=l9.split('\n'),start=lines.findIndex(line=>line.startsWith('to '+name+' '));
  assert.ok(start>=0,'missing canonical L9 verb '+name);
@@ -42,6 +42,16 @@ const cases=[
  ['canonical method definition','/integer /triple { 3 * } define-method 7 .triple out','21'],
  ['caller continues','/integer /triple { 3 * } define-method 7 .triple out 9 out','219'],
  ['method redefinition','/integer /triple { 3 * } define-method 7 .triple out /integer /triple { 2 * } define-method 7 .triple out','2114'],
+ ['canonical receiver method','/integer >it triple/it-method{ it 3 * } 7 .triple out it out','21integer'],
+ ['receiver method reused','/integer >it triple/it-method{ it 3 * } 7 .triple out 8 .triple out','2124'],
+ ['canonical attribute getter setter','/sample >it /value attribute 3 :value 2 :sample make.object >o $o .value out 8 $o .value! $o .value out','38'],
+ ['object reference sharing','/sample >it /value attribute 3 :value 2 :sample make.object >o $o >alias 8 $alias .value! $o .value out','8'],
+ ['object instance isolation','/sample >it /value attribute 3 :value 2 :sample make.object >a 9 :value 2 :sample make.object >b 8 $a .value! $a .value out $b .value out','89'],
+ ['named field lookup','3 :value 2 :sample make.object >o /value $o object.?@ out','3'],
+ ['object class versus Cell name','3 :value 2 :sample make.object >o $o name-of out $o class-of out','osample'],
+ ['local name preserved on update','3 :a >x 4 :b >x! $x name-of out','x'],
+ ['local name on postfix read','3 :a >x x> name-of out','x'],
+ ['two fields','3 :first 4 :second 3 :sample make.object >o $o /first object.@ out $o /second object.@ out','34'],
  ['attach','7 { 2 + } attach run out','9'],
  ['attached block reused','7 { 2 + } attach >b $b run out $b run out','99'],
  ['define verb','/dyn { 7 } define-verb /dyn tag.run out','7'],
@@ -68,4 +78,13 @@ test('canonical L9 definitions can be captured, relocated and used to define a m
  assert.deepEqual(target.evaluate('to p /integer /triple { 3 * } define-method 7 .triple. p'),[21]);
  assert.throws(()=>captureDefinitions(target,['integer.triple']),/unsupported Cell type runtime-literal/);
  assert.equal(target.CSP,0);
+});
+
+test('fixed objects retain Cell names, identity and optional missing values',()=>{
+ const vm=fresh(false);
+ vm.evaluate('to p 3 :value 2 :sample make.object >o $o /missing object.@. ');
+ assert.throws(()=>vm.invoke('p'),/Object variable not found/);
+ assert.equal(vm.CSP,0);
+ assert.deepEqual(vm.evaluate('to q 3 :value 2 :sample make.object >o /missing $o object.?@. q'),[null]);
+ assert.equal(vm.peek().type,'void');
 });

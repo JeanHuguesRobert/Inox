@@ -256,3 +256,33 @@ and class fallback are not yet implemented. The historical parameters
 primitive contains special-case behavior for L9 meta words; the
 experiment implements the ordinary explicit formal binding needed by
 define-method, not a copy of those historical parser workarounds.
+
+### Reuse of L9 receiver methods and attributes (2026-11-27)
+
+The same canonical-source test now also compiles and executes the existing
+`it-method{` and `attribute` definitions directly from lib/l9.nox.
+The generic adjacent `name/verb{ ... }` form supplies a tag and block
+to a brace-named defining verb. Brace-named definitions are supported.
+Postfix `:name` uses `rename`; `/!` supplies the suffix tag used by
+the canonical attribute definition.
+
+Native fixed objects are represented by a shared payload containing
+the class name and an ordered array of member Cells. The historical
+`make.object` length includes its class/length descriptor; fields are
+consumed in stack order. `object.@` takes object then tag,
+`object.?@` takes tag then object and returns void when absent, and
+`object.!` takes value, object, tag and preserves the member name.
+Object class is independent of the referencing Cell name; copying a
+reference shares the payload, not the Cell container. Local creation
+and update now name their stored Cells as the historical VM does
+(FBF exposed by name-of on a local object reference).
+
+Ten additional historical differential cases cover canonical receiver
+binding, getter/setter generation, object aliases and independent
+instances, field lookup and naming. A separate missing-field test
+checks explicit failure and optional void. The five canonical L9
+definitions can be relocated as a definition image. Runtime-created
+objects and captured methods remain outside the current image format.
+No changes to lib/l9.nox. Fixed-object member access is implemented,
+not the entire object model: extensible objects, the common L9 maker
+protocol, metaclasses, inheritance, and class fallback remain to port.
