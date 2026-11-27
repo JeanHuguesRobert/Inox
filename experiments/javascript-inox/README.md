@@ -226,3 +226,33 @@ to class verbs/thing, interpret, L9 metaclasses, inheritance, user-defined
 objects and attribute/it-method protocols are not implemented here. JS
 numeric classification uses Number.isInteger, not the historical packed
 numeric type distinction. Do not interpret this as general L9 parity.
+
+### First reuse of canonical L9 source (2026-11-27)
+
+The OO layer is already in lib/l9.nox. Do not create a second OO library.
+The experimental VM now executes the actual unmodified definitions
+`method-text-name`, `method-name`, and `define-method`, extracted directly
+from the canonical file in l9-source.test.js. The historical comparison
+runs the full existing L9 bootstrap, not translated versions of these
+verbs. The three definitions can themselves be captured as an image and
+relocated to a new VM.
+
+Minimal new dependencies: parenthesized prefix calls, comma separators,
+parenthesized left-associative text concatenation, `&` for text/tag
+operands, `parameters` using the same formal binder as
+`run-with-parameters`, `attach` and `define-verb`. Runtime-created
+blocks/definitions use captured Cells and normal threaded calls, not JS
+closures. Runtime-literal instructions are explicitly outside the
+existing portable definition-image format; capturing a method created
+with define-verb is rejected rather than silently losing its captures.
+The wrapper adds a VM call frame; optimize only if actual costs warrant.
+
+Nine differential cases (including dynamic method registration and
+replacement, block capture/reuse, and caller continuation) plus a
+relocation test exercise this first shared-source path. The prefix/infix
+grammar and parameter support are deliberately bounded; full L9
+bootstrap, comments/dialects, class declaration syntax, object storage
+and class fallback are not yet implemented. The historical parameters
+primitive contains special-case behavior for L9 meta words; the
+experiment implements the ordinary explicit formal binding needed by
+define-method, not a copy of those historical parser workarounds.

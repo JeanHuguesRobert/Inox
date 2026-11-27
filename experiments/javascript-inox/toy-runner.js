@@ -97,7 +97,7 @@ export class VM {
         return [...VM.normalizeTokens([token.slice(0,-1)]),'.'];
       }
       if (VM.literal(token) || token.startsWith('"')) return [token];
-      return token.split(/([>/]\{|[{};])/u).filter(Boolean);
+      return token.split(/([>/]\{|[{};(),])/u).filter(Boolean);
     });
   }
   // The two scanners already supply token boundaries. Recover only source
@@ -118,7 +118,7 @@ export class VM {
       let consumed=0;
       for(const piece of VM.normalizeTokens([token])){
         this.tokens.push(piece);
-        this.tokenPositions.push({columnOne:consumed===0&&column===0,dedent:consumed===0&&dedent});
+        this.tokenPositions.push({start:start+consumed,columnOne:consumed===0&&column===0,dedent:consumed===0&&dedent});
         consumed+=piece.length;
       }
       end=start+token.length;
@@ -149,6 +149,31 @@ export class VM {
         this.emitSourceToken(word);
       }
     };
+    // Parenthesized calls and the bounded left-associative text
+    // concatenation expression used by L9's method-text-name.
+    if(token==='(' || (this.tokens[this.cursor]==='(' &&
+        this.tokenPositions[this.cursor-1].start+token.length===this.tokenPositions[this.cursor].start)){
+      const callee=token==='('?null:token;
+      if(callee!==null)expect('(');
+      let pending=false,haveOperand=false;
+      for(;;){
+        const word=this.nextToken();
+        if(word===')'||word===','){
+          if(pending)throw new SyntaxError('missing right operand');
+          if(word===')')break;
+          haveOperand=false;continue;
+        }
+        if(word==='&'){
+          if(!haveOperand||pending)throw new SyntaxError('missing left operand');
+          pending=true;continue;
+        }
+        this.emitSourceToken(word);
+        if(pending){emit('&');pending=false;}
+        haveOperand=true;
+      }
+      if(callee!==null)emit(callee);
+      return;
+    }
     const conditionalExit = () => { emit('not'); return branch('branch-relative-if'); };
     if (token === 'if:') {
       // Historical keyword syntax: condition expression, then block,
@@ -333,6 +358,10 @@ export class VM {
       const cell = this.cells[this.IP];
       if (!cell) throw new Error('invalid IP: ' + this.IP);
       switch (cell.type) {
+        case 'runtime-literal':
+          this.push(cell.value);
+          this.IP++;
+          break;
         case 'literal':
           this.push(cell);
           this.IP++;
@@ -466,6 +495,31 @@ export class VM {
       if(!vm.words.has(name))throw Error('undefined verb: '+name);
       callName(vm,name);
     });
+    p('&',vm=>{
+      const right=textName(vm.pop()),left=textName(vm.pop());
+      pushValue(vm,left+right);
+    });
+    const runtimeLiteral=cell=>({name:'',type:'runtime-literal',value:{...cell}});
+    // Captured runtime values are Cells, not host closures. The existing
+    // image encoder deliberately rejects this runtime-only instruction.
+    const runnableCode=(vm,instructions)=>{
+      const entry=vm.cells.length;
+      for(const instruction of instructions)vm.alloc(instruction);
+      vm.alloc({name:'',type:'return',value:null});
+      return entry;
+    };
+    p('attach',vm=>{
+      const target=vm.pop(),value=vm.pop();
+      if(target.type!=='block')throw Error('expected block');
+      const entry=runnableCode(vm,[runtimeLiteral(value),runtimeLiteral(target),vm.resolve('run')]);
+      vm.push({name:'attach',type:'block',value:entry});
+    });
+    p('define-verb',vm=>{
+      const code=vm.pop(),name=vm.pop();
+      if(name.type!=='tag'||code.type!=='block')throw Error('expected tag and block');
+      const entry=runnableCode(vm,[runtimeLiteral(code),vm.resolve('run')]);
+      vm.words.set(name.value,entry);
+    });
     p('as-tag',vm=>vm.push({name:'tag',type:'tag',value:textName(vm.pop())}));
     p('as-verb',vm=>pushVerb(vm,textName(vm.pop())));
     p('text.as-verb',vm=>{
@@ -524,13 +578,10 @@ export class VM {
       if(typeof name!=='string'||!name)throw Error('expected tag name');
       vm.push({name,type:'tag',value:name});
     });
-    p('run-with-parameters',vm=>{
-      // Reuse dynamic call frames. The sentinel scan is part of the protocol;
-      // no fixed arity limit or additional walk to count actual arguments.
-      const block=vm.peek();
-      if(block.type!=='block'||!Number.isInteger(block.value))throw Error('expected block');
+    // One formal-binding protocol for the current frame (parameters)
+    // and a new block frame (run-with-parameters).
+    const bindParameters=(vm,end,enter)=>{
       const at=i=>vm.cells[vm.data[i]];
-      const end=vm.DSP-1;
       let sentinel=end-1;
       while(sentinel>=0){
         const cell=at(sentinel);
@@ -539,15 +590,21 @@ export class VM {
         sentinel--;
       }
       if(sentinel<0)throw Error('missing with sentinel');
-      const count=end-sentinel-1, first=sentinel-count;
+      const count=end-sentinel-1,first=sentinel-count;
       if(first<0)throw Error('insufficient actual arguments');
-      runBlock(vm,block);
+      if(enter)enter();
       const locals=vm.scopes().at(-1);
       for(let i=0;i<count;i++){
         const name=at(sentinel+1+i).name;
         locals.set(name,{...at(first+i),name});
       }
       vm.data.length=first;vm.DSP=first;
+    };
+    p('parameters',vm=>bindParameters(vm,vm.DSP));
+    p('run-with-parameters',vm=>{
+      const block=vm.peek();
+      if(block.type!=='block'||!Number.isInteger(block.value))throw Error('expected block');
+      bindParameters(vm,vm.DSP-1,()=>runBlock(vm,block));
     });
     p('it',vm=>vm.push(vm.findLocal('it').get('it')));
     p('it!',vm=>vm.findLocal('it').set('it',{...vm.pop(),name:'it'}));
