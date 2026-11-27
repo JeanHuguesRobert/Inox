@@ -24,7 +24,7 @@ const cases=[
  ['nested on-return unwind LIFO', 'to t { scope finally{ "O" out } scope finally{ "I" out } "X" FATAL } { >e $e out } run-guarded "A" out. t','IOXA'],
  ['on-return sees local on exceptional exit', 'to t { scope "LOCAL" >x finally{ $x out } "E" FATAL } { >e $e out } run-guarded. t','LOCALE'],
  ['on-return error supersedes original', 'to t { scope finally{ "NEW" FATAL } "OLD" FATAL } { >e $e out } run-guarded "A" out. t','NEWA'],
- ['two exceptional calls leave caller stack unchanged', 'to work from: 1 to: 2 do: { { "ERR" FATAL } { >e } try:catch: };. to t control-depth out "," out work control-depth out. t','-2,-2'],
+ ['two exceptional calls leave caller stack unchanged', 'to work from: 1 to: 2 do: { { "ERR" FATAL } { >e } try:catch: };. to t control-depth out "," out work control-depth out. t','2,2'],
  ['early return runs on-return cleanup','to w scope finally{ "F" out } "T" out return "BAD" out. to t w "A" out. t','TFA'],
  ['break runs finally before continuation','to t from: 1 to: 3 do: { scope finally{ "F" out } "B" out break }; "A" out. t','BFA'],
  ['nonlocal break nested cleanup runs LIFO','to t from: 1 to: 3 do: { scope finally{ "O" out } scope finally{ "I" out } "B" out break }; "A" out. t','BIOA'],

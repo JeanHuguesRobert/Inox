@@ -32,7 +32,7 @@ const cases = [
   ['integer times negative count', 'to t { "X" out } -3 .times. t', ''],
   ['integer times 1000, bounded/iterative execution', 'to t 0 >n { $n 1 + >n! } 1000 .times $n out. t', '1000'],
   ['integer times leaves caller continuation intact', 'to t "A" out { "X" out } 3 .times "B" out. t', 'AXXXB'],
-  ['integer times restores caller control-depth', 'to t control-depth out "," out { } 1000 .times control-depth out. t', '-2,-2'],
+  ['integer times restores caller control-depth', 'to t control-depth out "," out { } 1000 .times control-depth out. t', '2,2'],
   ['nested integer times 2x2', 'to t { { "X" out } 2 .times "Y" out } 2 .times. t', 'XXYXXY'],
   ['nested integer times 4x3', 'to t 0 >n { { $n 1 + >n! } 3 .times } 4 .times $n out. t', '12'],
 

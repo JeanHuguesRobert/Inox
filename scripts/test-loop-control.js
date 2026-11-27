@@ -101,10 +101,9 @@ for(const mode of ['minimal','l9']){
   }
   for(const [name,program,count] of depthProbes){
     const actual=invoke(program,mode);
-    // Inox currently reports control-depth as a negative offset from its base.
     const depths=actual.split(',').filter(Boolean).map(Number);
     assert.equal(depths.length,count,`${mode}: ${name} count`);
-    assert.ok(depths.every(n=>Number.isInteger(n)&&Math.abs(n)>0&&Math.abs(n)<100), `${mode}: ${name}: control depth exceeded 100-cell capacity`);
+    assert.ok(depths.every(n=>Number.isInteger(n)&&n>0&&n<100), `${mode}: ${name}: control depth exceeded 100-cell capacity`);
     assert.equal(new Set(depths).size,1,`${mode}: ${name}: control stack grew between iterations`);
     passed++;
   }

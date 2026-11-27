@@ -10450,7 +10450,8 @@ primitive( "data-dump", primitive_data_dump );
  */
 
 function primitive_control_depth(){
-  const depth = ( ACTOR_control_stack - CSP ) / ONE;
+  // 2026-11-27: GPT-6.2 under JHR, #42. CSP grows above the base.
+  const depth = ( CSP - ACTOR_control_stack ) / ONE;
   // ToDo: should check the stack's boundaries?
   legacy_de&&mand( depth >= 0 );
   set( push(), type_integer, tag_depth, depth );

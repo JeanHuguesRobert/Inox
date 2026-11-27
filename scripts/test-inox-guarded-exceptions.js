@@ -17,8 +17,8 @@ const cases=[
  ['nested nearest guard catches error','to t { { "BROKEN" FATAL } { >e "INNER" out } run-guarded "OUTER" out } { >e "WRONG" out } run-guarded "END" out. t','INNEROUTEREND'],
  ['nested guard can propagate a second error','to t { { "FIRST" FATAL } { >e "SECOND" FATAL } run-guarded "BAD" out } { >e $e out } run-guarded "END" out. t','SECONDEND'],
  ['subsequent calls are unaffected by a caught failure','to t { "A" FATAL } { >e "C" out } run-guarded { "B" out } { >e "WRONG" out } run-guarded. t','CB'],
- ['100 caught errors leave no extra return frames','to work from: 1 to: 100 do: { { "ERR" FATAL } { >e } run-guarded };. to t control-depth out "," out work control-depth out. t','-2,-2'],
- ['100 successful guarded runs leave no extra frames','to work from: 1 to: 100 do: { { 42 } { >e } run-guarded drop };. to t control-depth out "," out work control-depth out. t','-2,-2'],
+ ['100 caught errors leave no extra return frames','to work from: 1 to: 100 do: { { "ERR" FATAL } { >e } run-guarded };. to t control-depth out "," out work control-depth out. t','2,2'],
+ ['100 successful guarded runs leave no extra frames','to work from: 1 to: 100 do: { { 42 } { >e } run-guarded drop };. to t control-depth out "," out work control-depth out. t','2,2'],
  ['guard survives actual child/root context switching','to worker { "W1" out l9-root .resume l9-dispatch-next "ERR" FATAL "BAD" out } { >e "C" out } run-guarded l9-dispatch-next. to p l9-root .spawn( worker/ as-verb definition ) >kid $kid .resume l9-dispatch-next "R1" out l9-dispatch-next "R2" out. p','W1R1CR2'],
 
 ];

@@ -14,7 +14,7 @@ const cases=[
  ['return-unless','7 with /a /{ $a out false return-unless 8 out } 9 out','79'],
  ['text','"left" "right" with /first /second /{ $first out $second out } "!" out','leftright!'],
  ['preserve lower data','4 7 8 with /a /b /{ $a $b + } + out','19'],
- ['depth','control-depth out "," out 7 with /a /{ $a drop } control-depth out','-2,-2'],
+ ['depth','control-depth out "," out 7 with /a /{ $a drop } control-depth out','2,2'],
  ['target control','7 >{ it out } 9 out','79'],
 ];
 function invoke(source,mode){

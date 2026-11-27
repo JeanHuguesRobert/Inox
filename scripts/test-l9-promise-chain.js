@@ -66,7 +66,7 @@ for(const [name,source] of stackCases){
   });
   assert.equal(r.status,0,`${name}: exit=${r.status}`);
   assert.doesNotMatch(r.stdout+r.stderr,/FATAL:|missing-verb|Assert failure|AssertionError|Invalid return|Bad type/);
-  assert.match(r.stdout,/^-?\d+,-?\d+$/,`${name}: malformed depth observation`);
+  assert.match(r.stdout,/^\d+,\d+$/,`${name}: malformed depth observation`);
   const [before,after]=r.stdout.split(',').map(Number);
   assert.equal(after,before,`${name}: leaked or lost control frames`);
   passed++;

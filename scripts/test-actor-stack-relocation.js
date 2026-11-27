@@ -11,7 +11,7 @@ const cases=[
  ['actor switch preserves relocated stacks','to worker "value" >x 2000 reserve-control-stack 2000 reserve-data-stack l9-root .resume l9-dispatch-next $x out 0 actor stack.fetch value-of data-stack-base = out 1 actor stack.fetch value-of control-stack-base = out. to p l9-root .spawn( worker/ as-verb definition ) >kid $kid .resume l9-dispatch-next "R" out $kid .resume l9-dispatch-next $kid .done? out. p','Rvalue111'],
  ['bulk duplicate preflight','to p "payload" 1000 dups data-depth out clear-data data-depth out. p','10010'],
  ['direct literal evaluation grows data stack','1 '.repeat(1000)+'data-depth out clear-data data-depth out','10000'],
- ['deep non-tail recursion grows control stack','to descend >n if: ( $n > 0 ) then: { $n 1 - descend $n drop };. to p control-stack-limit control-stack-base - >before 0 >entry-depth control-depth >entry-depth! 500 descend control-stack-limit control-stack-base - >after if: ( $after > $before ) then: { "G" out }; if: ( control-depth = ( $entry-depth - 1 ) ) then: { "D" out };. p','GD'],
+ ['deep non-tail recursion grows control stack','to descend >n if: ( $n > 0 ) then: { $n 1 - descend $n drop };. to p control-stack-limit control-stack-base - >before 0 >entry-depth control-depth >entry-depth! 500 descend control-stack-limit control-stack-base - >after if: ( $after > $before ) then: { "G" out }; if: ( control-depth = ( $entry-depth + 1 ) ) then: { "D" out };. p','GD'],
 ];
 for(const [name,source,expected] of cases){
  const r=spawnSync(process.execPath,['bin/inox.js','-e',source],{cwd,encoding:'utf8',timeout:20000,env:{...process.env,INOX_WITH_L9:'1',INOX_FULL:'0',INOX_L9:'0'}});

@@ -48,7 +48,7 @@ const cases=[
  ['method introspection for own method','to t aa_parent/class{ thing/superclass ping/it-method{ "P" } } /ping aa_parent/make{ } .understand? out. t','1'],
  ['method introspection for inherited method','to t aa_parent/class{ thing/superclass ping/it-method{ "P" } } aa_child/class{ aa_parent/superclass } /ping aa_child/make{ } .understand? out. t','1'],
  ['method introspection for absent method','to t aa_parent/class{ thing/superclass ping/it-method{ "P" } } aa_child/class{ aa_parent/superclass } /unknown aa_child/make{ } .understand? not out. t','1'],
- ['method lookup keeps caller control depth','to work aa_parent/class{ thing/superclass ping/it-method{ 42 } } aa_child/class{ aa_parent/superclass } aa_child/make{ } .ping drop. to t control-depth out "," out work control-depth out. t','-2,-2'],
+ ['method lookup keeps caller control depth','to work aa_parent/class{ thing/superclass ping/it-method{ 42 } } aa_child/class{ aa_parent/superclass } aa_child/make{ } .ping drop. to t control-depth out "," out work control-depth out. t','2,2'],
  ['multi-level parent update invalidates inherited cache','to t aa_grand/class{ thing/superclass ping/it-method{ "A" } } aa_parent/class{ aa_grand/superclass } aa_child/class{ aa_parent/superclass } aa_child/make{ } .ping out aa_grand/class{ ping/it-method{ "B" } } aa_child/make{ } .ping out. t','AB'],
  ['repeated inherited dispatch remains iterative','to t aa_parent/class{ thing/superclass ping/it-method{ 42 } } aa_child/class{ aa_parent/superclass } 0 >count from: 1 to: 200 do: { aa_child/make{ } .ping drop $count 1 + >count! }; $count out. t','200'],
 
