@@ -9,7 +9,7 @@ import {VM} from './toy-runner.js';
 import {captureDefinitions,loadDefinitions} from './definition-image.js';
 const root=fileURLToPath(new URL('../..',import.meta.url));
 const l9=readFileSync(new URL('../../lib/l9.nox',import.meta.url),'utf8');
-const names=['method-text-name','method-name','define-method','it-method{','attribute'];
+const names=['method-text-name','method-name','define-method','it-method{','attribute','drop-with','with-length','with-length{','make{'];
 function extract(name){
  const lines=l9.split('\n'),start=lines.findIndex(line=>line.startsWith('to '+name+' '));
  assert.ok(start>=0,'missing canonical L9 verb '+name);
@@ -52,6 +52,19 @@ const cases=[
  ['local name preserved on update','3 :a >x 4 :b >x! $x name-of out','x'],
  ['local name on postfix read','3 :a >x x> name-of out','x'],
  ['two fields','3 :first 4 :second 3 :sample make.object >o $o /first object.@ out $o /second object.@ out','34'],
+ ['canonical make','/sample >it /value attribute sample/make{ 3 :value } >o $o .value out 8 $o .value! $o .value out','38'],
+ ['make preserves caller data','99 sample/make{ 3 :value } >o $o /value object.@ out out','399'],
+ ['independent maker instances','sample/make{ 3 :value } >a sample/make{ 4 :value } >b $a /value object.@ out $b /value object.@ out','34'],
+ ['nested construction','sample/make{ 3 :first other/make{ 8 :v } :child } >o $o /child object.@ /v object.@ out','8'],
+ ['empty object class','sample/make{ } class-of out','sample'],
+ ['extend preserves aliases','3 :value 2 :sample make.object >a $a >b $a extend-object 8 $b /value object.! $a /value object.@ out','8'],
+ ['repeat extend preserves fields','sample/make{ 1 :a 2 :b 3 :c 4 :d } >o $o extend-object $o /d object.@ out','4'],
+ ['extend then grow','sample/make{ 1 :a 2 :b 3 :c 4 :d } >o $o stack.length out $o 9 :extra stack.push $o /extra object.@ out $o /a object.@ out','491'],
+ ['alias observes grown object','sample/make{ 1 :a 2 :b 3 :c 4 :d } >o $o >alias $o 9 :extra stack.push 8 $alias /extra object.! $o /extra object.@ out $o /a object.@ out','81'],
+ ['grow empty object','0 :sample make.extensible-object >o $o 7 :value stack.push $o 9 :extra stack.push $o stack.length out $o /extra object.@ out','29'],
+ ['modify grown object','0 :sample make.extensible-object >o $o 7 :value stack.push $o 9 :extra stack.push 8 $o /extra object.! $o /extra object.@ out','8'],
+ ['control data save','4 >control 7 control> out out','47'],
+ ['with-length preserves fields','with 1 2 with-length out drop drop drop','3'],
  ['attach','7 { 2 + } attach run out','9'],
  ['attached block reused','7 { 2 + } attach >b $b run out $b run out','99'],
  ['define verb','/dyn { 7 } define-verb /dyn tag.run out','7'],

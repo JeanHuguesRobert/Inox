@@ -286,3 +286,35 @@ objects and captured methods remain outside the current image format.
 No changes to lib/l9.nox. Fixed-object member access is implemented,
 not the entire object model: extensible objects, the common L9 maker
 protocol, metaclasses, inheritance, and class fallback remain to port.
+
+
+### Canonical L9 object construction and extensibility (2026-11-27)
+
+The source test also extracts and compiles the unchanged `drop-with`,
+`with-length`, `with-length{` and `make{` definitions in lib/l9.nox.
+The native payload keeps its identity on extension; ordered member Cells
+can grow, and aliases observe the changes. No second maker or class system.
+The initial capacity of a native JS array is not a physical reservation.
+
+Dependencies are generic brace calls, comma separators, standalone
+`~~` line-comment handling for the scanned-token subset, `duplicate`,
+`top`, `with?`, `data-index`, and `>control`/`control>`.
+Saved Cells occupy the actual logical control stack, alongside return
+frames; balanced transfers and dynamic locals coexist. `assert` and
+the historical bootstrap alias `assert{` use a VM checker continuation,
+not a nested JS interpreter. This experiment is always checked; it has
+no fast-mode assertion switch. Comments containing arbitrary lexical
+errors (e.g. unclosed quotes) are not yet supported by the raw scanners.
+
+The historical differential cases exposed real defects in lib/inox.ts:
+extension of an already extended object with padded forwarding storage,
+confusion between fixed total length and extended member count, and
+lookup bounds derived from the forwarding area. The correction preserves
+the class, converts the count, and makes getter/setter share a bounded
+payload lookup. Optional absence is valid even in fast mode; a lookup
+must terminate in that case. The historical regression suite exercises
+these invariants separately, including fast-mode absence. No changes to
+L9 source. Nine canonical definitions are now reused and relocatable;
+runtime-created captures and objects still require a richer image format.
+Next: the L9 metaclass registry and fallback dispatch; do not duplicate
+the inheritance mechanism in JavaScript.

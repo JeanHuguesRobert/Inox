@@ -105,10 +105,17 @@ export class VM {
   // coordinates from the intervening whitespace, not a second lexical scan.
   setSourceTokens(raw,source) {
     this.tokens=[];this.tokenPositions=[];
-    let end=0, lineStart=0, indent=null;
+    let end=0, scanEnd=0, commentEnd=0, lineStart=0, indent=null;
     for(const token of raw){
-      const start=source.indexOf(token,end);
+      const start=source.indexOf(token,scanEnd);
       if(start<0)throw Error('scanner token has no source span');
+      scanEnd=start+token.length;
+      if(start<commentEnd)continue;
+      if(token==='~~'){
+        const newline=source.indexOf('\n',scanEnd);
+        commentEnd=newline<0?source.length:newline;
+        continue;
+      }
       const gap=source.slice(end,start);
       const newline=Math.max(gap.lastIndexOf('\n'),gap.lastIndexOf('\r'));
       const nextLineStart=newline<0?lineStart:end+newline+1;
@@ -128,6 +135,7 @@ export class VM {
   // Structured control lowers to the existing relocatable branch primitives.
   // The compiler is still VM-invoked through def.emit. No JS runtime recursion.
   emitSourceToken(token) {
+    if(token===',')return;
     const d = this.definition, body = d.body;
     const emit = word => body.push(this.resolve(word));
     const branch = word => {
@@ -239,6 +247,10 @@ export class VM {
       expect('{');this.emitSourceToken('{');emit(callee+'{');
       return;
     }
+    if(followingBrace && this.words.has(token+'{')){
+      expect('{');this.emitSourceToken('{');emit(token+'{');
+      return;
+    }
     if(token==='{' || token==='>{' || token==='/{') {
       // Retain inline lowering of immediate conditionals to support loop breaks.
       let depth=1, end=this.cursor;
@@ -283,6 +295,7 @@ export class VM {
       emit(JSON.stringify(tag));emit('tag.literal');
       return;
     }
+    if(token==='>control'||token==='control>'){emit(token);return;}
     const local=/^>([A-Za-z_][A-Za-z0-9_-]*)(!)?$/.exec(token);
     const read=/^\$([A-Za-z_][A-Za-z0-9_-]*)$/.exec(token)||/^([A-Za-z_][A-Za-z0-9_-]*)>$/.exec(token);
     if(local||read){
@@ -350,17 +363,21 @@ export class VM {
   }
   returnFrame() {
     const frame=this.control.pop();
+    if(frame!==undefined&&!this.frames.has(frame))throw Error('unbalanced control stack');
     this.IP=frame===undefined?null:this.cells[frame].value;
     this.frames.delete(frame);this.CSP=this.control.length;
   }
   scopes() {
-    const scopes=this.frames.get(this.control.at(-1));
-    if(!scopes)throw Error('local outside call frame');
-    return scopes;
+    for(let i=this.control.length-1;i>=0;i--){
+      const scopes=this.frames.get(this.control[i]);
+      if(scopes)return scopes;
+    }
+    throw Error('local outside call frame');
   }
   findLocal(name) {
     for(let i=this.control.length-1;i>=0;i--){
       const scopes=this.frames.get(this.control[i]);
+      if(!scopes)continue;
       for(let j=scopes.length-1;j>=0;j--)if(scopes[j].has(name))return scopes[j];
     }
     throw Error('undefined local: '+name);
@@ -432,6 +449,26 @@ export class VM {
     const binary = (name, f) => p(name, vm => {
       const b=vm.pop().value, a=vm.pop().value;
       pushValue(vm,f(a,b));
+    });
+    p('duplicate',vm=>vm.push(vm.peek()));
+    p('top',vm=>vm.push(vm.peek()));
+    p('>control',vm=>{
+      vm.control.push(vm.alloc(vm.pop()));vm.CSP=vm.control.length;
+    });
+    p('control>',vm=>{
+      const address=vm.control.at(-1);
+      if(address===undefined||vm.frames.has(address))throw Error('no saved control value');
+      vm.control.pop();vm.CSP=vm.control.length;vm.push(vm.cells[address]);
+    });
+    const isWith=cell=>cell.type==='tag'&&cell.name==='with'&&cell.value==='with';
+    p('with?',vm=>pushValue(vm,isWith(vm.pop())));
+    p('data-index',vm=>{
+      const key=vm.pop();
+      if(key.type!=='tag')throw Error('expected tag');
+      for(let i=vm.DSP-1;i>=0;i--){
+        if(vm.cells[vm.data[i]].name===key.value){pushValue(vm,vm.DSP-i);return;}
+      }
+      throw Error('Data variable not found, named '+key.value);
     });
     p('over', vm => {
       if(vm.DSP<2)throw Error('data stack underflow');
@@ -578,7 +615,29 @@ export class VM {
       vm.pop();
       const fields=[];
       for(let i=1;i<length;i++)fields.push({...vm.pop()});
-      vm.push({name:header.name,type:'object',value:{klass:header.name,fields}});
+      vm.push({name:header.name,type:'object',value:{klass:header.name,fields,extensible:false}});
+    });
+    p('make.extensible-object',vm=>{
+      const header=vm.pop();
+      if(header.type!=='literal'||!Number.isInteger(header.value)||header.value<0)
+        throw Error('invalid object capacity');
+      vm.push({name:header.name,type:'object',
+        value:{klass:header.name,fields:[],extensible:true}});
+    });
+    const objectPayload=cell=>{
+      if(cell.type!=='object')throw Error('expected Inox object');
+      return cell.value;
+    };
+    p('extend-object',vm=>{objectPayload(vm.pop()).extensible=true;});
+    p('stack.length',vm=>{
+      const payload=objectPayload(vm.pop());
+      // Historical fixed header includes itself; extended length does not.
+      pushValue(vm,payload.fields.length+(payload.extensible?0:1));
+    });
+    p('stack.push',vm=>{
+      const value=vm.pop(),payload=objectPayload(vm.pop());
+      if(!payload.extensible)throw Error("Can't extend a non extensible stack");
+      payload.fields.push({...value});
     });
     const field=(obj,key)=>{
       if(obj.type==='void')return undefined;
@@ -643,7 +702,7 @@ export class VM {
       while(sentinel>=0){
         const cell=at(sentinel);
         if(cell.type!=='tag')throw Error('expected formal parameter tag or with');
-        if(cell.name==='with'&&cell.value==='with')break;
+        if(isWith(cell))break;
         sentinel--;
       }
       if(sentinel<0)throw Error('missing with sentinel');
@@ -670,6 +729,18 @@ export class VM {
       const block=vm.pop(),condition=vm.pop().value;if(condition)runBlock(vm,block);
     });
     p('block.return',vm=>vm.returnFrame());
+    p('assert-checker',vm=>{
+      if(vm.pop().value!==true)throw Error('Assertion failed');
+    });
+    const assertBlock=vm=>{
+      const block=vm.pop();
+      if(block.type!=='block')throw Error('expected assertion block');
+      vm.call(vm.words.get('assert-checker'));
+      runBlock(vm,block);
+    };
+    p('assert',assertBlock);
+    p('assert{',assertBlock); // historical bootstrap alias
+
 
     // Experimental host-projection and text operations, not a new binary ABI.
     binary('get',(a,b)=>a!=null&&Object.hasOwn(a,b)?a[b]:undefined);
