@@ -292,6 +292,15 @@ export class VM {
       return;
     }
     if(token==='_'){emit('void.literal');return;}
+    // Ordinary name/verb syntax supplies a tag as the last operand.
+    const taggedCall=/^([A-Za-z_][A-Za-z0-9_.?!-]*)\/([A-Za-z_][A-Za-z0-9_.?!-]*)$/.exec(token);
+    if(taggedCall){
+      emit(JSON.stringify(taggedCall[1]));emit('tag.literal');emit(taggedCall[2]);return;
+    }
+    // Single-component @method calls use the dynamically bound receiver.
+    if(/^@[A-Za-z_][A-Za-z0-9_?!-]*$/.test(token)){
+      emit('it');emit(JSON.stringify(token.slice(1)));emit('tag.literal');emit('run-method');return;
+    }
     const tag = VM.sourceTag(token);
     if(tag!==null){
       emit(JSON.stringify(tag));emit('tag.literal');
@@ -591,7 +600,12 @@ export class VM {
     p('attach',vm=>{
       const target=vm.pop(),value=vm.pop();
       if(target.type!=='block')throw Error('expected block');
-      const entry=runnableCode(vm,[runtimeLiteral(value),runtimeLiteral(target),vm.resolve('run')]);
+      const instructions=[runtimeLiteral(value)];
+      // In the historical threaded code, a verb Cell is an executable
+      // instruction, not a quoted value. Preserve late or bound invocation.
+      if(value.type==='verb')instructions.push(vm.resolve('run'));
+      instructions.push(runtimeLiteral(target),vm.resolve('run'));
+      const entry=runnableCode(vm,instructions);
       vm.push({name:'attach',type:'block',value:entry});
     });
     p('define-verb',vm=>{
@@ -599,6 +613,10 @@ export class VM {
       if(name.type!=='tag'||code.type!=='block')throw Error('expected tag and block');
       const entry=runnableCode(vm,[runtimeLiteral(code),vm.resolve('run')]);
       vm.words.set(name.value,entry);
+    });
+    p('definitions',vm=>{
+      const fields=Array.from(vm.words,([name,value])=>({name,type:'literal',value}));
+      vm.push({name:'definitions',type:'object',value:{klass:'stack',fields,extensible:true}});
     });
     p('verb.exist?',vm=>pushValue(vm,vm.words.has(textName(vm.pop()))));
     p('definition',vm=>{
@@ -650,7 +668,7 @@ export class VM {
     // JavaScript class hierarchy or a premature method cache.
     const receiverClass=cell=>{
       if(cell.type==='object')return cell.value.klass;
-      if(cell.type==='tag'||cell.type==='verb'||cell.type==='void')return cell.type;
+      if(['tag','verb','void','block'].includes(cell.type))return cell.type;
       if(cell.type==='literal'){
         if(typeof cell.value==='number')return Number.isInteger(cell.value)?'integer':'float';
         if(typeof cell.value==='string')return 'text';
@@ -659,6 +677,13 @@ export class VM {
       }
       throw Error('unsupported method receiver');
     };
+    p('type-of',vm=>{
+      const cell=vm.pop(),klass=receiverClass(cell);
+      const name=cell.type==='object'||klass==='text'||klass==='block'?'reference':klass;
+      vm.push({name:'type',type:'tag',value:name});
+    });
+    p('block.run',vm=>runBlock(vm,vm.pop()));
+    p('control-depth',vm=>pushValue(vm,vm.CSP));
     p('class-of',vm=>vm.push({name:'class',type:'tag',value:receiverClass(vm.pop())}));
     p('name-of',vm=>vm.push({name:'name',type:'tag',value:vm.pop().name}));
     const tagValue=cell=>{
@@ -697,6 +722,14 @@ export class VM {
       const payload=objectPayload(vm.pop());
       // Historical fixed header includes itself; extended length does not.
       pushValue(vm,payload.fields.length+(payload.extensible?0:1));
+    });
+    p('stack.fetch',vm=>{
+      const payload=objectPayload(vm.pop());
+      let index=vm.pop().value;
+      if(!Number.isInteger(index))throw Error('invalid stack index');
+      if(index<0)index+=payload.fields.length;
+      if(index<0||index>=payload.fields.length)throw Error('stack.fetch, index out of range');
+      vm.push(payload.fields[index]);
     });
     p('stack.push',vm=>{
       const value=vm.pop(),payload=objectPayload(vm.pop());

@@ -1,6 +1,7 @@
 /* 2026-11-27: GPT-6 coding agent under Jean Hugues Noel Robert.
  * Execute the actual L9 definitions, not JS substitutes or rewritten copies. */
 import {test} from 'node:test';
+import {cases as objectCoreCases} from '../../scripts/test-l9-object-core.js';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
@@ -11,7 +12,7 @@ const root=fileURLToPath(new URL('../..',import.meta.url));
 const l9=readFileSync(new URL('../../lib/l9.nox',import.meta.url),'utf8');
 const names=['method-text-name','method-name','define-method','it-method{','attribute','drop-with','with-length','with-length{','make{'];
 function extract(name){
- const lines=l9.split('\n'),start=lines.findIndex(line=>line.startsWith('to '+name+' '));
+ const lines=l9.split('\n'),start=lines.findIndex(line=>line==='to '+name||line.startsWith('to '+name+' '));
  assert.ok(start>=0,'missing canonical L9 verb '+name);
  let end=start+1;
  while(end<lines.length&&/^[ \t]+\S/.test(lines[end]))end++;
@@ -166,4 +167,82 @@ test('L9 missing inherited method remains observable',()=>{
  assert.throws(()=>vm.invoke('p'),/missing-method parent.absent/);
  assert.equal(vm.CSP,0);assert.equal(vm.frames.size,0);
  assert.ok(!vm.values().includes(99));
+});
+
+
+// Use the actual class declarations, including canonical initialization.
+const classNames=['update-classes','update-all-classes','update-class','extend-class{',
+ 'class{','superclass','class-method{','method{','getter','setter','initialize-classes'];
+function loadClasses(vm){
+ loadRegistry(vm);
+ vm.evaluate(classNames.map(extract).join('\n')+'\nto l9-class-end .');
+ vm.invoke('initialize-classes');
+ assert.equal(vm.DSP,0);assert.equal(vm.CSP,0);
+}
+// The source suite is shared with the historical CLI. Explicitly keep
+// unported contracts visible, not silently drop them.
+const deferredCoreCases=new Map([
+ ['primitive integer method reflection','stdlib class extensions not yet loaded'],
+ ['primitive text method reflection','stdlib class extensions not yet loaded'],
+ ['optional missing lookup in fast mode','no fast! mode in experiment'],
+ ['method lookup keeps caller control depth','absolute packed control depth is representation-specific'],
+ ['repeated inherited dispatch remains iterative','from: range syntax not yet ported'],
+]);
+for(const [name,source,expected] of objectCoreCases){
+ test('shared object core: '+name,{skip:deferredCoreCases.get(name)},()=>{
+  for(const reader of [false,true]){
+   const vm=fresh(reader),out=[];
+   vm.primitive('out',v=>{
+    const cell=v.pop();
+    out.push(cell.type==='void'?'':typeof cell.value==='boolean'?(cell.value?'1':''):String(cell.value));
+   });
+   loadClasses(vm);
+   vm.evaluate(source);
+   assert.equal(out.join(''),expected);
+   assert.equal(vm.CSP,0);
+   // These two historical methods deliberately leave the receiver.
+   const remainder=['instance class identity','class-method dispatch'].includes(name)?1:0;
+   assert.equal(vm.DSP,remainder);assert.equal(vm.frames.size,0);
+  }
+ });
+}
+test('shared object core: missing method prevents following code',()=>{
+ const vm=fresh(false),out=[];
+ vm.primitive('out',v=>out.push(String(v.pop().value)));
+ loadClasses(vm);
+ vm.evaluate('to t aa_parent/class{ thing/superclass } aa_child/class{ aa_parent/superclass } aa_child/make{ } .not-found "AFTER" out.');
+ assert.throws(()=>vm.invoke('t'),/missing-method aa_child.not-found/);
+ assert.deepEqual(out,[]);assert.equal(vm.CSP,0);
+});
+
+test('attach executes symbolic and bound captured verbs as historical threaded code',()=>{
+ for(const conversion of ['as-verb','tag.to-verb']){
+  const source='to q 7. to p /q '+conversion+' { 2 + } attach run out. p';
+  assert.equal(historical(source),'9');
+  for(const reader of [false,true]){
+   const vm=fresh(reader),out=[];
+   vm.primitive('out',v=>out.push(v.pop().value));
+   vm.evaluate(source);
+   assert.deepEqual(out,[9]);assert.equal(vm.CSP,0);assert.equal(vm.DSP,0);
+  }
+ }
+});
+test('initialized class definitions relocate and execute without a host class registry',()=>{
+ const vm=fresh(false);vm.primitive('out',v=>v.pop());loadClasses(vm);
+ const target=fresh(true),out=[];
+ target.primitive('out',v=>out.push(String(v.pop().value)));
+ loadDefinitions(target,JSON.parse(JSON.stringify(captureDefinitions(vm,['map[]']))));
+ target.evaluate(registryDeclaration);
+ loadDefinitions(target,JSON.parse(JSON.stringify(captureDefinitions(vm,[...names,...registryNames.slice(1),...classNames]))));
+ target.invoke('initialize-classes');
+ target.evaluate('to p aa_parent/class{ thing/superclass ping/it-method{ 7 } } aa_child/class{ aa_parent/superclass } aa_child/make{ } .ping out. p');
+ assert.deepEqual(out,['7']);assert.equal(target.CSP,0);assert.equal(target.DSP,0);
+});
+test('class dispatch preserves control depth and repeats without host recursion',()=>{
+ const vm=fresh(false),out=[];
+ vm.primitive('out',v=>out.push(v.pop().value));loadClasses(vm);
+ const source='to work aa_parent/class{ thing/superclass ping/it-method{ 42 } } aa_child/class{ aa_parent/superclass } 0 >count while: { $count 200 < } do: { aa_child/make{ } .ping drop $count 1 + >count! }; $count out. to t control-depth out work control-depth out. t';
+ vm.evaluate(source);
+ assert.equal(out[0],out[2]);assert.equal(out[1],200);
+ assert.equal(vm.CSP,0);assert.equal(vm.DSP,0);
 });

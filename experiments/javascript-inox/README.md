@@ -356,3 +356,37 @@ and captured methods are not serialized by the existing codec.
 Remaining work: execute the actual class{ / extend-class{ /
 update-classes protocol, then use the existing full object-core suite.
 No changes to lib/l9.nox or historical runtime.
+
+### Canonical class declarations and shared object-core suite (2026-11-27)
+
+The actual L9 `class{`, `extend-class{`, `superclass`,
+`class-method{`, `method{`, `getter`, `setter`, `update-classes`,
+`update-class`, `update-all-classes` and `initialize-classes` now run
+in both experimental readers. The 28 source definitions and a separately
+initialized classes global are sufficient for the L9 class hierarchy;
+no host-side replacement hierarchy. The source initializer itself is
+executed, rather than manually registering a fixture's parent metadata.
+
+FBF in the common historical source: `definitions` used the numeric
+packed-memory address as a host array and returned an empty collection.
+It now enumerates via get_definition, retaining named integer-address
+Cells. The old L9 update-classes scan also confused these addresses with
+method-name text, and stopped at the first nonmatching dictionary item.
+The corrected common L9 implementation refreshes a registered class
+directly, or iterates the existing registry once for "*", dropping
+the temporary metaclass result and preserving the superclass through
+make.metaclass. Cache invalidation remains explicit. This is a deliberate
+repair of L9 source, not a parallel JavaScript implementation.
+
+Kernel additions: single-component name/verb and @method syntax,
+block.run, type-of, stack.fetch, definitions and logical control-depth.
+Captured verb Cells in attach now execute, as they do in the historical
+threaded engine; the earlier experimental quoting was incorrect.
+The common tests import the historical object-core cases rather than
+duplicate them. Five cases remain explicitly deferred: two stdlib
+method registrations, fast! mode, absolute packed control depth,
+and from: range syntax. Separate experimental tests verify equal
+control depth before/after dispatch, 200 inherited invocations via
+while:, and relocation of all 28 definitions before initialization.
+No change to image encoding or production. The common source still
+needs native C++ compilation verification.
