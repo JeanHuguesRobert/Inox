@@ -2882,12 +2882,13 @@ function lean_str_eq( area1 : Area, area2 : Area ) : boolean {
   // Neither alignment padding nor the terminator is part of the value.
   const len = nbytes - 1;
   const whole = len - len % size_of_cell;
-  for( let offset = 0; offset < whole; offset += size_of_cell ){
+  let offset = 0;
+  for( offset = 0; offset < whole; offset += size_of_cell ){
     const a = area1 + ( offset / size_of_cell ) * ONE;
     const b = area2 + ( offset / size_of_cell ) * ONE;
     if( value_of( a ) != value_of( b ) || info_of( a ) != info_of( b ) )return false;
   }
-  for( let offset = whole; offset < len; offset++ ){
+  for( offset = whole; offset < len; offset++ ){
     if( lean_str_unchecked_byte_at( area1, offset ) != lean_str_unchecked_byte_at( area2, offset ) )return false;
   }
   return true;
@@ -26150,7 +26151,7 @@ function repl(){
 // Export the inox object together with its repl
 inox.repl = repl;
 export { inox };
-
+/*}*/
 
 /* ----------------------------------------------------------------------------
  *  Synchronous CLI runner.
@@ -26171,7 +26172,6 @@ function run_program( path : string ){
   current_eval_content = source_code;
   I.processor( "{}", "{}", source_code );
 }
-/*}*/
 
 
 // When run directly (not imported), either run a program (synchronous CLI) or
@@ -26180,6 +26180,11 @@ function run_program( path : string ){
 if( process.argv[ 1 ] && import.meta.url === pathToFileURL( process.argv[ 1 ] ).href ){
 
   const argv = process.argv.slice( 2 );
+  // Native extraction is an explicit developer operation, never a REPL side effect.
+  if( argv.length === 1 && argv[ 0 ] === "--build-targets" ){
+    build_targets();
+    process.exit( 0 );
+  }
 
   if( argv.includes( "--help" ) || argv.includes( "-h" ) ){
     // Use stderr so that piping a run stays clean.
@@ -26195,6 +26200,7 @@ Usage:
   -e, --eval CODE    Evaluate CODE then exit. Like a one-liner.
   --help, -h         This message.
   --version          Print version.
+  --build-targets    Generate experimental native targets and primitive documentation.
 
 Environment (for l9 developers):
   INOX_WITH_L9=1     Boot full stack including l9.nox + stdlib (currently
@@ -26238,20 +26244,20 @@ See examples/hello.nox and examples/factorial.nox (use postfix if needed).
   // only the args intended for the Inox program, not the node/inox launcher
   // or the -e code itself). Do this before running any user code so that
   // primitives inside processor see the right view.
-  /**/ if( typeof globalThis !== "undefined" ){
-  /**/   if( file_arg ){
-  /**/     const full = process.argv;
-  /**/     const idx = full.lastIndexOf( file_arg );
-  /**/     globalThis.inox_script_args = ( idx >= 0 ) ? full.slice( idx + 1 ) : [];
-  /**/   } else if( eval_code ){
-  /**/     const full = process.argv;
-  /**/     let start = full.indexOf( "-e" ); if( start < 0 ) start = full.indexOf( "--eval" );
-  /**/     if( start >= 0 ) start += 2; else start = 2;
-  /**/     globalThis.inox_script_args = full.slice( start );
-  /**/   } else {
-  /**/     globalThis.inox_script_args = [];
-  /**/   }
-  /**/ }
+  if( typeof globalThis !== "undefined" ){
+    if( file_arg ){
+      const full = process.argv;
+      const idx = full.lastIndexOf( file_arg );
+      globalThis.inox_script_args = ( idx >= 0 ) ? full.slice( idx + 1 ) : [];
+    } else if( eval_code ){
+      const full = process.argv;
+      let start = full.indexOf( "-e" ); if( start < 0 ) start = full.indexOf( "--eval" );
+      if( start >= 0 ) start += 2; else start = 2;
+      globalThis.inox_script_args = full.slice( start );
+    } else {
+      globalThis.inox_script_args = [];
+    }
+  }
 
   if( eval_code ){
     current_eval_file    = tag( "-e" );
@@ -26276,7 +26282,6 @@ See examples/hello.nox and examples/factorial.nox (use postfix if needed).
     process.exit( 0 );
   }
 
-  build_targets();
   repl();
 // #2026: Old code had:
 // 
