@@ -1038,6 +1038,7 @@ to initialize-l9
     fork-join/it-method{ >branches
       $branches make.parole-fork-group/ as-verb run it .will
     }
+    pipe/it-method{ it make.parole-pipe/ as-verb run }
     instantiate/it-method{
       make.parole/ as-verb run .from >execution
       0 >idx
@@ -1056,6 +1057,64 @@ to initialize-l9
     submit/it-method{ >value
       it .instantiate >execution
       $value $execution .resolve
+    }
+  }
+
+  ~~ 2026-11-27: #42. Serial FIFO input to independent Parole executions.
+  parole-pipe-entry/class{
+    maker{ >class >result >execution >event
+      $class make{ $event :event $execution :execution $result :result }
+    }
+    event/getter
+    execution/getter
+    result/getter
+  }
+  parole-pipe-completion/class{
+    maker{ >class >result >pipe
+      $class make{ $pipe :pipe $result :result }
+    }
+    run/it-method{ >source >event
+      $event @result @pipe .finish
+    }
+  }
+  parole-pipe/class{
+    maker{ >class >template
+      $class make{ $template :template queue[] :pending false :active? false :draining? }
+    }
+    active?/getter
+    pending-count/it-method{ @pending queue.length }
+    invoke/it-method{ >event
+      make.boxon/ as-verb run >result
+      $event @template .instantiate $result make.parole-pipe-entry/ as-verb run >entry
+      @pending $entry queue.enqueue
+      it .drain
+      $result
+    }
+    submit/it-method{ >value
+      array[] >values $values $value array.push
+      false _ $values make.outcome/ as-verb run it .invoke
+    }
+    finish/it-method{ >result >event
+      ~~ Keep ownership during user notification, including reentrant submit.
+      try: { $event $result .settle drop } finally: {
+        false @active?!
+        it .drain
+      };
+    }
+    drain/it-method{
+      if: @draining? not then: {
+        true @draining?!
+        try: {
+          while: { if: @active? then: { false } else: { @pending queue.length 0 > }; } do: {
+            @pending queue.pull >entry
+            true @active?!
+            $entry .execution >execution
+            it $entry .result make.parole-pipe-completion/ as-verb run
+            $execution .tail-box .observe drop
+            $entry .event $execution .fill drop
+          };
+        } finally: { false @draining?! };
+      };
     }
   }
 
