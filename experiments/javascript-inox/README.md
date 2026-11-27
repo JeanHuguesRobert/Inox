@@ -390,3 +390,25 @@ control depth before/after dispatch, 200 inherited invocations via
 while:, and relocation of all 28 definitions before initialization.
 No change to image encoding or production. The common source still
 needs native C++ compilation verification.
+
+### Dogfooding: unique field selection using native Inox objects (2026-11-27)
+
+`browser-unique-field.nox` adds the distinct behavior `unique-field`:
+return an eligible field's index only when exactly one exists; return
+-1 when none exists and -2 when ambiguous. Stop at the second match.
+It uses the existing sensitive-field predicate, local variables,
+structured loops, and native `object.?@` rather than host property
+access. ZeroBrowser's `field.object` projects only tag/type/disabled/
+readonly/autocomplete metadata; missing properties are absent and
+unsupported nonscalar metadata fails closed. No DOM handles or values
+are exposed to this new behavior. The original projection and image
+remain available unchanged.
+
+The separate image imports sensitive-field? from the existing
+browser-fields image. Reproducibility, missing/unique/ambiguous cases,
+80-field bounds, and 100 deterministic mixed observations are tested.
+No complete L9 initialization is needed by this short-lived script.
+The Cogentia generic.unique-text@1 recipe is an explicit new choice,
+not a change to the existing first-match recipes. The comparison
+registry still treats JavaScript as its reference and rejects any
+disagreement. No authorization or transport change.

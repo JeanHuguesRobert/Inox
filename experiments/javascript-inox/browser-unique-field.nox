@@ -1,0 +1,23 @@
+~~ A distinct behavior: no arbitrary first-match choice.
+~~ ZeroBrowser projects only observed, non-value field metadata.
+to eligible-input? >wanted >field
+  /tag $field object.?@ "input" equal?
+  /type $field object.?@ $wanted equal? and
+  /disabled $field object.?@ false equal? and
+  /readonly $field object.?@ false equal? and
+  /autocomplete $field object.?@ sensitive-field? not and.
+
+to unique-field >wanted
+  -1 >selected
+  0 >index
+  while: { $index count < } do: {
+    if: $index field.object $wanted eligible-input? then: {
+      if: $selected -1 equal? not then: {
+        -2 >selected!
+        break
+      };
+      $index >selected!
+    };
+    $index 1 + >index!
+  };
+  $selected.
