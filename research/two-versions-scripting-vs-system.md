@@ -145,3 +145,10 @@ termination in its tested subset. See [experiment status and measurements](../ex
 and [Cogentia #291](https://github.com/JeanHuguesRobert/cogentia/issues/291).
 The existing browser selector is an opt-in Reality Test, not a production
 migration or proof of full L9 compatibility. Method/class dispatch is next.
+
+
+### Aggregation and selection (2026-11-27, Inox #42)
+
+The corrected L8 Aggregator/Selector contract is tracked in [virteal/l8@5e68096](https://github.com/virteal/l8/commit/5e68096aad580ab3a0bc7d0600248ae15622333e). L9 `aggregator` collects ordered typed Outcomes; `aggregator-and` waits for every result, returning false on any failure, otherwise the first false-like value in declaration order or the last declared success. `selector` wraps the first delivered Outcome (including failure) as a successful outer Boxon; `selector-or` settles on the first truthy success or rejection, otherwise the last delivered false-like value. Historical empty inputs remain empty arrays for all/and and void for selection/or. Explicit `combinator-thunk` wrappers distinguish deferred computation from raw code Cells, with cycle detection. All four accept local promises, Boxons, direct Outcomes, Parole executions and values. Nested foreign thenable assimilation and host-event reentry are separate. Truth reduction uses a local predicate, not a new language-wide boolean rule.
+
+Porting exposed leaked receivers in existing Boxon/Whisper adapters (use `class-of`, not `.class`) and incorrect float payload addressing. The TypeScript float repair preserves payload bits across Cells, arrays and relocated stacks. The float truth predicate uses the specific `text.=` operation; an independent defect in generic text equality `=` was observed and remains to be corrected. See #42 for exact evidence. Native backends not validated.

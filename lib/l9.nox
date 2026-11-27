@@ -899,6 +899,53 @@ to initialize-l9
     run/it-method{ >source >event $source @idx @collection .record }
   }
 
+  ~~ 2026-11-27: #42. L8 aggregation and selection, typed local results.
+  ~~ Explicit thunk wrapper: raw Inox code Cells can also be ordinary data.
+  combinator-thunk/class{
+    maker{ >class >callback $class make{ $callback :callback } }
+    evaluate/it-method{ @callback .run }
+  }
+  combinator-observer/class{
+    maker{ >class >mode >target
+      $class make{ $target :target $mode :mode }
+    }
+    run/it-method{ >source >event
+      if: ( @mode /selector = ) then: {
+        $event .value .outcome @target .resolve drop
+      } else: {
+        $event .value >boxes
+        array[] >outcomes 0 >idx
+        while: { $idx $boxes array.length < } do: {
+          $outcomes $idx $boxes array.get .outcome array.push
+          $idx ++ >idx!
+        };
+        if: ( @mode /and = ) then: {
+          $outcomes combinator-reduce-and/ as-verb run @target .resolve drop
+        } else: { $outcomes @target .resolve drop };
+      };
+    }
+  }
+  combinator-or-state/class{
+    maker{ >class >count
+      $class make{ $count :remaining make.boxon/ as-verb run :output }
+    }
+    output/getter
+    run/it-method{ >source >event
+      if: @output .settled? not then: {
+        @remaining -- @remaining!
+        if: $event .failed? then: {
+          $event @output .settle drop
+        } else: {
+          if: ( $event .value combinator-truth?/ as-verb run ) then: {
+            $event @output .settle drop
+          } else: {
+            if: ( @remaining 0 = ) then: { $event @output .settle drop };
+          };
+        };
+      };
+    }
+  }
+
   ~~ 2026-11-26: GPT-6.2 under JHR, #42. Parole one-shot step chains.
   ~~ Each step receives (Outcome, next Boxon); may receives (value, next).
   ~~ Returning from a step does not advance it; settling next does.
@@ -1625,7 +1672,7 @@ initialize-l9
 
 ~~ Core Inox adapters: explicit operations instead of JavaScript callable objects.
 to boxon?
-  .class >kind
+  class-of >kind
   $kind /boxon = $kind /moxon = or
 
 to boxon-cast
@@ -1633,7 +1680,7 @@ to boxon-cast
   if: $source boxon? then: {
     $target make.boxon-forwarder $source .observe drop
   } else: {
-    if: ( $source .class /promise = ) then: {
+    if: ( $source class-of /promise = ) then: {
       $target false make.boxon-promise-adapter
       $target true make.boxon-promise-adapter
       $source .then drop
@@ -1664,10 +1711,120 @@ to boxon-collect
 to boxon-all false boxon-collect
 to boxon-race true boxon-collect
 
+~~ L8-style truth reduction scoped to these combinators. No change to
+~~ Inox boolean operators. Void, zero, false and empty text are false.
+to combinator-truth?
+  >v
+  if: $v void? then: { false } else: {
+    if: ( $v class-of /text = ) then: { $v text.length 0 > } else: {
+      if: ( $v type-of /integer = ) then: {
+        if: ( $v 0 = ) then: { false } else: { true };
+      } else: {
+        if: $v is-a-float? then: {
+          $v float.as-text >t
+          if: ( $t "0" text.= ) then: { false } else: {
+            if: ( $t "NaN" text.= ) then: { false } else: { true };
+          };
+        } else: { if: $v false? then: { false } else: { true }; };
+      };
+    };
+  };
+
+to combinator-reduce-and
+  >events
+  $events array.length >n
+  if: ( $n 0 = ) then: { array[] } else: {
+    false >failed? false >found-false? _ >result 0 >idx
+    while: { $idx $n < } do: {
+      $idx $events array.get >event
+      if: $event .failed? then: { true >failed?! } else: {
+        if: $found-false? not then: {
+          $event .value >result!
+          if: ( $result combinator-truth? not ) then: { true >found-false?! };
+        };
+      };
+      $idx ++ >idx!
+    };
+    if: $failed? then: { false } else: { $result };
+  };
+
+~~ Normalize explicit thunks, direct typed Outcomes, Parole executions,
+~~ local promises, Boxons and ordinary values.
+to combinator-source
+  >source
+  make.boxon >failure
+  array[] >seen
+  try: {
+    while: { $source class-of /combinator-thunk = } do: {
+      0 >idx
+      while: { $idx $seen array.length < } do: {
+        if: ( $idx $seen array.get $source same? ) then: { /cyclic-combinator-input raise };
+        $idx ++ >idx!
+      };
+      $seen $source array.push
+      $source .evaluate >source!
+    };
+    if: ( $source class-of /outcome = ) then: {
+      $source $failure .settle drop $failure
+    } else: {
+      if: ( $source class-of /parole = ) then: { $source .tail-box } else: {
+        $source boxon-normalize
+      };
+    };
+  } catch: { >reason $reason $failure .reject drop $failure };
+
+~~ all and and share the existing ordered Boxon collector.
+to combinator-aggregate
+  >mode >inputs
+  array[] >boxes 0 >idx
+  while: { $idx $inputs array.length < } do: {
+    $boxes $idx $inputs array.get combinator-source array.push
+    $idx ++ >idx!
+  };
+  $boxes boxon-all >joined
+  make.boxon >output
+  $output $mode make.combinator-observer $joined .observe drop
+  $output
+
+to aggregator /all combinator-aggregate
+to aggregator-and /and combinator-aggregate
+
+~~ Selector registers in input order until a winner settles.
+~~ A later thunk is never executed after a synchronous winner.
+to selector
+  >inputs
+  make.boxon >output
+  if: ( $inputs array.length 0 = ) then: { $output .complete drop } else: {
+    1 true make.boxon-collection >race
+    $race .output >winner
+    $output /selector make.combinator-observer $winner .observe drop
+    0 >idx
+    while: { if: ( $idx $inputs array.length < ) then: { $winner .settled? not } else: { false }; } do: {
+      $idx $inputs array.get combinator-source >source
+      $race $idx make.boxon-collection-observer $source .observe drop
+      $idx ++ >idx!
+    };
+  };
+  $output
+
+to selector-or
+  >inputs
+  $inputs array.length make.combinator-or-state >state
+  $state .output >output
+  if: ( $inputs array.length 0 = ) then: { $output .complete drop } else: {
+    0 >idx
+    while: { if: ( $idx $inputs array.length < ) then: { $output .settled? not } else: { false }; } do: {
+      $idx $inputs array.get combinator-source >source
+      $state $source .observe drop
+      $idx ++ >idx!
+    };
+  };
+  $output
+
 ~~ First Whisper adapter for local Inox promises/Boxons/values.
 to parole-whisper
   >source
-  if: ( $source .class /parole = ) then: { $source } else: {
+  if: ( $source class-of /parole = ) then: { $source } else: {
     make.parole .from >target
     $source boxon-normalize >input-box
     $target make.boxon-forwarder $input-box .observe drop
