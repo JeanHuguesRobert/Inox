@@ -2837,14 +2837,11 @@ function lean_str_as_native( area : Area ) : TxtC {
   /*ts{*/
     // Return the empty string?
     if( area == the_empty_lean )return "";
-    // ToDo:: optimize this a lot, using a Javascript TextDecoder
-    const len = lean_str_length( area );
-    let str = "";
-    let ii;
-    for( ii = 0; ii < len; ii++ ){
-      str += String.fromCharCode( lean_str_byte_at( area, ii ) );
-    }
-    return str;
+    // Decode the same UTF-8 byte representation produced by TextEncoder.
+    // A leading U+FEFF is content, not a transport byte order mark.
+    return new TextDecoder( "utf-8", { ignoreBOM: true } ).decode(
+      new Uint8Array( mem, to_ptr( area ), lean_str_length( area ) )
+    );
   /*}*/
 
 }
@@ -2881,42 +2878,18 @@ function lean_str_eq( area1 : Area, area2 : Area ) : boolean {
   }
   */
 
-  // Adjust size, aligned on size of cell, also skip null terminator
-  const sz = ( ( nbytes - 1 ) + size_of_cell - 1 ) & ~( size_of_cell - 1 );
-
-  // Check the content, 8 bytes at a time where possible
-
-  /*c{
-    u64* start_ptr = reinterpret_cast< u64* > to_ptr( area1 );
-    u64* end_ptr = start_ptr + ( sz / sizeof( u64 ) );
-    u64* other_ptr = reinterpret_cast< u64* > to_ptr( area2 );
-    while( start_ptr < end_ptr ){
-      if( *start_ptr != *other_ptr )return false;
-      start_ptr += size_of_cell;
-      other_ptr += size_of_cell;
-    }
-  }*/
-
-  /*ts{*/
-    let a = area1;
-    let b = area2;
-    const length = sz / size_of_cell;
-    let ii;
-    for( ii = 0 ; ii < length ; ii++ ){
-      // ToDo: optimize this using 64 bits words when possible
-      if( value_of( a ) != value_of( b ) ){
-        return false;
-      }
-      if( info_of( a ) != info_of( b ) ){
-        return false;
-      }
-      // Move to next cells
-      a = a + ONE;
-      b = b + ONE;
-    }
-  /*}*/
-
-  // All cells are equal
+  // 2026-11-27: #42. Compare whole payload Cells, then the exact tail.
+  // Neither alignment padding nor the terminator is part of the value.
+  const len = nbytes - 1;
+  const whole = len - len % size_of_cell;
+  for( let offset = 0; offset < whole; offset += size_of_cell ){
+    const a = area1 + ( offset / size_of_cell ) * ONE;
+    const b = area2 + ( offset / size_of_cell ) * ONE;
+    if( value_of( a ) != value_of( b ) || info_of( a ) != info_of( b ) )return false;
+  }
+  for( let offset = whole; offset < len; offset++ ){
+    if( lean_str_unchecked_byte_at( area1, offset ) != lean_str_unchecked_byte_at( area2, offset ) )return false;
+  }
   return true;
 
 }
@@ -13080,62 +13053,22 @@ function primitive_is_equal(){
   const type1  = type_of(  p1 );
   const type2  = type_of(  p2 );
 
-  // Simple case if when both type and value are the same
+  // 2026-11-27: #42. Direct text payloads are not JS proxies.
+  // Preserve identity fast path and existing scalar/reference semantics.
+  let equal = false;
   if( type1 == type2 ){
     if( value1 == value2 ){
-      clear( p2 );
-      clear( p1 );
-      set( p1, type_boolean, tag_is_equal, 1 );
-      return;
+      equal = true;
+    }else if( type1 == type_reference
+      && area_tag( value1 ) == tag_text
+      && area_tag( value2 ) == tag_text ){
+      equal = lean_str_eq( value1, value2 );
     }
-    // If not references, then they're necesseraly different
-    if( ! is_a_reference( p1 ) ){
-      clear( p2 );
-      set( p1, type_boolean, tag_is_equal, 0 );
-      return;
-    }
-    // For text, compare content
-    if( type1 == type_reference && area_tag( value1 ) == tag_text ){
-      /**/ const text1 = cell_proxied_object( p1 );
-      /**/ const text2 = cell_proxied_object( p2 );
-      //c/ const char* text1 = (const char*) value_of( value_of( p1 ) );
-      //c/ const char* text2 = (const char*) value_of( value_of( p2 ) );
-      let is_it = 0;
-      // If same content
-      if( text2 == text1 ){
-        is_it = 1;
-      }else{
-        /*c{
-          if( strcmp( text1, text2 ) == 0 ){
-            is_it = 1;
-          }
-        }*/
-      }
-      clear( p2 );
-      clear( p1 );
-      set( p1, type_boolean, tag_is_equal, is_it );
-      return;
-    }
-    // p1 is an object or a proxied object
-    // ToDo: delegate to p1
-    clear( p1 );
-    clear( p2 );
-    set( p1, type_boolean, tag_is_equal, 0 );
-    return;
+    // ToDo: delegate value equality for other object classes.
   }
-
-  // It's getting complex, let's delegate to the first operand if possible
-  if( type1 != type_reference ){
-    clear( p1 );
-    clear( p2 );
-    set( p1, type_boolean, tag_is_equal, 0 );
-    return;
-  }
-
-  // ToDo: p1 is a reference, let's delegate to the object it points to
-  clear( p1 );
   clear( p2 );
-  set( p1, type_boolean, tag_is_equal, 0 );
+  clear( p1 );
+  set( p1, type_boolean, tag_is_equal, equal ? 1 : 0 );
 
 }
 operator_primitive( "=", primitive_is_equal );
@@ -13188,24 +13121,11 @@ function primitive_is_identical(){
   const value1 = value_of( p1 );
   const value2 = value_of( p2 );
 
-  if( value1 != value2 ){
-    clear( p2 );
-    clear( p1 );
-    set_value( p1, 0 );
-    return;
-  }
-
-  const type1  = type_of(  p1 );
-  const type2  = type_of(  p2 );
-
+  const type1 = type_of( p1 );
+  const type2 = type_of( p2 );
   clear( p2 );
   clear( p1 );
-
-  if( type1 == type2 ){
-    set_value( p1, 1 );
-  }else{
-    set_value( p1, 0 );
-  }
+  set_boolean_cell( p1, value1 == value2 && type1 == type2 ? 1 : 0 );
 
 }
 operator_primitive( "same?", primitive_is_identical );

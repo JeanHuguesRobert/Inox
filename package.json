@@ -32,6 +32,7 @@
     "test:stack-growth-threshold": "node scripts/test-stack-growth-threshold.js",
     "test:actor-stack-relocation": "node scripts/test-actor-stack-relocation.js",
     "test:float-cells": "node scripts/test-float-cells.js",
+    "test:value-equality": "node scripts/test-value-equality.js",
     "test:l9-tasks": "node scripts/test-l9-task-structure.js",
     "test:l9-lifecycle-basics": "node scripts/test-l9-lifecycle-basics.js",
     "test:l9-mutex": "node scripts/test-l9-mutex.js",
