@@ -16075,20 +16075,24 @@ function primitive_extend_object(){
   const len = object_length( obj );
 
   // Silently ignore if alreay extended
-  if( is_a_reference( obj ) && len == 1 )return;
+  if( is_a_reference( obj ) )return;
 
   // Allocate the extended area
-  const area = allocate_area( name_of( obj ), len * size_of_cell );
+  const klass = area_tag( obj );
+  const area = allocate_area( klass, len * size_of_cell );
   if( area == 0 ){
     // ToDo: raise an exception, return 0?
     FATAL( "out-of-memory" );
   }
 
   // Move the object's attributes to the extended area
+  // Fixed header counts itself; extensible header counts members.
+  const member_count = value_of( obj ) - 1;
   move_cells( obj, area, len );
+  set( area, type_integer, tag_extension_length, member_count );
 
   // Change the type of the object's content
-  set( obj, type_reference, name_of( obj ), area );
+  set( obj, type_reference, klass, area );
 
   // Free the now unused portion of the fixed object's area
   resize_area( obj, 1 * ONE * size_of_cell );
@@ -16105,33 +16109,18 @@ primitive( "extend-object", primitive_extend_object );
 function object_get( ptr : Cell, n : Tag ) : Cell {
 // Get the value of a data member of an object
 
-  const len = object_length( ptr );
-
-  // Add an indirection level if object is extensible
+  // Dereference before deriving the payload bound. Absence is a valid
+  // outcome of object.?@ even in fast mode, so never scan past the area.
   if( type_of( ptr ) == type_reference ){
     ptr = reference_of( ptr );
   }
-
-  let limit = 0;
-  if( check_de ){
-    limit = ptr + len;
-  }
-
-  // Skip the class name & length header first cell
+  const end = ptr + object_length( ptr ) * ONE;
   ptr += ONE;
-
-  while( name_of( ptr ) != n ){
-    // ToDo: go backward? That would process the array as a stack
+  while( ptr < end ){
+    if( name_of( ptr ) == n )return ptr;
     ptr += ONE;
-    if( check_de && limit != 0 ){
-      if( ptr > limit ){
-        return 0;
-      }
-    }
   }
-
-  // Found
-  return ptr
+  return 0;
 }
 
 
@@ -16274,7 +16263,7 @@ operator_primitive( "in?", primitive_is_in );
 function dereference_top(){
   const target = reference_of( TOS );
   if( type_of( target ) == type_reference ){
-    check_de&&mand_eq( area_length( target ), 1 );
+    check_de&&mand( area_length( target ) >= 1 );
     return value_of( target );
   }
   return target;
@@ -16295,37 +16284,10 @@ function primitive_object_set(){
   reset( name_cell );
 
 // #2026: This was added in 2026:
-  const target = reference_of( obj_cell );
-  let ptr = 0;
-  if( type_of( target ) == type_reference ){
-    // 2026-11-23 — GPT-6 coding agent under Jean Hugues Noel Robert.
-    // An extensible object's forwarding area can have allocator padding;
-    // requiring exactly one payload Cell rejects valid objects (observed 2).
-    // Match object_get(): accept a forwarding area with at least one cell.
-    check_de&&mand( area_length( target ) >= 1 );
-    ptr = value_of( target );
-  } else {
-    ptr = target;
-  }
-
-  let limit = 0;
-  if( check_de ){
-    limit = ptr + object_length( ptr ) * ONE;
-  }
-
-  // Skip the class name & length header first cell
-  ptr += ONE;
-
-  // Find the cell with the desired name
-  while( name_of( ptr ) != n ){
-    // ToDo: go backward?
-    ptr += ONE;
-    if( check_de && limit != 0 ){
-      if( ptr > limit ){
-        FATAL( "Object variable not found, named " + tag_as_text( n ) );
-        return;
-      }
-    }
+  const ptr = object_get( reference_of( obj_cell ), n );
+  if( ptr == 0 ){
+    FATAL( "Object variable not found, named " + tag_as_text( n ) );
+    return;
   }
 
   move_cell( value_cell, ptr );

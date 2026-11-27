@@ -28,6 +28,14 @@ const cases=[
 
  ['optional object attribute returns void if missing','to t aa_one/make{ 4 :value } >o missing/ $o object.?@ type-of out. t','void'],
 
+ // 2026-11-27 — GPT-6 coding agent under the Principal: fixed-to-extensible
+ // conversion, identity and lookup after growth.
+ ['extension is idempotent','to t sample/make{ 1 :a 2 :b 3 :c 4 :d } >o $o extend-object $o /a object.@ out $o /d object.@ out. t','14'],
+ ['extended object counts members','to t sample/make{ 1 :a 2 :b 3 :c 4 :d } >o $o stack.length out $o 9 :extra stack.push $o /extra object.@ out $o /a object.@ out. t','491'],
+ ['lookup after capacity growth','to t 0 :sample make.extensible-object >o $o 7 :value stack.push $o 9 :extra stack.push $o stack.length out $o /extra object.@ out. t','29'],
+ ['setter after capacity growth','to t 0 :sample make.extensible-object >o $o 7 :value stack.push $o 9 :extra stack.push 8 $o /extra object.! $o /extra object.@ out. t','8'],
+ ['aliases survive extension and growth','to t sample/make{ 1 :a 2 :b 3 :c 4 :d } >o $o >alias $o 9 :extra stack.push 8 $alias /extra object.! $o /extra object.@ out $o /a object.@ out. t','81'],
+ ['optional missing lookup in fast mode','to t sample/make{ 1 :a 2 :b 3 :c 4 :d } >o fast! /missing $o object.?@ type-of out. t','void'],
  ['instance attribute setter','to t aa_one/class{ thing/superclass value/attribute } aa_one/make{ 3 :value } >o 8 $o .value! $o .value out. t','8'],
  ['independent instances','to t aa_one/class{ thing/superclass value/attribute } aa_one/make{ 3 :value } >a aa_one/make{ 9 :value } >b 6 $a .value! $a .value out $b .value out. t','69'],
  ['own method','to t aa_one/class{ thing/superclass ping/it-method{ "P" } } aa_one/make{ } .ping out. t','P'],
